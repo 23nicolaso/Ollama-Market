@@ -1,15 +1,30 @@
 # Ollama-Powered Fake Stock Market Simulation
 
-This project simulates a fictional stock market using Python and the Ollama language model. It features multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
+This project simulates a fictional stock market based on four imaginary countries: Simula, Rivala, Allia, and Factoria. It uses Python and the Ollama language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
 
 ## Features
 
-- Simulated stock market with multiple assets
-- Various trading agents (Market Maker, Retail Trader, Hedge Fund, HFT Fund, Technical Analysis Trader)
-- Real-time price updates and charts
-- News generation using Ollama LLM
+- Simulated stock market with assets tied to fictional countries:
+  - Simula: A technology-focused nation
+  - Rivala: An agricultural powerhouse
+  - Allia: An entertainment industry leader
+  - Factoria: An industrial giant
+- Various realistic, simulated trading agents (Market Maker, Retail Trader, Hedge Fund, HFT Fund, Technical Analysis Traders)
+- Real-time price updates, charts and orderbooks
+- Accurate market microstructure, with limit orders, market orders, conditional orders
+- News generation using Ollama LLM, reflecting events in the fictional world
 - Sentiment analysis and market impact simulation
 - GUI for monitoring market activity and news
+
+## World Background
+
+The simulation is set in a world with four main countries:
+- Simula: Known for its advanced technology sector
+- Rivala: A major agricultural producer
+- Allia: Famous for its entertainment industry
+- Factoria: A leading industrial nation and weapons manufacturer
+
+These countries have complex economic and political relationships, including occasional conflicts between Simula and Rivala, with Allia allied to Rivala and Factoria supplying weapons to all sides.
 
 ## Requirements
 
