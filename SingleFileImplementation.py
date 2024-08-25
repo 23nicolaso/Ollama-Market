@@ -3,7 +3,6 @@ from langchain_ollama import OllamaLLM
 import time
 import math
 import threading
-import sqlite3
 
 # dictionary of all accounts (with accountIDs)
 accounts = {}
