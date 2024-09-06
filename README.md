@@ -64,8 +64,8 @@ The GUI will open, displaying:
 - `Account`: Represents a trading account with positions and cash
 - `MarketAgent`: Base class for all trading agents
 - `MarketMaker`: Provides liquidity to the market
-- `RetailTrader`: Simulates retail investor behavior
-- `HedgeFund` and `ExecutionalTrader`: More sophisticated trading strategies
+- `RetailTrader`: Simulates retail investor behavior (almost entirely random, centered around sentiment)
+- `HedgeFund` and `ExecutionalTrader`: Simulates behavior of more sophisticated firms (front running retail, trading market structure)
 - `genNews()`: Generates news headlines using Ollama and updates market sentiment
 
 ## Customization
