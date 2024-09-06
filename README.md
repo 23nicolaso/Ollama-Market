@@ -42,10 +42,7 @@ These countries have complex economic and political relationships, including occ
    cd ollama-fake-stock-market
    ```
 
-2. Install the required packages:
-   ```
-   pip install -r requirements.txt
-   ```
+2. Install the required packages
 
 3. Ensure Ollama is installed and running on your system.
 
