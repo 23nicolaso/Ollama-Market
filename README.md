@@ -1,6 +1,6 @@
 # Ollama-Powered Fake Stock Market Simulation
 
-This project simulates a fictional stock market in a world with four imaginary countries. It uses Python and the Ollama language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
+This project simulates a stock market of a fictional world. It uses Python and the Ollama language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
 
 ## Features
 
