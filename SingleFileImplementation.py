@@ -16,6 +16,8 @@ price_history = {asset: [price] for asset, price in last_prices.items()}
 def update_price_history(asset, price):
     if asset in price_history:
         price_history[asset].append(price)
+        if len(price_history[asset]) > 1000:
+            price_history[asset] = price_history[asset][-1000:]
     else:
         price_history[asset] = [price]
 
@@ -51,6 +53,7 @@ class OrderBook:
             self.netQuantity += quantity
             creation_time = time.time()
             self.orders.append([quantity, accountID, creation_time])
+        
         def getPrice(self):
             return self.price
         def getQuantity(self):
@@ -107,6 +110,22 @@ class OrderBook:
         self.urgentBuys = []
         self.urgentSells = []
         last_prices[asset] = initialPrice
+
+    def consolidateOrders(self):
+            for book in [self.bids, self.asks]:
+                for price, level in book.items():
+                    if len(level.orders) > 100:
+                        total_quantity = sum(order[0] for order in level.orders)
+                        level.orders = [['CONSOLIDATED', total_quantity, 'CONSOLIDATED']]
+                        level.netQuantity = total_quantity
+
+    def cleanupOldOrders(self, max_age=300):  # 300 seconds = 5 minutes
+        current_time = time.time()
+        for book in [self.bids, self.asks]:
+            for price, level in book.items():
+                level.orders = [order for order in level.orders if current_time - order[2] < max_age]
+                level.netQuantity = sum(order[0] for order in level.orders)
+
     def getBids(self):
         return self.bids
     def getAsks(self):
@@ -291,21 +310,21 @@ class MarketMaker(MarketAgent):
         self.wipeAllOrders(orderBook)
         for i in range (1,10):
             bidPrice = round(midPrice - (self.spread / 2 * i), 2)
-            self.placeOrder(orderBook, "buy", bidPrice, 5*i, "limit")
+            self.placeOrder(orderBook, "buy", bidPrice, 10*i, "limit")
         for i in range (1,10):
             askPrice = round(midPrice + (self.spread / 2 * i), 2)
-            self.placeOrder(orderBook, "sell", askPrice, 5*i, "limit")
+            self.placeOrder(orderBook, "sell", askPrice, 10*i, "limit")
 
     def provideLiquidity(self, orderBook):
         urgentBuys, urgentSells = orderBook.getUrgentOrders()
         orderBook.fillUrgentOrders()
         if len(urgentBuys) > 0:
             for buyOrder in urgentBuys:
-                self.placeOrder(orderBook, "sell", last_prices[orderBook.asset]+round(self.spread*buyOrder[0]/100, 2), buyOrder[0], "limit")
+                self.placeOrder(orderBook, "sell", last_prices[orderBook.asset]+round(self.spread*buyOrder[0]/1000, 2), buyOrder[0], "limit")
         
         if len(urgentSells) > 0:
             for sellOrder in urgentSells:
-                self.placeOrder(orderBook, "buy", last_prices[orderBook.asset]-round(self.spread*sellOrder[0]/100, 2), sellOrder[0], "limit")
+                self.placeOrder(orderBook, "buy", last_prices[orderBook.asset]-round(self.spread*sellOrder[0]/1000, 2), sellOrder[0], "limit")
         orderBook.fillUrgentOrders()
         self.makeMarket(orderBook)
 
@@ -396,9 +415,9 @@ class RetailTrader(MarketAgent):
                 # Adjust sentiment based on price movement
                 adjusted_sentiment = self.retailSentimentScore[orderBook.asset]
                 if price_movement > 0:
-                    adjusted_sentiment += 0.05  # Slight increase if price went up
+                    adjusted_sentiment += 0.001  # Slight increase if price went up
                 elif price_movement < 0:
-                    adjusted_sentiment -= 0.05  # Slight decrease if price went down
+                    adjusted_sentiment -= 0.002  # Bigger decrease if price went down
                 
                 # Ensure adjusted sentiment is between 0 and 1
                 adjusted_sentiment = max(0, min(1, adjusted_sentiment))
@@ -420,7 +439,7 @@ class RetailTrader(MarketAgent):
     def shiftSentimentToMean(self):
         for asset in self.retailSentimentScore:
             direction = 1 if self.retailSentimentScore[asset] > 0.5 else -1
-            self.retailSentimentScore[asset] -= 1/(1000*self.newsUrgency) * direction
+            self.retailSentimentScore[asset] -= 1/(5000*self.newsUrgency) * direction
         
             if self.retailSentimentScore[asset] < 0.65 and self.retailSentimentScore[asset] > 0.55:
                 self.newsUrgency = 1
@@ -584,7 +603,7 @@ def genNews():
     for market in assets:
         mm.makeMarket(markets[market])
         #  If sentiment is above 0.9 or below 0.1, make the HFT front run the trade by market buying/selling and then doing a smart execution to close
-        if retailTrader.estimateSentiment(markets[market]) <= 0.25 and hftFund.account.getPosition(market) > -100:
+        if retailTrader.estimateSentiment(markets[market]) <= 0.25 and hftFund.account.getPosition(market) > 0:
             try:
                 current_price = markets[market].getLastPrice()
                 bid = markets[market].getBestBid().price
@@ -594,9 +613,10 @@ def genNews():
             quantity = 10*retailTrader.estimateImportance()
             hftFund.placeOrder(markets[market], "sell", current_price, quantity, "market")
             mm.provideLiquidity(markets[market])
-            hftFund.executeTradeInLegs(markets[market], "buy", bid, quantity)
+            hftFund.placeOrder(markets[market], 'buy', bid, math.floor(quantity/2), 'limit')
+            hftFund.executeTradeInLegs(markets[market], "buy", bid, math.floor(quantity/2))
             mm.makeMarket(markets[market])
-        if retailTrader.estimateSentiment(markets[market]) >= 0.75 and hftFund.account.getPosition(market) < 100:
+        if retailTrader.estimateSentiment(markets[market]) >= 0.75 and hftFund.account.getPosition(market) < 0:
             try:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getBestAsk().price
@@ -606,7 +626,8 @@ def genNews():
             quantity = 10*retailTrader.estimateImportance()
             hftFund.placeOrder(markets[market], "buy", current_price, quantity, "market")
             mm.provideLiquidity(markets[market])
-            hftFund.executeTradeInLegs(markets[market], "sell", ask, quantity)
+            hftFund.placeOrder(markets[market], 'sell', ask, math.floor(quantity/2), 'limit')
+            hftFund.executeTradeInLegs(markets[market], "sell", ask, math.floor(quantity/2))
             mm.makeMarket(markets[market])
 
 
@@ -629,8 +650,23 @@ def manageTATrades(market):
     price_list = price_history[market][-200:]
     mean_price = sum(price_list) / len(price_list)
     std_dev = (sum((x - mean_price) ** 2 for x in price_list) / len(price_list)) ** 0.5
-    quantity = random.randint(1,10)
+    quantity = random.randint(1,100)
     current_price = markets[market].getLastPrice()
+
+    # Limit the number of orders placed
+    max_orders = 10
+    if len(markets[market].bids) + len(markets[market].asks) > max_orders:
+        return
+
+    # Calculate 8-period moving average
+    if len(price_list) >= 8:
+        ma_8 = sum(price_list[-8:]) / 8
+        small_quantity = random.randint(1, 10)  # Small order quantity
+
+        if current_price < ma_8:
+            TATraders.placeOrder(markets[market], "sell", current_price, small_quantity, "market")
+        elif current_price > ma_8:
+            TATraders.placeOrder(markets[market], "buy", current_price, small_quantity, "market")
 
     # Check if price is two standard deviations above or below mean
     if current_price > mean_price + 2 * std_dev:
@@ -668,6 +704,16 @@ while runSimulation:
         retailTrader.trade(markets[market])
         manageTATrades(market)
 
+        if tick % 10 == 0:
+            markets[market].consolidateOrders()
+            markets[market].cleanupOldOrders()
+
+
+    max_history_length = 1000
+    for asset in price_history:
+        if len(price_history[asset]) > max_history_length:
+            price_history[asset] = price_history[asset][-max_history_length:]
+
     # hedgeFund.managePortfolio()
     retailTrader.shiftSentimentToMean()
 
@@ -686,11 +732,6 @@ while runSimulation:
             hftFund.partialExecuteMarket(markets[market])
             update_price_history(market, markets[market].getLastPrice())
             # Place execute in legs order to buy at the lowest price in history
-
-                
-
-
-
 
         update_charts()  # Update charts every 100 ticks
         update_prices()
