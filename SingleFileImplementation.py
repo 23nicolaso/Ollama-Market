@@ -664,7 +664,7 @@ def genNews():
     for market in assets:
         mm.makeMarket(markets[market])
         #  If sentiment is above 0.9 or below 0.1, make the HFT front run the trade by market buying/selling and then doing a smart execution to close
-        if retailTrader.estimateSentiment(markets[market]) <= 0.2:
+        if retailTrader.estimateSentiment(markets[market]) <= 0.25:
             try:
                 current_price = markets[market].getLastPrice()
                 bid = markets[market].getBestBid().price
@@ -677,7 +677,7 @@ def genNews():
             hftFund.placeOrder(markets[market], 'buy', bid, math.floor(quantity/2), 'limit')
             hftFund.executeTradeInLegs(markets[market], "buy", bid, math.floor(quantity/2))
             mm.makeMarket(markets[market])
-        if retailTrader.estimateSentiment(markets[market]) >= 0.8:
+        if retailTrader.estimateSentiment(markets[market]) >= 0.75:
             try:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getBestAsk().price
