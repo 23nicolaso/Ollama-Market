@@ -480,13 +480,15 @@ class RetailTrader(MarketAgent):
     def trade(self, orderBook):
         for _ in range(self.newsUrgency):
             try:
-                direction = "buy" if self.retailSentimentScore[orderBook.asset] > random.random() else "sell"
+                sentiment = self.retailSentimentScore[orderBook.asset]
+                bounded_sentiment = 0.3 + (0.4 * sentiment)  # Scale sentiment to be within 30%-70%
+                direction = "buy" if bounded_sentiment > random.random() else "sell"
             except KeyError:
                 direction = "buy" if random.random() < 0.6 else "sell"
 
             current_position = self.account.getPosition(orderBook.asset)
 
-            if (direction == "buy" and current_position >= 5000) or (direction == "sell" and current_position <= -5000):
+            if (direction == "buy" and current_position >= 10000) or (direction == "sell" and current_position <= -10000):
                 continue  # Skip this trade if it would exceed position limits
 
             price = orderBook.getLastPrice()
@@ -494,9 +496,9 @@ class RetailTrader(MarketAgent):
 
             # Adjust quantity if it would exceed position limits
             if direction == "buy":
-                quantity = min(quantity, 5000 - current_position)
+                quantity = min(quantity, 10000 - current_position)
             else:  # sell
-                quantity = min(quantity, current_position + 5000)
+                quantity = min(quantity, current_position + 10000)
 
             if quantity > 0:
                 self.placeOrder(orderBook, direction, price, quantity, "market")
@@ -507,7 +509,7 @@ class RetailTrader(MarketAgent):
     def shiftSentimentToMean(self):
         for asset in self.retailSentimentScore:
             current_sentiment = self.retailSentimentScore[asset]
-            shift_amount = (0.55 - current_sentiment) / (100 * self.newsUrgency)
+            shift_amount = (0.55 - current_sentiment) / (1000 * self.newsUrgency)
             self.retailSentimentScore[asset] += shift_amount
             
             # Ensure the sentiment stays within [0, 1] range

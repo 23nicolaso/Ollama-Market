@@ -1,0 +1,1 @@
+last_prices[orderBook.asset]
