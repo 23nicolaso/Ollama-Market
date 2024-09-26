@@ -3,16 +3,41 @@ from langchain_ollama import OllamaLLM
 import time
 import math
 import threading
+import tkinter as tk
+from tkinter import ttk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import queue
 
-# dictionary of all accounts (with accountIDs)
-accounts = {}
+# =========================== #
+# Created by Nicolas Ollivier #
+# Last Updated: 25-09-2024    #
+# =========================== #
 
-# Dictionary to track last price for every asset
-last_prices = {"Simula 500":5000, "Rivala ETF":100, "Allia ETF":100, "Factoria ETF":100, "Gold":4000}
+'''
+Welcome to the codebase for OLLAMA Market Simulator!                                          
+This codebase was designed to simulate a market in a fake world!                              
+It is designed to be a simple simulation of how a market could react to random news events in short time periods.
 
-# Dictionary to track all past prices for every asset
-price_history = {asset: [price] for asset, price in last_prices.items()}
+Notes:                                                                                                  
+ - ignore the fact that it was implemented in a single file, I just started coding it that way and then  
+    it became too much effort to split up into multiple files.                                                                                                 
+ - make sure you are running with Ollama open, as it is the model that powers the simulation.     
+'''
 
+model = OllamaLLM(model="llama3.1")
+
+# =================================================== Data Structures ================================================================== #
+accounts = {} # Stores list of Account objects, indexed by accountID
+last_prices = {"Simula 500":100, "Rivala ETF":100, "Allia ETF":100, "Factoria ETF":100, "Gold":4000} # Stores last price for each asset
+price_history = {asset: [price] for asset, price in last_prices.items()} # Stores list of past prices for each asset
+assets = ["Simula 500", "Rivala ETF", "Allia ETF", "Factoria ETF", "Gold"] # Stores list of assets
+markets = {} # Stores list of OrderBook objects, indexed by asset
+recentHeadlines = [] # Stores list of recently generated headlines
+news_queue = queue.Queue()
+# ====================================================================================================================================== #
+
+# ============================================ Helper Functions ============================================ #
 def update_price_history(asset, price):
     if asset in price_history:
         price_history[asset].append(price)
@@ -21,6 +46,13 @@ def update_price_history(asset, price):
     else:
         price_history[asset] = [price]
 
+def makeMarkets():
+    for asset in assets:
+        markets[asset] = OrderBook(asset, last_prices[asset])
+
+# ========================================================================================================== #
+
+# ============================================ Class Definitions ============================================ #
 class Account:
     def __init__(self, accountID, CASH):
         self.accountID = accountID
@@ -40,7 +72,6 @@ class Account:
         self.addPosition(asset, quantity*direction)
         self.addPosition("CASH", -price*quantity*direction)
 
-# Order book
 class OrderBook:
     class OrderLevel:
         def __init__(self, price, quantity, asset, direction):
@@ -53,7 +84,8 @@ class OrderBook:
             self.netQuantity += quantity
             creation_time = time.time()
             self.orders.append([quantity, accountID, creation_time])
-        
+        def isEmpty(self):
+            return self.netQuantity == 0
         def getPrice(self):
             return self.price
         def getQuantity(self):
@@ -69,6 +101,11 @@ class OrderBook:
         def cancelOldOrders(self):
             current_time = time.time()
             self.orders = [order for order in self.orders if current_time - order[2] < 100]
+            self.netQuantity = sum([order[0] for order in self.orders])
+        def cancelAll(self):
+            self.orders = []
+            self.netQuantity = 0
+
         def fulfillQuantity(self, quantityToFill):
             if quantityToFill >= self.netQuantity:
                 quantityToFill -= self.netQuantity
@@ -85,12 +122,14 @@ class OrderBook:
                         quantityToFill -= order[0]
                         self.netQuantity -= order[0]
                         self.orders.pop(0)
+                        last_prices[self.asset] = self.price
                     else:
                         # Order gets partially fulfilled
                         accountToModify.tradeAtPrice(self.asset, self.price, quantityToFill, self.direction)
                         order[0] -= quantityToFill
                         self.netQuantity -= quantityToFill
                         quantityToFill = 0
+                        last_prices[self.asset] = self.price
                 
                 last_prices[self.asset] = self.price
                 return 0
@@ -102,6 +141,7 @@ class OrderBook:
                 else:
                     new_orders.append(order)
             self.orders = new_orders
+            self.netQuantity = sum([order[0] for order in self.orders])
 
     def __init__(self, asset, initialPrice):
         self.asset = asset
@@ -111,27 +151,20 @@ class OrderBook:
         self.urgentSells = []
         last_prices[asset] = initialPrice
 
-    def consolidateOrders(self):
-            for book in [self.bids, self.asks]:
-                for price, level in book.items():
-                    if len(level.orders) > 100:
-                        total_quantity = sum(order[0] for order in level.orders)
-                        level.orders = [['CONSOLIDATED', total_quantity, 'CONSOLIDATED']]
-                        level.netQuantity = total_quantity
-
-    def cleanupOldOrders(self, max_age=300):  # 300 seconds = 5 minutes
-        current_time = time.time()
-        for book in [self.bids, self.asks]:
-            for price, level in book.items():
-                level.orders = [order for order in level.orders if current_time - order[2] < max_age]
-                level.netQuantity = sum(order[0] for order in level.orders)
-
     def getBids(self):
         return self.bids
     def getAsks(self):
         return self.asks
     def getUrgentOrders(self):
         return self.urgentBuys, self.urgentSells
+
+    def cancelAllOldOrders(self):
+        for bid in self.bids.values():
+            bid.cancelOldOrders()
+        for ask in self.asks.values():
+            ask.cancelOldOrders()
+        self.clearEmptyOrderlevels()
+
     def display(self):
         print(f"{self.asset} Orderbook")
         print(f"Total Buy Orders: {len(self.bids)}")
@@ -149,6 +182,32 @@ class OrderBook:
         return sum([bid.netQuantity for bid in self.bids.values()])
     def getAskSize(self):
         return sum([ask.netQuantity for ask in self.asks.values()])
+
+    def clearFarOrders(self):
+        # To stop my computer from exploding, I clear orders that are too far away from the current price
+        for bid in self.bids.values():
+            if bid.price < self.getLastPrice() - 5:
+                bid.cancelAll()
+
+        for ask in self.asks.values():
+            if ask.price > self.getLastPrice() + 5:
+                ask.cancelAll()
+        
+        self.clearEmptyOrderlevels()
+
+    def clearEmptyOrderlevels(self):
+        bid_prices = list(self.bids.keys())
+        ask_prices = list(self.asks.keys())
+        
+        while bid_prices:
+            price = bid_prices.pop()
+            if self.bids[price].netQuantity == 0:
+                del self.bids[price]
+        
+        while ask_prices:
+            price = ask_prices.pop()
+            if self.asks[price].netQuantity == 0:
+                del self.asks[price]
 
     def addOrder(self, direction, price, quantity, orderType, accountID):
         book = self.bids if direction == "buy" else self.asks
@@ -188,6 +247,7 @@ class OrderBook:
             bestAsk = self.getBestAsk()
             if not bestBid or not bestAsk or bestBid.getPrice() < bestAsk.getPrice():
                 break
+            
             quantityToFill = min(bestBid.getQuantity(), bestAsk.getQuantity())
             bestBid.fulfillQuantity(quantityToFill)
             bestAsk.fulfillQuantity(quantityToFill)
@@ -197,12 +257,17 @@ class OrderBook:
             if bestAsk.getQuantity() == 0:
                 self.asks.pop(bestAsk.getPrice())
 
+    def getUnfilledUrgentOrders(self):
+        return self.urgentBuys, self.urgentSells
+
     def fillUrgentOrders(self):
+        filledOrders = 0
         # match buys and sells at the middle of the bid and ask
         while self.urgentBuys and self.urgentSells:
             sellAccountID = self.urgentSells[0][1]
             buyAccountID = self.urgentBuys[0][1]
-            quantityFilled = min(self.urgentBuys[0][0], self.urgentSells[0][0])            
+            quantityFilled = min(self.urgentBuys[0][0], self.urgentSells[0][0])  
+            filledOrders += quantityFilled
             
             if self.getBestBid() and self.getBestAsk():
                 midPrice = (self.getBestBid().getPrice() + self.getBestAsk().getPrice()) / 2
@@ -227,6 +292,7 @@ class OrderBook:
         
         # Fill remaining market orders against the order book
         while self.urgentBuys:
+            filledOrders += self.urgentBuys[0][0]
             if self.urgentBuys[0][0] == 0:
                 self.urgentBuys.pop(0)
             else:    
@@ -247,6 +313,7 @@ class OrderBook:
         #print(5)
 
         while self.urgentSells:
+            filledOrders += self.urgentSells[0][0]
             if self.urgentSells[0][0] == 0:
                 self.urgentSells.pop(0)
             else:
@@ -263,14 +330,12 @@ class OrderBook:
                         last_prices[self.asset] = self.getBestBid().getPrice()
                 else:
                     break
-            
+        
+        return filledOrders
         #print(6)
     def getLastPrice(self):
         return last_prices.get(self.asset, None)
-
-model = OllamaLLM(model="llama3.1")
-
-# Create Agents
+# ============================================== Agent Classes ============================================== #
 class MarketAgent:
     def __init__(self, accountID, cash):
         self.account = Account(accountID, cash)
@@ -282,7 +347,6 @@ class MarketAgent:
     def displayAccount(self):
         print(f"Account {self.account.accountID} has {self.account.getCash()} cash and the following positions: {self.account.positions}")
 
-# MARKET MAKER
 class MarketMaker(MarketAgent):
     def __init__(self, accountID, cash, spread):
         super().__init__(accountID, cash)
@@ -310,29 +374,48 @@ class MarketMaker(MarketAgent):
         self.wipeAllOrders(orderBook)
         for i in range (1,10):
             bidPrice = round(midPrice - (self.spread / 2 * i), 2)
-            self.placeOrder(orderBook, "buy", bidPrice, 10*i, "limit")
+            self.placeOrder(orderBook, "buy", bidPrice, round(2**i), "limit")
         for i in range (1,10):
             askPrice = round(midPrice + (self.spread / 2 * i), 2)
-            self.placeOrder(orderBook, "sell", askPrice, 10*i, "limit")
+            self.placeOrder(orderBook, "sell", askPrice, round(2**i), "limit")
 
     def provideLiquidity(self, orderBook):
-        urgentBuys, urgentSells = orderBook.getUrgentOrders()
-        orderBook.fillUrgentOrders()
-        if len(urgentBuys) > 0:
-            for buyOrder in urgentBuys:
-                self.placeOrder(orderBook, "sell", last_prices[orderBook.asset]+round(self.spread*buyOrder[0]/1000, 2), buyOrder[0], "limit")
+        remaining_urgent_buys, remaining_urgent_sells = orderBook.getUnfilledUrgentOrders()
         
-        if len(urgentSells) > 0:
-            for sellOrder in urgentSells:
-                self.placeOrder(orderBook, "buy", last_prices[orderBook.asset]-round(self.spread*sellOrder[0]/1000, 2), sellOrder[0], "limit")
+        for buyOrder in remaining_urgent_buys:
+            self.placeOrder(orderBook, "sell", last_prices[orderBook.asset]+round(self.spread*buyOrder[0]/5, 2), buyOrder[0], "limit")
+        
+        for sellOrder in remaining_urgent_sells:
+            self.placeOrder(orderBook, "buy", last_prices[orderBook.asset]-round(self.spread*sellOrder[0]/5, 2), sellOrder[0], "limit")
+        
         orderBook.fillUrgentOrders()
         self.makeMarket(orderBook)
 
-# EXECUTIONAL TRADER
 class ExecutionalTrader(MarketAgent):
     def __init__(self, accountID, cash):
         super().__init__(accountID, cash)
         self.intendedOrders = {}
+        self.conditionalOrders = {}
+
+    def getConditionalOrdersInDirection(self, orderBook, direction):
+        if orderBook not in self.conditionalOrders:
+            return 0
+        orders = [order for order in self.conditionalOrders[orderBook] if order["direction"] == direction]
+        return sum(order["quantity"] for order in orders)
+
+    def placeConditionalOrder(self, orderBook, direction, price, quantity, priceCondition, conditionalDirection):
+        if orderBook not in self.conditionalOrders:
+            self.conditionalOrders[orderBook] = []
+        self.conditionalOrders[orderBook].append({"direction": direction, "price": price, "quantity": quantity, "priceCondition": priceCondition, "conditionalDirection": conditionalDirection})
+
+    def checkConditionalOrders(self, orderBook):
+        if orderBook not in self.conditionalOrders:
+            return
+        for order in self.conditionalOrders[orderBook]:
+            if (order["conditionalDirection"] == "above" and orderBook.getLastPrice() >= order["priceCondition"]) or (order["conditionalDirection"] == "below" and orderBook.getLastPrice() <= order["priceCondition"]):
+                print(f"Conditional order fulfilled: {order['quantity']} {order['direction']} at {order['price']}")
+                self.placeOrder(orderBook, order["direction"], order["price"], order["quantity"], "market")
+                self.conditionalOrders[orderBook].remove(order)
 
     def executeTradeInLegs(self, orderBook, direction, price, quantity):
         self.intendedOrders[orderBook] = {"direction": direction, "price": price, "quantity": quantity}
@@ -341,12 +424,12 @@ class ExecutionalTrader(MarketAgent):
         self.intendedOrders.clear()
 
     def partialExecuteMarket(self, orderBook):
-        if random.random() < 0.01:
+        if random.random() < 0.05:
             if orderBook in self.intendedOrders:
                 order = self.intendedOrders[orderBook]
                 if order["quantity"] > 0:
-                    # Determine a random amount to fill, between 1 and the full quantity
-                    quantity_to_fill = random.randint(1, order["quantity"]//5)
+                    # Determine a random amount to fill, between 0 and the full quantity
+                    quantity_to_fill = random.randint(1, max(order["quantity"]//5,1))
                     
                     # Place the order
                     self.placeOrder(orderBook, order["direction"], order["price"], quantity_to_fill, "market")
@@ -354,10 +437,11 @@ class ExecutionalTrader(MarketAgent):
                     # Update the remaining quantity
                     order["quantity"] -= quantity_to_fill
                     
-                    print(f"Partially executed {quantity_to_fill} out of {order['quantity'] + quantity_to_fill} for {orderBook.asset}")
+                    # commented out debug statement
+                    # print(f"Partially executed {quantity_to_fill} out of {order['quantity'] + quantity_to_fill} for {orderBook.asset}")
                     
                     # If the order is completely filled, remove it from intended orders
-                    if order["quantity"] == 0:
+                    if order["quantity"] <= 0:
                         del self.intendedOrders[orderBook]
 
     def updateOrdersInLegs(self, orderBook):
@@ -372,15 +456,11 @@ class ExecutionalTrader(MarketAgent):
             self.placeOrder(orderBook, "sell", 0, quantityToFill, "market")
             self.intendedOrders[orderBook]["quantity"] -= quantityToFill
 
-# HEDGE FUND
 class HedgeFund(ExecutionalTrader):
     def __init__(self, accountID, cash):
         super().__init__(accountID, cash)
-    
-# create example agents
-mm = MarketMaker("MARKET MAKER", 100000000000000, 0.005)
 
-# RETAIL TRADER
+
 class RetailTrader(MarketAgent):
     def __init__(self, accountID, cash):
         super().__init__(accountID, cash)
@@ -400,73 +480,55 @@ class RetailTrader(MarketAgent):
     def trade(self, orderBook):
         for _ in range(self.newsUrgency):
             try:
-                
-                # Get the last thirty prices from price history
-                last_thirty_prices = price_history[orderBook.asset][-15:]
-            
-                # Determine price movement
-                # Calculate moving average of last thirty prices
-                moving_average = sum(last_thirty_prices) / len(last_thirty_prices)
-                
-                # Determine price movement by comparing last price to moving average
-                last_price = last_thirty_prices[-1]
-                price_movement = last_price - moving_average
-                
-                # Adjust sentiment based on price movement
-                adjusted_sentiment = self.retailSentimentScore[orderBook.asset]
-                if price_movement > 0:
-                    adjusted_sentiment += 0.001  # Slight increase if price went up
-                elif price_movement < 0:
-                    adjusted_sentiment -= 0.002  # Bigger decrease if price went down
-                
-                # Ensure adjusted sentiment is between 0 and 1
-                adjusted_sentiment = max(0, min(1, adjusted_sentiment))
-                
-                # Determine direction based on adjusted sentiment
-                direction = "buy" if adjusted_sentiment > random.random() else "sell"
+                direction = "buy" if self.retailSentimentScore[orderBook.asset] > random.random() else "sell"
             except KeyError:
                 direction = "buy" if random.random() < 0.6 else "sell"
 
-            
+            current_position = self.account.getPosition(orderBook.asset)
+
+            if (direction == "buy" and current_position >= 5000) or (direction == "sell" and current_position <= -5000):
+                continue  # Skip this trade if it would exceed position limits
 
             price = orderBook.getLastPrice()
             quantity = random.randint(1, 100)
-            self.placeOrder(orderBook, direction, price, quantity, "market")
+
+            # Adjust quantity if it would exceed position limits
+            if direction == "buy":
+                quantity = min(quantity, 5000 - current_position)
+            else:  # sell
+                quantity = min(quantity, current_position + 5000)
+
+            if quantity > 0:
+                self.placeOrder(orderBook, direction, price, quantity, "market")
     
     def setReversionUrgency(self, urgency):
         self.newsUrgency = urgency
         
     def shiftSentimentToMean(self):
         for asset in self.retailSentimentScore:
-            direction = 1 if self.retailSentimentScore[asset] > 0.5 else -1
-            self.retailSentimentScore[asset] -= 1/(5000*self.newsUrgency) * direction
-        
-            if self.retailSentimentScore[asset] < 0.65 and self.retailSentimentScore[asset] > 0.55:
-                self.newsUrgency = 1
+            current_sentiment = self.retailSentimentScore[asset]
+            shift_amount = (0.55 - current_sentiment) / (100 * self.newsUrgency)
+            self.retailSentimentScore[asset] += shift_amount
+            
+            # Ensure the sentiment stays within [0, 1] range
+            self.retailSentimentScore[asset] = max(0, min(1, self.retailSentimentScore[asset]))
+
+        if all(0.54 <= sentiment <= 0.56 for sentiment in self.retailSentimentScore.values()):
+            self.newsUrgency = 1
+# ========================================= End of Class Definitions ======================================== #
 
 retailTrader = RetailTrader("RETAIL TRADER", 1000000)
 hedgeFund = HedgeFund("HEDGE FUND", 5000000)
 hftFund = HedgeFund("EVENTS TRADING FUND", 10000000)
 TATraders = HedgeFund("TA Trading Firm", 1000000)
+mm = MarketMaker("MARKET MAKER", 100000000000000, 0.005)
 
 # make markets for the agents
-assets = ["Simula 500", "Rivala ETF", "Allia ETF", "Factoria ETF", "Gold"]
-markets = {}
-for asset in assets:
-    markets[asset] = OrderBook(asset, last_prices[asset])
+makeMarkets()
 
 # main loop
 runSimulation = True
-recentHeadlines = []
-
 tick = 0
-import tkinter as tk
-from tkinter import ttk
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import queue
-
-news_queue = queue.Queue()
 
 # Create the main window
 root = tk.Tk()
@@ -572,7 +634,6 @@ def genNews():
 
     sentimentScore = model.invoke(f"In this world, there is technology country Simula, agricultural country Rivala, entertainment country Allia and industrial country Factoria. All these countries are reliant on each others economies, and their governments intervene when their economy is in danger. Here is the most recent news headline: {recentHeadlines[-1]}. Predict retail sentiment for investors in the Simula 500, Rivala ETF, Allia ETF, Factoria ETF and list them as a comma seperated list (give each a score between 0-1, 0 is extremely bearish, 1 is extremely bullish). Do not say anything other than the sentiment score. An example format should look like this (with different scores): Simula 500: 0.5, Rivala ETF: 0.5, Allia ETF: 0.5, Factoria ETF: 0.5")
     urgencyScore = model.invoke(f"You are an analyst in a simulated world. Score the impact of this headline between 1-10, with 1 being not impactful and 10 being extremely impactful: {recentHeadlines[-1]}. Say the urgency score, nothing else.")
-    # hedgeFund.definePortfolio()
     try:
         urgencyScore = int(urgencyScore)
     except:
@@ -603,27 +664,27 @@ def genNews():
     for market in assets:
         mm.makeMarket(markets[market])
         #  If sentiment is above 0.9 or below 0.1, make the HFT front run the trade by market buying/selling and then doing a smart execution to close
-        if retailTrader.estimateSentiment(markets[market]) <= 0.25 and hftFund.account.getPosition(market) > 0:
+        if retailTrader.estimateSentiment(markets[market]) <= 0.2:
             try:
                 current_price = markets[market].getLastPrice()
                 bid = markets[market].getBestBid().price
             except:
                 current_price = markets[market].getLastPrice()
                 bid = markets[market].getLastPrice()
-            quantity = 10*retailTrader.estimateImportance()
+            quantity = 20*math.pow(max(1,retailTrader.estimateImportance()),3)
             hftFund.placeOrder(markets[market], "sell", current_price, quantity, "market")
             mm.provideLiquidity(markets[market])
             hftFund.placeOrder(markets[market], 'buy', bid, math.floor(quantity/2), 'limit')
             hftFund.executeTradeInLegs(markets[market], "buy", bid, math.floor(quantity/2))
             mm.makeMarket(markets[market])
-        if retailTrader.estimateSentiment(markets[market]) >= 0.75 and hftFund.account.getPosition(market) < 0:
+        if retailTrader.estimateSentiment(markets[market]) >= 0.8:
             try:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getBestAsk().price
             except:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getLastPrice()
-            quantity = 10*retailTrader.estimateImportance()
+            quantity = 20*math.pow(max(1,retailTrader.estimateImportance()),3)
             hftFund.placeOrder(markets[market], "buy", current_price, quantity, "market")
             mm.provideLiquidity(markets[market])
             hftFund.placeOrder(markets[market], 'sell', ask, math.floor(quantity/2), 'limit')
@@ -647,66 +708,66 @@ root.after(100, update_news_feed)
 
 def manageTATrades(market):
     # Calculate mean and standard deviation of price history
-    price_list = price_history[market][-200:]
+    price_list = price_history[market][-20:]
     mean_price = sum(price_list) / len(price_list)
     std_dev = (sum((x - mean_price) ** 2 for x in price_list) / len(price_list)) ** 0.5
     quantity = random.randint(1,100)
     current_price = markets[market].getLastPrice()
 
-    # Limit the number of orders placed
-    max_orders = 10
-    if len(markets[market].bids) + len(markets[market].asks) > max_orders:
-        return
+    # # Position conditional orders at the high of the past 500 ticks and low of the past 500 ticks to emulate stop loss / take profit orders getting hit
+    if len(price_history[market]) > 500:
+        high = max(price_history[market][-500:])
+        low = min(price_history[market][-500:]) 
+    
+        if TATraders.account.getPosition(market) > 0 and TATraders.getConditionalOrdersInDirection(market, "sell") == 0:
+            TATraders.placeConditionalOrder(markets[market], "sell", current_price, TATraders.account.getPosition(market), low, "below")
+        elif TATraders.account.getPosition(market) < 0 and TATraders.getConditionalOrdersInDirection(market, "buy") == 0:
+            TATraders.placeConditionalOrder(markets[market], "buy", current_price, -TATraders.account.getPosition(market), high, "above")
 
     # Calculate 8-period moving average
     if len(price_list) >= 8:
         ma_8 = sum(price_list[-8:]) / 8
-        small_quantity = random.randint(1, 10)  # Small order quantity
-
+        
+        # Determine action based on current price relative to 8-period MA
         if current_price < ma_8:
-            TATraders.placeOrder(markets[market], "sell", current_price, small_quantity, "market")
-        elif current_price > ma_8:
-            TATraders.placeOrder(markets[market], "buy", current_price, small_quantity, "market")
+            # Sell market
+            TATraders.placeOrder(markets[market], "sell", current_price, quantity, "market")
+        else:
+            # Buy market
+            TATraders.placeOrder(markets[market], "buy", current_price, quantity, "market")
+    
+    if len(price_list) > 30:
+        ma_30 = sum(price_list[-30:]) / 30
+        if current_price < ma_30:
+            # Sell market
+            TATraders.placeOrder(markets[market], "sell", current_price, quantity, "market")
+        else:
+            # Buy market
+            TATraders.placeOrder(markets[market], "buy", current_price, quantity, "market")
 
-    # Check if price is two standard deviations above or below mean
-    if current_price > mean_price + 2 * std_dev:
-        TATraders.placeOrder(markets[market], "sell", mean_price + 2 * std_dev, quantity, "limit")
-    elif current_price < mean_price - 2 * std_dev:
-        TATraders.placeOrder(markets[market], "buy", mean_price - 2 * std_dev, quantity, "limit")
+    # Limit the number of limitorders placed to save on compute
+    max_orders = 20
+    if len(markets[market].bids) + len(markets[market].asks) > max_orders:
+        # Cancel all TA orders
+        for bid_level in markets[market].bids.values():
+            bid_level.cancelOrdersFromID("TA Trading Firm")
+        for ask_level in markets[market].asks.values():
+            ask_level.cancelOrdersFromID("TA Trading Firm")
+        return
 
-    # If price is above mean, place buy orders at the mean price
-    if current_price > mean_price and TATraders.account.getPosition(market) < 100:
-        TATraders.placeOrder(markets[market], "buy", mean_price, quantity, "limit")
-    # If price is below mean, place sell orders at the mean price
-    elif current_price < mean_price and TATraders.account.getPosition(market) > -100:
-        TATraders.placeOrder(markets[market], "sell", mean_price, quantity, "limit")
+    # # place sell limit order at nearest vwap band above, and buy limit order at nearest vwap band below
+    upper_band = std_dev * 3 + mean_price
+    lower_band = std_dev * -3 + mean_price
 
-    # Also position limit orders at the high of the past 500 ticks and low of the past 500 ticks
-    if len(price_history[market]) > 500:
-        high = max(price_history[market][-500:])
-        low = min(price_history[market][-500:]) 
+    TATraders.placeOrder(markets[market], "sell", upper_band, quantity, "limit")
+    TATraders.placeOrder(markets[market], "buy", lower_band, quantity, "limit")
 
-        # Check if the quantity at the low price is less than 1000
-        try:        
-            low_quantity = markets[market].getBids()[low].netQuantity()
-            high_quantity = markets[market].getAsks()[high].netQuantity()
-        except:
-            low_quantity = 0
-            high_quantity = 0
-        if low_quantity < 20:
-            TATraders.placeOrder(markets[market], "buy", low, 10, "limit")
-        if high_quantity < 20:
-            TATraders.placeOrder(markets[market], "sell", high, 10, "limit")
+    
 
 while runSimulation:
     for market in assets:
         mm.makeMarket(markets[market])
         retailTrader.trade(markets[market])
-        manageTATrades(market)
-
-        if tick % 10 == 0:
-            markets[market].consolidateOrders()
-            markets[market].cleanupOldOrders()
 
 
     max_history_length = 1000
@@ -720,18 +781,22 @@ while runSimulation:
     for market in assets:
         mm.provideLiquidity(markets[market])
 
-    if tick > 10:
-        if random.random() < 0.01:
+    if tick > 10: 
+        if random.random() < 0.001:
             genNewsThread()
-            print("MM VALUE: " + str(mm.account.getValue()))
-            print("HFT FUND VALUE: " + str(hftFund.account.getValue()))
-            print("TA FUND VALUE: " + str(TATraders.account.getValue()))
-            print("RETAIL TRADER VALUE: " + str(retailTrader.account.getValue()))
+            # print("MM VALUE: " + str(mm.account.getValue()))
+            # print("HFT FUND VALUE: " + str(hftFund.account.getValue()))
+            # print("TA FUND VALUE: " + str(TATraders.account.getValue()))
+            # print("RETAIL TRADER VALUE: " + str(retailTrader.account.getValue()))
     
         for market in assets:
             hftFund.partialExecuteMarket(markets[market])
             update_price_history(market, markets[market].getLastPrice())
-            # Place execute in legs order to buy at the lowest price in history
+            manageTATrades(market)
+            TATraders.checkConditionalOrders(market)
+            markets[market].clearEmptyOrderlevels()
+            markets[market].cancelAllOldOrders()
+            markets[market].clearFarOrders()
 
         update_charts()  # Update charts every 100 ticks
         update_prices()
