@@ -31,8 +31,8 @@ model = OllamaLLM(model="llama3.1")
 accounts = {} # Stores list of Account objects, indexed by accountID
 initial_prices = {"Simula 500":100, "Rivala ETF":100, "Allia ETF":100, "Factoria ETF":100, "Gold":4000} # Stores last price for each asset
 last_prices = {"Simula 500":100, "Rivala ETF":100, "Allia ETF":100, "Factoria ETF":100, "Gold":4000} # Stores last price for each asset
-spreads_by_market = {"Simula 500": 0.01, "Rivala ETF": 0.01, "Allia ETF": 0.01, "Factoria ETF": 0.01, "Gold": 0.5} # Stores the spread for each market
-average_annual_return_by_market = {"Simula 500": 0.2, "Rivala ETF": 0.15, "Allia ETF": 0.12, "Factoria ETF": 0.09, "Gold": 0.05} # Stores the average annual return for each market
+spreads_by_market = {"Simula 500": 0.02, "Rivala ETF": 0.01, "Allia ETF": 0.01, "Factoria ETF": 0.01, "Gold": 0.5} # Stores the spread for each market
+average_annual_return_by_market = {"Simula 500": 0.3, "Rivala ETF": 0.15, "Allia ETF": 0.12, "Factoria ETF": 0.09, "Gold": 0.05} # Stores the average annual return for each market
 economic_health_by_market = {"Simula 500": 1, "Rivala ETF": 1, "Allia ETF": 1, "Factoria ETF": 1, "Gold": 1} # Stores the total economic health of each market
 simulation_age = 0 # Stores the age of the simulation in total sets of 10 ticks note (treat 10 ticks as 1 minute)
 price_history = {asset: [price] for asset, price in last_prices.items()} # Stores list of past prices for each asset
@@ -61,7 +61,7 @@ def makeMarkets():
 
 def estimatePrice(asset):
     estimated_price = initial_prices[asset] * (1 + average_annual_return_by_market[asset] / 252 / 24) ** simulation_age
-    economic_health_adjustment = economic_health_by_market[asset] * 100 * spreads_by_market[asset]
+    economic_health_adjustment = economic_health_by_market[asset] * 10 * spreads_by_market[asset]
     adjusted_price = max(0,estimated_price + economic_health_adjustment)
 
     return adjusted_price
@@ -181,6 +181,12 @@ class OrderBook:
         for ask in self.asks.values():
             ask.cancelOldOrders()
         self.clearEmptyOrderlevels()
+
+    def cancelOrdersByAccount(self, accountID):
+        for bid in self.bids.values():
+            bid.cancelOrdersFromID(accountID)
+        for ask in self.asks.values():
+            ask.cancelOrdersFromID(accountID)
 
     def display(self):
         print(f"{self.asset} Orderbook")
@@ -526,7 +532,7 @@ class RetailTrader(MarketAgent):
                 quantity = min(quantity, current_position + 10000)
 
             if quantity > 0:
-                self.placeOrder(orderBook, direction, price, quantity, 'market')
+                self.placeOrder(orderBook, direction, price, quantity, "market")
     
     def setReversionUrgency(self, urgency):
         self.newsUrgency = urgency
@@ -540,7 +546,7 @@ class RetailTrader(MarketAgent):
             # Ensure the sentiment stays within [0, 1] range
             self.retailSentimentScore[asset] = max(0, min(1, self.retailSentimentScore[asset]))
 
-        if all(0.54 <= sentiment <= 0.56 for sentiment in self.retailSentimentScore.values()):
+        if all(0.50 <= sentiment <= 0.60 for sentiment in self.retailSentimentScore.values()):
             self.newsUrgency = 1
 # ========================================= End of Class Definitions ======================================== #
 
@@ -702,7 +708,7 @@ def genNews():
         recentHeadlines.pop(0)
 
     with model_lock:
-        sentimentScore = model.invoke(f"In this world, there is technology country Simula, agricultural country Rivala, entertainment country Allia and industrial country Factoria. All these countries are reliant on each others economies, and their governments intervene when their economy is in danger. Here is the most recent news headline: {recentHeadlines[-1]}. Predict retail sentiment for investors in the Simula 500, Rivala ETF, Allia ETF, Factoria ETF and list them as a comma seperated list (give each a score between 0-1, 0 is extremely bearish, 1 is extremely bullish). Do not say anything other than the sentiment score. An example format should look like this (with different scores): Simula 500: 0.5, Rivala ETF: 0.5, Allia ETF: 0.5, Factoria ETF: 0.5")
+        sentimentScore = model.invoke(f"In this world, there is technology country Simula, agricultural country Rivala, entertainment country Allia and industrial country Factoria. All these countries are reliant on each others economies, and their governments intervene when their economy is in danger. Here is the most recent news headline: {recentHeadlines[-1]}. Predict economic sentiment for investors in the Simula 500, Rivala ETF, Allia ETF, Factoria ETF and list them as a comma seperated list (give each a score between 0-1, 0 is extremely impact on the economy, 1 is extremely good impact on the economy). Do not say anything other than the sentiment score. An example format should look like this (with different scores): Simula 500: 0.5, Rivala ETF: 0.5, Allia ETF: 0.5, Factoria ETF: 0.5")
         urgencyScore = model.invoke(f"You are an analyst in a simulated world. Score the impact of this headline between 1-10, with 1 being not impactful and 10 being extremely impactful: {recentHeadlines[-1]}. Say the urgency score, nothing else.")
     try:
         urgencyScore = int(urgencyScore)
@@ -717,7 +723,7 @@ def genNews():
     for asset_sentiment in sentimentScore.split(', '):
         try:
             asset, score = asset_sentiment.split(': ')
-            sentiment_scores[asset] = float(score)
+            sentiment_scores[asset] = max(0.8, min(0.2, float(score)))
         except:
             print(f"Error parsing sentiment score: {asset_sentiment}")
     
@@ -734,7 +740,7 @@ def genNews():
     for market in assets:
         mm.makeMarket(markets[market])
         #  If sentiment is above 0.9 or below 0.1, make the HFT front run the trade by market buying/selling and then doing a smart execution to close
-        if retailTrader.estimateSentiment(markets[market]) <= 0.25:
+        if retailTrader.estimateSentiment(markets[market]) <= 0.3:
             try:
                 current_price = markets[market].getLastPrice()
                 bid = markets[market].getBestBid().price
@@ -743,28 +749,28 @@ def genNews():
                 bid = markets[market].getLastPrice()
             quantity = 5*math.pow(max(1,retailTrader.estimateImportance()),3)
             if retailTrader.estimateImportance() >= 8:
-                hftFund.executeTradeInLegs(markets[market], "sell", current_price, quantity)
+                hftFund.executeTradeInLegs(markets[market], "sell", current_price, quantity//4)
             else:
                 hftFund.placeOrder(markets[market], "sell", current_price, quantity, "market")
                 mm.provideLiquidity(markets[market])
-                hftFund.placeOrder(markets[market], 'buy', bid, math.floor(quantity/2), 'limit')
-                hftFund.executeTradeInLegs(markets[market], "buy", bid, math.floor(quantity/2))
+                hftFund.placeOrder(markets[market], 'buy', bid, math.floor(quantity//2), 'limit')
+                hftFund.executeTradeInLegs(markets[market], "buy", bid, math.floor(quantity//2))
                 mm.makeMarket(markets[market])
-        elif retailTrader.estimateSentiment(markets[market]) >= 0.75:
+        elif retailTrader.estimateSentiment(markets[market]) >= 0.7:
             try:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getBestAsk().price
             except:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getLastPrice()
-            quantity = 20*math.pow(max(1,retailTrader.estimateImportance()),3)
+            quantity = 5*math.pow(max(1,retailTrader.estimateImportance()),3)
             if retailTrader.estimateImportance() >= 8:
-                hftFund.executeTradeInLegs(markets[market], "buy", current_price, quantity)
+                hftFund.executeTradeInLegs(markets[market], "buy", current_price, quantity//4)
             else:
                 hftFund.placeOrder(markets[market], "buy", current_price, quantity, "market")
                 mm.provideLiquidity(markets[market])
-                hftFund.placeOrder(markets[market], 'sell', ask, math.floor(quantity/2), 'limit')
-                hftFund.executeTradeInLegs(markets[market], "sell", ask, math.floor(quantity/2))
+                hftFund.placeOrder(markets[market], 'sell', ask, math.floor(quantity//2), 'limit')
+                hftFund.executeTradeInLegs(markets[market], "sell", ask, math.floor(quantity//2))
                 mm.makeMarket(markets[market])
         else:
             current_price = markets[market].getLastPrice()
@@ -921,6 +927,7 @@ while runSimulation:
             # print("RETAIL TRADER VALUE: " + str(retailTrader.account.getValue()))
     
         for market in assets:
+            hftFund.updateOrdersInLegs(markets[market])
             hftFund.partialExecuteMarket(markets[market])
             update_price_history(market, markets[market].getLastPrice())
             manageTATrades(market)
@@ -929,22 +936,18 @@ while runSimulation:
             markets[market].cancelAllOldOrders()
             markets[market].clearFarOrders()
 
-            # Fix pricing to be closer to the long term pricing estimate, using the long term investors
-            avg_price = sum(price_history[market][-100:]) / 50
+            if len(price_history[market]) < 100:
+                continue
+
             estimated_fair_value = estimatePrice(market)
-            # make the order sizes bigger the further price is away from fair value, with it starting from this point up to a max quantity of 10000
-            position = longTermInvestors.account.getPosition(market)
-            price = markets[market].getLastPrice()
-            if price > estimated_fair_value:
-                deviation = price - estimated_fair_value
-                if deviation / estimated_fair_value >= 0.15:
-                    quantity = min(int(deviation / estimated_fair_value * 10000), 5000)
-                    longTermInvestors.placeOrder(markets[market], "sell", price, quantity, "market")
-            elif price < estimated_fair_value:
-                deviation = estimated_fair_value - price
-                if deviation / estimated_fair_value >= 0.15:
-                    quantity = min(int(deviation / estimated_fair_value * 10000), 5000)
-                    longTermInvestors.placeOrder(markets[market], "buy", price, quantity, "market")
+
+            # Calculate the target price for limit orders
+            target_price = estimated_fair_value
+            buy_price = 0.9 * target_price
+
+            # Clear any orders with longTermInvestor's id
+            markets[market].cancelOrdersByAccount("Long Term Investors")
+            longTermInvestors.placeOrder(markets[market], "buy", buy_price, 1000, "limit")
 
         update_charts()  # Update charts every 100 ticks
         update_prices()
