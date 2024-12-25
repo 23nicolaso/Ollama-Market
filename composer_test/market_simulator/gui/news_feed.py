@@ -19,15 +19,12 @@ class NewsFeedFrame(ttk.Frame):
         self.chat_window.insert(tk.END, "Chat Window:\n")
         self.chat_window.see(tk.END)
 
-        # Create queues for thread-safe updates
-        self.news_queue = queue.Queue()
-        self.chat_queue = queue.Queue()
-
         # Start update loops
-        self.update_news_feed()
-        self.update_chat_window()
+        self._update_news_feed()
+        self._update_chat_window()
 
-    def update_news_feed(self):
+    def _update_news_feed(self):
+        """Internal method to update news feed"""
         try:
             while True:
                 headline = news_queue.get_nowait()
@@ -36,9 +33,11 @@ class NewsFeedFrame(ttk.Frame):
         except queue.Empty:
             pass
         finally:
-            self.after(100, self.update_news_feed)
+            # Schedule next update using instance method
+            self.after(100, self._update_news_feed)
 
-    def update_chat_window(self):
+    def _update_chat_window(self):
+        """Internal method to update chat window"""
         try:
             while True:
                 message = chat_queue.get_nowait()
@@ -47,15 +46,19 @@ class NewsFeedFrame(ttk.Frame):
         except queue.Empty:
             pass
         finally:
-            self.after(100, self.update_chat_window)
+            # Schedule next update using instance method
+            self.after(100, self._update_chat_window)
 
     def add_news(self, headline):
+        """Add news to the queue"""
         news_queue.put(headline)
 
     def add_chat(self, message):
+        """Add chat message to the queue"""
         chat_queue.put(message)
 
     def clear_chat(self):
+        """Clear the chat window"""
         self.chat_window.delete(1.0, tk.END)
         self.chat_window.insert(tk.END, "Chat Window:\n")
         self.chat_window.see(tk.END) 

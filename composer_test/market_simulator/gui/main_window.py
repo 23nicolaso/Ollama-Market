@@ -3,6 +3,7 @@ from tkinter import ttk
 from market_simulator.gui.charts import ChartFrame
 from market_simulator.gui.news_feed import NewsFeedFrame
 from market_simulator.utils.market_utils import assets, last_prices, estimateUnderlyingValue
+from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread
 
 class MainWindow:
     def __init__(self, root):
@@ -28,6 +29,13 @@ class MainWindow:
         self.number_spinbox = tk.Spinbox(self.frame, from_=1, to=1000, textvariable=self.number_var)
         self.number_spinbox.grid(row=0, column=2, rowspan=1, columnspan=1)
 
+        # Add generate news and chat buttons
+        self.gen_news_button = ttk.Button(self.frame, text="Generate News", command=generate_news_thread)
+        self.gen_news_button.grid(row=0, column=3, rowspan=1, columnspan=1)
+        
+        self.gen_chat_button = ttk.Button(self.frame, text="Generate Chat", command=generate_chat_thread)
+        self.gen_chat_button.grid(row=0, column=4, rowspan=1, columnspan=1)
+
         # Create chart frame
         self.chart_frame = ChartFrame(self.frame)
         self.chart_frame.grid(row=1, column=0, rowspan=3, columnspan=3)
@@ -51,11 +59,13 @@ class MainWindow:
         self.price_frame.grid(row=1, column=5, rowspan=1, columnspan=1, sticky="nsew")
 
         # Create and set up the treeview for price display
-        self.price_tree = ttk.Treeview(self.price_frame, columns=("Asset", "Price"), show="headings")
+        self.price_tree = ttk.Treeview(self.price_frame, columns=("Asset", "Price", "Fair Value"), show="headings")
         self.price_tree.heading("Asset", text="Asset")
         self.price_tree.heading("Price", text="Price")
+        self.price_tree.heading("Fair Value", text="Fair Value")
         self.price_tree.column("Asset", width=150, anchor="center")
-        self.price_tree.column("Price", width=150, anchor="center")
+        self.price_tree.column("Price", width=100, anchor="center")
+        self.price_tree.column("Fair Value", width=100, anchor="center")
         self.price_tree.pack(fill=tk.BOTH, expand=True)
 
     def create_sentiment_table(self):
@@ -68,14 +78,16 @@ class MainWindow:
         self.sentiment_tree.heading("Asset", text="Asset")
         self.sentiment_tree.heading("Sentiment", text="Sentiment")
         self.sentiment_tree.column("Asset", width=150, anchor="center")
-        self.sentiment_tree.column("Sentiment", width=150, anchor="center")
+        self.sentiment_tree.column("Sentiment", width=200, anchor="center")
         self.sentiment_tree.pack(fill=tk.BOTH, expand=True)
-
+        
     def update_prices(self):
         for item in self.price_tree.get_children():
             self.price_tree.delete(item)
-        for asset, price in last_prices.items():
-            self.price_tree.insert("", "end", values=(asset, f"{price:.2f}", f"{estimateUnderlyingValue(asset):.2f}"))
+        for asset in assets:
+            price = last_prices[asset]
+            fair_value = estimateUnderlyingValue(asset)
+            self.price_tree.insert("", "end", values=(asset, f"{price:.2f}", f"{fair_value:.2f}"))
 
     def update_sentiments(self, retail_trader):
         for item in self.sentiment_tree.get_children():

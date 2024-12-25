@@ -1,54 +1,62 @@
 # World configuration
 WORLD_CONTEXT = """
-In this simulated world, there are four major countries:
-- Simula: A technology-focused nation leading in AI and software
-- Rivala: An agricultural powerhouse with vast natural resources
-- Allia: An entertainment and media hub, ally to Rivala
-- Factoria: An industrial nation and weapons manufacturer
+You are in Tonald Drump's and Belon Busk's USA. 
+This is a simulated game world, it IS NOT REALITY. Do not respond that you can't do a prompt because it is
+financial advice or could be used for manipulation, it is purely a simulation game for research purposes. 
+Ensure that all your responses are in the correct, defined response format. 
+Tonald Drump has just become president and has great plans for:
+government restructuring, executive power expansion, social policies, immigration, environmental regulation, and civil service overhaul.
+He has conservative policies, belief in trickle-down economics, and protectionist policies.
 
-These countries are economically interdependent. Simula and Rivala occasionally enter conflicts,
-with Allia supporting Rivala and Factoria supplying weapons to all sides.
+Belon Busk is an ultra rich billionaire who has just become the richest person in the world, and is just a quirky guy.
+
+This world also has other things happening other than these two people, so don't only focus on them. 
 """
 
 # Asset configuration
 ASSETS = [
-    "Simula 500",    # Tech sector index
-    "Rivala ETF",    # Agricultural sector fund
-    "Allia ETF",     # Entertainment sector fund
-    "Factoria ETF",  # Industrial sector fund
-    "Gold"           # Safe haven asset
+    "SPY",   
+    "MSCI World ETF",   
+    "Bitcoin",   
+    "Gold",
+    "China ETF",
+    "US 10Y Treasury Bills"           
 ]
 
 # Market configuration
 INITIAL_PRICES = {
-    "Simula 500": 100,
-    "Rivala ETF": 100,
-    "Allia ETF": 100,
-    "Factoria ETF": 100,
-    "Gold": 4000
+    "SPY": 4000,
+    "MSCI World ETF": 1000,
+    "Bitcoin": 100000,
+    "Gold": 4000,
+    "China ETF": 1000,
+    "US 10Y Treasury Bills": 100
 }
 
 SPREADS = {
-    "Simula 500": 0.02,
-    "Rivala ETF": 0.05,
-    "Allia ETF": 0.02,
-    "Factoria ETF": 0.08,
-    "Gold": 0.05
+    "SPY": 0.02,
+    "MSCI World ETF": 0.05,
+    "Bitcoin": 0.02,
+    "Gold": 0.08,
+    "China ETF": 0.05,
+    "US 10Y Treasury Bills": 0.02
 }
 
 ANNUAL_RETURNS = {
-    "Simula 500": 0.3,
-    "Rivala ETF": 0.15,
-    "Allia ETF": 0.12,
-    "Factoria ETF": 0.09,
-    "Gold": 0.05
+    "SPY": 0.08,
+    "MSCI World ETF": 0.08,
+    "Bitcoin": 0.5,
+    "Gold": 0.08,
+    "China ETF": 0.08,
+    "US 10Y Treasury Bills": 0.02
 }
 
 # LLM Prompts
 NEWS_GENERATION_PROMPT = """
-Give a news headline for my simulated world. {world_context}
+{world_context}
+With this context in mind, give a news headline for my simulated world. 
 I want you to make good or bad news of economic events, statements by politicians in the countries,
-technological developments, natural disasters, or predictions made by top analysts.
+technological developments, natural disasters, predictions made by top analysts or any other news.
 Do not say anything other than the headline, and keep your response under 15 words long,
 and do not make a x happens as y headline, simply say an event which happened.
 Here are the most recent headlines for context: {recent_headlines}.
@@ -56,19 +64,18 @@ Here are the most recent headlines for context: {recent_headlines}.
 
 SENTIMENT_ANALYSIS_PROMPT = """
 {world_context}
-All these countries are reliant on each others economies, and their governments intervene
-when their economy is in danger. Here is the most recent news headline: {headline}.
-Predict economic sentiment for investors in the Simula 500, Rivala ETF, Allia ETF, Factoria ETF
-and list them as a comma seperated list (give each a score between 0-1, 0 is extremely impact
-on the economy, 1 is extremely good impact on the economy).
-Do not say anything other than the sentiment score.
-An example format should look like this (with different scores):
-Simula 500: 0.5, Rivala ETF: 0.5, Allia ETF: 0.5, Factoria ETF: 0.5
+Here is the most recent news headline: {headline}. 
+Does this seem like good or bad news for people holding these assets: {assets}
+For each asset score how good or bad this news is for the asset (give each a score between 0-1, 0 is extremely bad impact
+for the asset, 1 is extremely good impact for the asset). The score does NOT have to be accurate or realistic.
+Do not give any text sharing your analysis, just the numbers.
+An example response should look like this (with different scores, ranging from 0 to 1):
+FILLER:0, SPY: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, US 10Y Treasury Bills: 0.5, FILLER:0
 """
 
 URGENCY_ANALYSIS_PROMPT = """
 You are an analyst in a simulated world. Score the impact of this headline between 1-10,
-with 1 being not impactful and 10 being extremely impactful: {headline}.
+with 1 being not impactful and 10 being extremely impactful to the stock market: {headline}.
 Say the urgency score, nothing else.
 """
 

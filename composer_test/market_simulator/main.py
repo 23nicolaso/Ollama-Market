@@ -26,8 +26,8 @@ def main():
     news_feed_frame = main_window.news_feed_frame
     
     # Start update loops
-    news_feed_frame.update_news_feed()
-    news_feed_frame.update_chat_window()
+    news_feed_frame._update_news_feed()
+    news_feed_frame._update_chat_window()
 
     # Initialize agents
     retail_trader = RetailTrader("RETAIL TRADER", 1000000)
@@ -90,6 +90,9 @@ def main():
                 if len(price_history[market]) < 100:
                     continue
 
+                                # Update GUI components
+            main_window.update_prices()
+            main_window.update_sentiments(retail_trader)
             main_window.update()
             tick = 0
         

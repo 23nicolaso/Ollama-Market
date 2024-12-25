@@ -38,8 +38,8 @@ class ExecutionalTrader(MarketAgent):
             if orderBook in self.intendedOrders:
                 order = self.intendedOrders[orderBook]
                 if order["quantity"] > 0:
-                    # Determine a random amount to fill, between 0 and the full quantity
-                    quantity_to_fill = random.randint(1, max(order["quantity"]//2,1))
+                    # Determine a random amount to fill, between 0.05 and the 0.5 of the quantity
+                    quantity_to_fill = int(order["quantity"] * random.uniform(0.05, 0.5))
                     
                     # Place the order
                     self.placeOrder(orderBook, order["direction"], order["price"], quantity_to_fill, "market")

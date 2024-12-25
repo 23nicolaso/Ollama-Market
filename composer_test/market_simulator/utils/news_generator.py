@@ -3,7 +3,7 @@ import random
 from market_simulator.utils.market_utils import model, recentHeadlines, assets, news_queue, chat_queue, markets
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
-    URGENCY_ANALYSIS_PROMPT, CHAT_ANALYSIS_PROMPT, ASSETS
+    URGENCY_ANALYSIS_PROMPT, ASSETS
 )
 
 # Global variables to store agent references
@@ -35,7 +35,8 @@ def generate_news():
     sentiment_scores = model.invoke(
         SENTIMENT_ANALYSIS_PROMPT.format(
             world_context=WORLD_CONTEXT,
-            headline=recentHeadlines[-1]
+            headline=recentHeadlines[-1],
+            assets=", ".join(ASSETS)
         )
     )
 
@@ -59,12 +60,13 @@ def generate_news():
     sentiment_scores_dict = {}
     for asset_sentiment in sentiment_scores.split(', '):
         try:
-            asset, score = asset_sentiment.split(': ')
+            if "FILLER" in asset_sentiment:
+                continue
+            asset, score = asset_sentiment.split(':')
+            score = score.replace(" ", "")
             sentiment_scores_dict[asset] = min(0.8, max(0.2, float(score)))
         except:
             print(f"Error parsing sentiment score: {asset_sentiment}")
-    
-    sentiment_scores_dict["Gold"] = 0.7 + random.uniform(-0.3, 0.3)
     
     # Ensure all assets have a sentiment score, defaulting to 0.5 if not set
     for asset in ASSETS:
@@ -82,15 +84,16 @@ def generate_news():
 
 def generate_chat():
     """Generates chat messages about market conditions"""
-    current_asset = random.choice(assets)
-    chat = model.invoke(
-        CHAT_ANALYSIS_PROMPT.format(
-            asset=current_asset,
-            recent_headlines=recentHeadlines
-        )
-    )
-    print(f"Chat: {chat}")
-    chat_queue.put(chat)
+    return
+    # current_asset = random.choice(assets)
+    # chat = model.invoke(
+    #     CHAT_ANALYSIS_PROMPT.format(
+    #         asset=current_asset,
+    #         recent_headlines=recentHeadlines
+    #     )
+    # )
+    # print(f"Chat: {chat}")
+    # chat_queue.put(chat)
 
 def generate_news_thread():
     """Creates a thread to generate news"""

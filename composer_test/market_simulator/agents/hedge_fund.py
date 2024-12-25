@@ -6,13 +6,7 @@ class HedgeFund(ExecutionalTrader):
     def __init__(self, accountID, cash, strategy_type):
         super().__init__(accountID, cash)
         self.strategy_type = strategy_type
-        self.position_limits = {
-            "Simula 500": 100000,
-            "Rivala ETF": 100000,
-            "Allia ETF": 100000,
-            "Factoria ETF": 100000,
-            "Gold": 100000
-        }
+        self.position_limits = {asset: 10000 for asset in assets}
         self.target_positions = {asset: 0 for asset in assets}
         
     def update_positions(self, market):
@@ -21,11 +15,11 @@ class HedgeFund(ExecutionalTrader):
         
         if current_position < target_position:
             # Need to buy
-            quantity = min(10000, target_position - current_position)
+            quantity = min(1000, target_position - current_position)
             self.executeTradeInLegs(markets[market], "buy", markets[market].getLastPrice(), quantity)
         elif current_position > target_position:
             # Need to sell
-            quantity = min(10000, current_position - target_position)
+            quantity = min(1000, current_position - target_position)
             self.executeTradeInLegs(markets[market], "sell", markets[market].getLastPrice(), quantity)
         
         self.updateOrdersInLegs(markets[market])
