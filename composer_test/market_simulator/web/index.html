@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Market Simulator Charts</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #1e222d;
+            color: #ffffff;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #asset-selector {
+            padding: 8px;
+            font-size: 16px;
+            background-color: #2a2e39;
+            color: #ffffff;
+            border: 1px solid #363c4e;
+            border-radius: 4px;
+        }
+        #chart-container {
+            height: 600px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #2a2e39;
+        }
+        .price-info {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background-color: #2a2e39;
+            border-radius: 4px;
+        }
+        .price-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .price-label {
+            font-size: 12px;
+            color: #787b86;
+        }
+        .price-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Market Simulator Charts</h1>
+            <select id="asset-selector"></select>
+        </div>
+        <div class="price-info">
+            <div class="price-item">
+                <span class="price-label">Last Price</span>
+                <span class="price-value" id="last-price">-</span>
+            </div>
+            <div class="price-item">
+                <span class="price-label">24h Change</span>
+                <span class="price-value" id="price-change">-</span>
+            </div>
+        </div>
+        <div id="chart-container"></div>
+    </div>
+
+    <script>
+        // Initialize variables
+        let chart = null;
+        let candleSeries = null;
+        let currentAsset = null;
+        let socket = null;
+        let candleData = new Map(); // Store candles for each asset
+        let currentCandle = null;
+        const CANDLE_INTERVAL = 10; // 10 seconds per candle
+
+        // Create chart
+        function createChart() {
+            const container = document.getElementById('chart-container');
+            
+            chart = LightweightCharts.createChart(container, {
+                layout: {
+                    background: { color: '#2a2e39' },
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: '#334158' },
+                    horzLines: { color: '#334158' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: '#485c7b',
+                },
+                timeScale: {
+                    borderColor: '#485c7b',
+                    timeVisible: true,
+                    secondsVisible: true,
+                },
+                handleScroll: {
+                    vertTouchDrag: false,
+                },
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#26a69a',
+                downColor: '#ef5350',
+                borderVisible: false,
+                wickUpColor: '#26a69a',
+                wickDownColor: '#ef5350',
+            });
+
+            // Make chart responsive
+            window.addEventListener('resize', () => {
+                chart.applyOptions({
+                    width: container.clientWidth,
+                    height: container.clientHeight,
+                });
+            });
+        }
+
+        // Create a new candle
+        function createCandle(price, timestamp) {
+            return {
+                time: Math.floor(timestamp / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL,
+                open: price,
+                high: price,
+                low: price,
+                close: price
+            };
+        }
+
+        // Update current candle with new price
+        function updateCurrentCandle(price, timestamp) {
+            if (!currentCandle) {
+                currentCandle = createCandle(price, timestamp);
+                return;
+            }
+
+            const candleTime = Math.floor(timestamp / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL;
+
+            if (candleTime > currentCandle.time) {
+                // Save the completed candle
+                if (!candleData.has(currentAsset)) {
+                    candleData.set(currentAsset, []);
+                }
+                candleData.get(currentAsset).push({ ...currentCandle });
+                
+                // Create new candle
+                currentCandle = createCandle(price, timestamp);
+                
+                // Update the chart with all candles
+                const allCandles = [...candleData.get(currentAsset), currentCandle];
+                candleSeries.setData(allCandles);
+            } else {
+                // Update current candle
+                currentCandle.high = Math.max(currentCandle.high, price);
+                currentCandle.low = Math.min(currentCandle.low, price);
+                currentCandle.close = price;
+                
+                // Update only the last candle
+                candleSeries.update(currentCandle);
+            }
+        }
+
+        // Update price info
+        function updatePriceInfo(price, history) {
+            document.getElementById('last-price').textContent = price.toFixed(2);
+            
+            if (history.length > 1) {
+                const change = ((price - history[0]) / history[0]) * 100;
+                const changeElement = document.getElementById('price-change');
+                changeElement.textContent = `${change.toFixed(2)}%`;
+                changeElement.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+            }
+        }
+
+        // Initialize WebSocket connection
+        function initializeWebSocket() {
+            socket = io('http://localhost:5000');
+            
+            socket.on('price_update', (data) => {
+                if (data.asset === currentAsset) {
+                    const timestamp = Date.now();
+                    updateCurrentCandle(data.price, timestamp);
+                    updatePriceInfo(data.price, data.history);
+                }
+            });
+        }
+
+        // Initialize asset selector
+        async function initializeAssetSelector() {
+            const response = await fetch('http://localhost:5000/assets');
+            const assets = await response.json();
+            
+            const selector = document.getElementById('asset-selector');
+            assets.forEach(asset => {
+                const option = document.createElement('option');
+                option.value = asset;
+                option.textContent = asset;
+                selector.appendChild(option);
+            });
+
+            selector.addEventListener('change', async (e) => {
+                currentAsset = e.target.value;
+                currentCandle = null; // Reset current candle for new asset
+                
+                // Load historical data
+                const response = await fetch(`http://localhost:5000/price_history/${currentAsset}`);
+                const data = await response.json();
+                
+                // Convert historical data to candles
+                const candles = [];
+                const prices = data.prices;
+                const now = Date.now();
+                const timeStep = CANDLE_INTERVAL * 1000; // Convert to milliseconds
+                
+                for (let i = 0; i < prices.length; i++) {
+                    const timestamp = now - (prices.length - i) * timeStep;
+                    if (i === 0 || Math.floor(timestamp / timeStep) > Math.floor((now - (prices.length - (i-1)) * timeStep) / timeStep)) {
+                        candles.push(createCandle(prices[i], timestamp));
+                    }
+                    const currentCandle = candles[candles.length - 1];
+                    currentCandle.high = Math.max(currentCandle.high, prices[i]);
+                    currentCandle.low = Math.min(currentCandle.low, prices[i]);
+                    currentCandle.close = prices[i];
+                }
+                
+                candleData.set(currentAsset, candles);
+                candleSeries.setData(candles);
+            });
+
+            // Set initial asset
+            if (assets.length > 0) {
+                currentAsset = assets[0];
+                selector.value = currentAsset;
+                const event = new Event('change');
+                selector.dispatchEvent(event);
+            }
+        }
+
+        // Initialize everything
+        async function initialize() {
+            createChart();
+            await initializeAssetSelector();
+            initializeWebSocket();
+        }
+
+        // Start initialization when page loads
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html> 

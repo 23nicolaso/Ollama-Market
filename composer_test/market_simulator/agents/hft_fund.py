@@ -12,7 +12,6 @@ class HFTFund(MarketAgent):
         print(self.sentimentForecastError, self.importanceForecastError, self.estimateFairValueError)
 
     def updatePositioning(self, market):
-        self.updateOrdersInLegs(markets[market])
         self.partialExecuteMarket(markets[market])
 
     def estimateFairValue(self, market):
@@ -33,13 +32,11 @@ class HFTFund(MarketAgent):
             except:
                 current_price = markets[market].getLastPrice()
                 bid = markets[market].getLastPrice()
-            quantity = pow(self.estimateImportance(rt),2)*5
-            if self.estimateImportance(rt) >= 8:
-                self.placeOrder(markets[market], "sell", current_price, quantity, "market")
-            else:
-                self.placeOrder(markets[market], "sell", current_price, quantity, "market")
+            quantity = pow(self.estimateImportance(rt),2)*100
+            if markets[market].asset == "SPY":
                 print("selling " + str(quantity) + " shares in " + markets[market].asset)
-                self.executeTradeInLegs(markets[market], "buy", bid, int(quantity))
+            self.placeOrder(markets[market], "sell", current_price, quantity, "market")
+            self.executeTradeInLegs(markets[market], "buy", bid, int(quantity))
         elif self.estimateSentiment(rt, market) >= 0.7:
             try:
                 current_price = markets[market].getLastPrice()
@@ -47,13 +44,11 @@ class HFTFund(MarketAgent):
             except:
                 current_price = markets[market].getLastPrice()
                 ask = markets[market].getLastPrice()
-            quantity = pow(self.estimateImportance(rt),2)*5
-            if self.estimateImportance(rt) >= 8:
-                self.placeOrder(markets[market], "buy", current_price, quantity, "market")
-            else:
-                self.placeOrder(markets[market], "buy", current_price, quantity, "market")
+            quantity = pow(self.estimateImportance(rt),2)*100
+            if markets[market].asset == "SPY":
                 print("buying " + str(quantity) + " shares in " + markets[market].asset)
-                self.executeTradeInLegs(markets[market], "sell", ask, int(quantity))
+            self.placeOrder(markets[market], "buy", current_price, quantity, "market")
+            self.executeTradeInLegs(markets[market], "sell", ask, int(quantity))
 
     def executeTradeInLegs(self, orderBook, direction, price, quantity):
         self.intendedOrders[orderBook] = {"direction": direction, "price": price, "quantity": quantity}
@@ -62,15 +57,19 @@ class HFTFund(MarketAgent):
         self.intendedOrders.clear()
 
     def partialExecuteMarket(self, orderBook):
-        if random.random() < 0.05:
+        if random.random() < 0.1:
+            if orderBook.asset == "SPY":
+                print("partial executing market in " + orderBook.asset)
+
             if orderBook in self.intendedOrders:
                 order = self.intendedOrders[orderBook]
                 if order["quantity"] > 0:
-                    # Determine a random amount to fill, between 0 and the full quantity
-                    quantity_to_fill = random.randint(1, max(order["quantity"]//2,1))
+                    # Determine a random amount to fill, between 0.05 and 0.1 x quantity
+                    quantity_to_fill = max(1, int(random.uniform(0.05, 0.1) * order["quantity"]))
                     
                     # Place the order
-                    self.placeOrder(orderBook, order["direction"], order["price"], quantity_to_fill, "market")
+                    priceChange = 0.05 if order["direction"] == "buy" else -0.05
+                    self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice()+priceChange, quantity_to_fill, "limit")
                     
                     # Update the remaining quantity
                     order["quantity"] -= quantity_to_fill
