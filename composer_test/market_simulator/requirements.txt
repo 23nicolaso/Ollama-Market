@@ -1,0 +1,4 @@
+matplotlib>=3.5.0
+numpy>=1.21.0
+langchain_ollama>=0.1.0
+tk>=8.6.0 

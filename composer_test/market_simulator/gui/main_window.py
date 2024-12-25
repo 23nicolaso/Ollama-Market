@@ -1,0 +1,93 @@
+import tkinter as tk
+from tkinter import ttk
+from market_simulator.gui.charts import ChartFrame
+from market_simulator.gui.news_feed import NewsFeedFrame
+from market_simulator.utils.market_utils import assets, last_prices, estimateUnderlyingValue
+
+class MainWindow:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Market Simulation")
+        self.root.geometry("2000x800")
+
+        # Create main frame
+        self.frame = ttk.Frame(root)
+        self.frame.pack(fill=tk.BOTH, expand=True)
+
+        # Create the dropdown menu
+        self.asset_var = tk.StringVar()
+        self.asset_dropdown = ttk.Combobox(self.frame, textvariable=self.asset_var, values=assets)
+        self.asset_dropdown.set(assets[0])  # Set default value
+        self.asset_dropdown.grid(row=0, column=0, rowspan=1, columnspan=1)
+
+        # Create a number selection menu
+        self.chart_length_label = ttk.Label(self.frame, text="Chart Length")
+        self.chart_length_label.grid(row=0, column=1, rowspan=1, columnspan=1)
+
+        self.number_var = tk.IntVar(value=500)
+        self.number_spinbox = tk.Spinbox(self.frame, from_=1, to=1000, textvariable=self.number_var)
+        self.number_spinbox.grid(row=0, column=2, rowspan=1, columnspan=1)
+
+        # Create chart frame
+        self.chart_frame = ChartFrame(self.frame)
+        self.chart_frame.grid(row=1, column=0, rowspan=3, columnspan=3)
+
+        # Create news feed frame
+        self.news_feed_frame = NewsFeedFrame(self.frame)
+        self.news_feed_frame.grid(row=1, column=3, rowspan=3, columnspan=2)
+
+        # Create price table
+        self.create_price_table()
+
+        # Create sentiment table
+        self.create_sentiment_table()
+
+        # Bind events
+        self.asset_dropdown.bind("<<ComboboxSelected>>", self.on_asset_change)
+
+    def create_price_table(self):
+        # Create a frame for the price table
+        self.price_frame = ttk.Frame(self.frame)
+        self.price_frame.grid(row=1, column=5, rowspan=1, columnspan=1, sticky="nsew")
+
+        # Create and set up the treeview for price display
+        self.price_tree = ttk.Treeview(self.price_frame, columns=("Asset", "Price"), show="headings")
+        self.price_tree.heading("Asset", text="Asset")
+        self.price_tree.heading("Price", text="Price")
+        self.price_tree.column("Asset", width=150, anchor="center")
+        self.price_tree.column("Price", width=150, anchor="center")
+        self.price_tree.pack(fill=tk.BOTH, expand=True)
+
+    def create_sentiment_table(self):
+        # Create a frame for the sentiment table
+        self.sentiment_frame = ttk.Frame(self.frame)
+        self.sentiment_frame.grid(row=2, column=5, rowspan=2, columnspan=1, sticky="nsew")
+
+        # Create and set up the treeview for sentiment display
+        self.sentiment_tree = ttk.Treeview(self.sentiment_frame, columns=("Asset", "Sentiment"), show="headings")
+        self.sentiment_tree.heading("Asset", text="Asset")
+        self.sentiment_tree.heading("Sentiment", text="Sentiment")
+        self.sentiment_tree.column("Asset", width=150, anchor="center")
+        self.sentiment_tree.column("Sentiment", width=150, anchor="center")
+        self.sentiment_tree.pack(fill=tk.BOTH, expand=True)
+
+    def update_prices(self):
+        for item in self.price_tree.get_children():
+            self.price_tree.delete(item)
+        for asset, price in last_prices.items():
+            self.price_tree.insert("", "end", values=(asset, f"{price:.2f}", f"{estimateUnderlyingValue(asset):.2f}"))
+
+    def update_sentiments(self, retail_trader):
+        for item in self.sentiment_tree.get_children():
+            self.sentiment_tree.delete(item)
+        for asset in assets:
+            sentiment = retail_trader.retailSentimentScore[asset]
+            self.sentiment_tree.insert("", "end", values=(asset, f"{sentiment:.2f}"))
+
+    def on_asset_change(self, event):
+        self.chart_frame.update_chart(self.asset_var.get(), self.number_var.get())
+        self.news_feed_frame.clear_chat()
+
+    def update(self):
+        self.chart_frame.update_chart(self.asset_var.get(), self.number_var.get())
+        self.root.update() 
