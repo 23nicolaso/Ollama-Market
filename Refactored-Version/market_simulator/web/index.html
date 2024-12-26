@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Market Simulator Charts</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #1e222d;
+            color: #ffffff;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #asset-selector {
+            padding: 8px;
+            font-size: 16px;
+            background-color: #2a2e39;
+            color: #ffffff;
+            border: 1px solid #363c4e;
+            border-radius: 4px;
+        }
+        #chart-container {
+            height: 600px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #2a2e39;
+        }
+        .price-info {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background-color: #2a2e39;
+            border-radius: 4px;
+        }
+        .price-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .price-label {
+            font-size: 12px;
+            color: #787b86;
+        }
+        .price-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .trade-log {
+            background-color: #2a2e39;
+            border-radius: 4px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .trade-log h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .trade-log-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .agent-trades {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .agent-card {
+            background-color: #363c4e;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .agent-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .trade-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .buy { color: #26a69a; }
+        .sell { color: #ef5350; }
+        
+        /* Order book styles */
+        .order-book {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+            background-color: #2a2e39;
+            border-radius: 4px;
+            height: 600px;
+        }
+        .order-book-header {
+            font-weight: bold;
+            padding: 10px;
+            background-color: #363c4e;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 0;
+        }
+        #depth-chart-container {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            background-color: #2a2e39;
+        }
+        .depth-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .depth-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .depth-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        .depth-legend-bid .depth-legend-color {
+            background-color: rgba(38, 166, 154, 0.5);
+        }
+        .depth-legend-ask .depth-legend-color {
+            background-color: rgba(239, 83, 80, 0.5);
+        }
+        
+        /* Tab styles */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 20px;
+            background-color: #363c4e;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #2a2e39;
+            border: none;
+            color: #787b86;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #404556;
+            color: #ffffff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* News notification styles */
+        .news-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(42, 46, 57, 0.95);
+            border-left: 4px solid #4CAF50;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 4.7s;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Market Simulator</h1>
+            <select id="asset-selector"></select>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="chart">Price Chart</button>
+            <button class="tab" data-tab="orderbook">Order Book</button>
+            <button class="tab" data-tab="trades">Trade Log</button>
+        </div>
+
+        <div id="chart-tab" class="tab-content active">
+            <div class="price-info">
+                <div class="price-item">
+                    <span class="price-label">Last Price</span>
+                    <span class="price-value" id="last-price">-</span>
+                </div>
+                <div class="price-item">
+                    <span class="price-label">24h Change</span>
+                    <span class="price-value" id="price-change">-</span>
+                </div>
+            </div>
+            <div id="chart-container"></div>
+        </div>
+
+        <div id="orderbook-tab" class="tab-content">
+            <div class="order-book">
+                <div class="order-book-header">Market Depth</div>
+                <canvas id="depth-chart-container"></canvas>
+                <div class="depth-legend">
+                    <div class="depth-legend-item depth-legend-bid">
+                        <div class="depth-legend-color"></div>
+                        <span>Bids</span>
+                    </div>
+                    <div class="depth-legend-item depth-legend-ask">
+                        <div class="depth-legend-color"></div>
+                        <span>Asks</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="trades-tab" class="tab-content">
+            <div id="trade-log" class="trade-log">
+                <h2>Trade Log</h2>
+                <div class="trade-log-content">
+                    <div class="agent-trades"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize variables
+        let chart = null;
+        let candleSeries = null;
+        let depthChart = null;
+        let currentAsset = null;
+        let socket = null;
+        let candleData = new Map(); // Store candles for each asset
+        let currentCandles = new Map(); // Store current candles for all assets
+        const CANDLE_INTERVAL = 10; // 10 seconds per candle
+
+        // Connect to Socket.IO server
+        socket = io();
+
+        // Handle news notifications
+        socket.on('news', function(data) {
+            const notification = document.createElement('div');
+            notification.className = 'news-notification';
+            notification.textContent = data.headline;
+            document.body.appendChild(notification);
+
+            // Remove notification after animation completes
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        });
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleTimeString();
+        }
+
+
+        // Create chart
+        function createChart() {
+            const container = document.getElementById('chart-container');
+            
+            chart = LightweightCharts.createChart(container, {
+                layout: {
+                    background: { color: '#2a2e39' },
+                    textColor: '#d1d4dc',
+                },
+                grid: {
+                    vertLines: { color: '#334158' },
+                    horzLines: { color: '#334158' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: '#485c7b',
+                },
+                timeScale: {
+                    borderColor: '#485c7b',
+                    timeVisible: true,
+                    secondsVisible: true,
+                },
+                handleScroll: {
+                    vertTouchDrag: false,
+                },
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#26a69a',
+                downColor: '#ef5350',
+                borderVisible: false,
+                wickUpColor: '#26a69a',
+                wickDownColor: '#ef5350',
+            });
+
+            // Make chart responsive
+            window.addEventListener('resize', () => {
+                chart.applyOptions({
+                    width: container.clientWidth,
+                    height: container.clientHeight,
+                });
+            });
+        }
+
+        // Create a new candle
+        function createCandle(price, timestamp) {
+            return {
+                time: Math.floor(timestamp / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL,
+                open: price,
+                high: price,
+                low: price,
+                close: price
+            };
+        }
+
+        // Update current candle with new price
+        function updateCurrentCandle(price, timestamp, asset) {
+            if (!currentCandles.has(asset)) {
+                currentCandles.set(asset, createCandle(price, timestamp));
+                return;
+            }
+
+            const currentCandle = currentCandles.get(asset);
+            const candleTime = Math.floor(timestamp / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL;
+
+            if (candleTime > currentCandle.time) {
+                // Save the completed candle
+                if (!candleData.has(asset)) {
+                    candleData.set(asset, []);
+                }
+                candleData.get(asset).push({ ...currentCandle });
+                
+                // Create new candle
+                currentCandles.set(asset, createCandle(price, timestamp));
+                
+                // Update the chart if this is the current asset
+                if (asset === currentAsset) {
+                    const allCandles = [...candleData.get(asset), currentCandles.get(asset)];
+                    candleSeries.setData(allCandles);
+                }
+            } else {
+                // Update current candle
+                currentCandle.high = Math.max(currentCandle.high, price);
+                currentCandle.low = Math.min(currentCandle.low, price);
+                currentCandle.close = price;
+                
+                // Update the chart if this is the current asset
+                if (asset === currentAsset) {
+                    candleSeries.update(currentCandle);
+                }
+            }
+        }
+
+        // Update price info
+        function updatePriceInfo(price, history) {
+            document.getElementById('last-price').textContent = price.toFixed(2);
+            
+            if (history.length > 1) {
+                const change = ((price - history[0]) / history[0]) * 100;
+                const changeElement = document.getElementById('price-change');
+                changeElement.textContent = `${change.toFixed(2)}%`;
+                changeElement.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+            }
+        }
+
+        // Initialize WebSocket connection
+        function initializeWebSocket() {
+            socket = io('http://localhost:5000');
+            
+            socket.on('price_update', (data) => {
+                const timestamp = Date.now();
+                updateCurrentCandle(data.price, timestamp, data.asset);
+                if (data.asset === currentAsset) {
+                    updatePriceInfo(data.price, data.history);
+                }
+            });
+
+            socket.on('orderbook_update', (data) => {
+                if (data.asset === currentAsset) {
+                    updateOrderBook(data.bids, data.asks);
+                }
+            });
+
+            socket.on('trade_update', (data) => {
+                updateTradeLog(data);
+            });
+        }
+
+        // Trade log management
+        const agentTrades = new Map(); // Store trades by agent
+
+        function updateTradeLog(trade) {
+            const { agent, asset, side, quantity, price, timestamp } = trade;
+            
+            // Initialize agent's trade data if not exists
+            if (!agentTrades.has(agent)) {
+                agentTrades.set(agent, new Map());
+            }
+            
+            const agentData = agentTrades.get(agent);
+            if (!agentData.has(asset)) {
+                agentData.set(asset, { buys: 0, sells: 0 });
+            }
+            
+            // Update trade counts
+            const assetData = agentData.get(asset);
+            if (side === 'buy') {
+                assetData.buys += quantity;
+            } else {
+                assetData.sells += quantity;
+            }
+            
+            // Update display
+            renderTradeLog();
+        }
+
+        function renderTradeLog() {
+            const container = document.querySelector('.agent-trades');
+            container.innerHTML = '';
+            
+            for (const [agent, trades] of agentTrades) {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card';
+                
+                const agentName = document.createElement('div');
+                agentName.className = 'agent-name';
+                agentName.textContent = agent;
+                agentCard.appendChild(agentName);
+                
+                for (const [asset, data] of trades) {
+                    const tradeItem = document.createElement('div');
+                    tradeItem.className = 'trade-item';
+                    tradeItem.innerHTML = `
+                        <span>${asset}</span>
+                        <span>
+                            <span class="buy">+${data.buys}</span> / 
+                            <span class="sell">-${data.sells}</span>
+                        </span>
+                    `;
+                    agentCard.appendChild(tradeItem);
+                }
+                
+                container.appendChild(agentCard);
+            }
+        }
+
+        // Initialize asset selector
+        async function initializeAssetSelector() {
+            const response = await fetch('http://localhost:5000/assets');
+            const assets = await response.json();
+            
+            // Load historical data for all assets
+            await Promise.all(assets.map(async (asset) => {
+                const response = await fetch(`http://localhost:5000/price_history/${asset}`);
+                const data = await response.json();
+                
+                // Convert historical data to candles
+                const candles = [];
+                const prices = data.prices;
+                const now = Date.now();
+                const timeStep = CANDLE_INTERVAL * 1000;
+                
+                for (let i = 0; i < prices.length; i++) {
+                    const timestamp = now - (prices.length - i) * timeStep;
+                    if (i === 0 || Math.floor(timestamp / timeStep) > Math.floor((now - (prices.length - (i-1)) * timeStep) / timeStep)) {
+                        candles.push(createCandle(prices[i], timestamp));
+                    }
+                    const currentCandle = candles[candles.length - 1];
+                    currentCandle.high = Math.max(currentCandle.high, prices[i]);
+                    currentCandle.low = Math.min(currentCandle.low, prices[i]);
+                    currentCandle.close = prices[i];
+                }
+                
+                candleData.set(asset, candles);
+            }));
+
+            // Set up asset selector
+            const selector = document.getElementById('asset-selector');
+            assets.forEach(asset => {
+                const option = document.createElement('option');
+                option.value = asset;
+                option.textContent = asset;
+                selector.appendChild(option);
+            });
+
+            selector.addEventListener('change', (e) => {
+                currentAsset = e.target.value;
+                const candles = candleData.get(currentAsset);
+                const currentCandle = currentCandles.get(currentAsset);
+                candleSeries.setData(currentCandle ? [...candles, currentCandle] : candles);
+            });
+
+            // Set initial asset
+            if (assets.length > 0) {
+                currentAsset = assets[0];
+                selector.value = currentAsset;
+                const event = new Event('change');
+                selector.dispatchEvent(event);
+            }
+        }
+
+        // Tab functionality
+        function initializeTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    const tabContent = document.getElementById(`${tab.dataset.tab}-tab`);
+                    tabContent.classList.add('active');
+                    
+                    // Resize charts when switching tabs
+                    if (tab.dataset.tab === 'chart' && chart) {
+                        chart.applyOptions({
+                            width: document.getElementById('chart-container').clientWidth,
+                            height: document.getElementById('chart-container').clientHeight,
+                        });
+                    } else if (tab.dataset.tab === 'orderbook' && depthChart) {
+                        depthChart.resize();
+                    }
+                });
+            });
+        }
+
+        // Initialize everything
+        async function initialize() {
+            createChart();
+            await initializeAssetSelector();
+            initializeWebSocket();
+            initializeTabs();
+        }
+
+        // Start initialization when page loads
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        // Order book management
+        function updateOrderBook(bids, asks) {
+            // Convert order book data to depth chart format
+            const bidPrices = [];
+            const bidVolumes = [];
+            const askPrices = [];
+            const askVolumes = [];
+            let cumBidVolume = 0;
+            let cumAskVolume = 0;
+            
+            // Process bids (high to low)
+            Object.entries(bids)
+                .sort(([price1], [price2]) => parseFloat(price2) - parseFloat(price1))
+                .forEach(([price, quantity]) => {
+                    cumBidVolume += parseFloat(quantity);
+                    bidPrices.push(parseFloat(price));
+                    bidVolumes.push(cumBidVolume);
+                });
+            
+            // Process asks (low to high)
+            Object.entries(asks)
+                .sort(([price1], [price2]) => parseFloat(price1) - parseFloat(price2))
+                .forEach(([price, quantity]) => {
+                    cumAskVolume += parseFloat(quantity);
+                    askPrices.push(parseFloat(price));
+                    askVolumes.push(cumAskVolume);
+                });
+
+            // Update depth chart
+            if (!depthChart) {
+                const ctx = document.getElementById('depth-chart-container').getContext('2d');
+                depthChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Bids',
+                            data: bidPrices.map((price, index) => ({
+                                x: price,
+                                y: bidVolumes[index]
+                            })),
+                            borderColor: 'rgb(38, 166, 154)',
+                            backgroundColor: 'rgba(38, 166, 154, 0.2)',
+                            fill: true,
+                            stepped: true,
+                            tension: 0
+                        },
+                        {
+                            label: 'Asks',
+                            data: askPrices.map((price, index) => ({
+                                x: price,
+                                y: askVolumes[index]
+                            })),
+                            borderColor: 'rgb(239, 83, 80)',
+                            backgroundColor: 'rgba(239, 83, 80, 0.2)',
+                            fill: true,
+                            stepped: true,
+                            tension: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 2,
+                        animation: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} @ ${context.parsed.x.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Price',
+                                    color: '#d1d4dc'
+                                },
+                                grid: {
+                                    color: '#334158'
+                                },
+                                ticks: {
+                                    color: '#d1d4dc'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cumulative Volume',
+                                    color: '#d1d4dc'
+                                },
+                                grid: {
+                                    color: '#334158'
+                                },
+                                ticks: {
+                                    color: '#d1d4dc'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Update existing chart data
+                depthChart.data.datasets[0].data = bidPrices.map((price, index) => ({
+                    x: price,
+                    y: bidVolumes[index]
+                }));
+                depthChart.data.datasets[1].data = askPrices.map((price, index) => ({
+                    x: price,
+                    y: askVolumes[index]
+                }));
+                depthChart.update('none'); // Update without animation for better performance
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,89 +1,169 @@
-# Ollama-Powered Fake Stock Market Simulation
+# Market Simulator
 
-This project simulates a stock market of a fictional world. It uses Python and Meta's LLama 3.1-8B language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
-This was mainly done to experiment with prompt engineering and as random programming practice. 
+A Python-based market simulation that models various types of traders and their interactions in a multi-asset market environment.
 
 ## Features
 
-- Simulated stock market with assets tied to fictional countries:
-  - Simula: A technology-focused nation
-  - Rivala: An agricultural powerhouse
-  - Allia: An entertainment industry leader
-  - Factoria: An industrial giant
-- Various realistic, simulated trading agents (Market Maker, Retail Trader, Hedge Fund, HFT Fund, Technical Analysis Traders)
-- Real-time price updates, charts and orderbooks
-- Accurate market microstructure, with limit orders, market orders, conditional orders
-- News generation using Ollama LLM, reflecting events in the fictional world
-- Sentiment analysis and market impact simulation
-- GUI for monitoring market activity and news
+### Market Structure
+- Multiple tradable assets with configurable initial prices and spreads
+- Order book with limit and market orders
+- Real-time price discovery based on supply and demand
 
-## World Background
+### Trading Agents
+- Retail Trader: Simulates individual investors with sentiment-based trading
+- Market Maker: Provides liquidity and maintains orderly markets
+- HFT Fund: High-frequency trading strategies
+- Hedge Funds: Mean reversion and macro strategies
+- Technical Analysis Traders: Trades based on technical indicators
 
-The simulation is set in a world with four main countries:
-- Simula: Known for its advanced technology sector
-- Rivala: A major agricultural producer
-- Allia: Famous for its entertainment industry
-- Factoria: A leading industrial nation and weapons manufacturer
+### News and Events System
+- AI-powered news generation using Ollama
+- Sentiment analysis affecting trader behavior
+- Real-time chat messages between agents
+- Economic health tracking for different sectors
+- Real-time news notifications in web interface
+- Interactive news submission through GUI
 
-These countries have complex economic and political relationships, including occasional conflicts between Simula and Rivala, with Allia allied to Rivala and Factoria supplying weapons to all sides.
+### Real-Time Visualization
+- Tkinter-based GUI for market monitoring
+- Real-time price and sentiment displays
+- News and chat feed windows
+- Web-based charting interface using TradingView's Lightweight Charts
+  - 10-second OHLC candles
+  - Real-time updates
+  - Historical data preservation
+  - Multiple asset views
+  - Real-time news notifications with sleek overlay design
+  - Interactive order book visualization
+  - Trade log with agent activity tracking
 
 ## Requirements
 
-- Python 3.7+
-- Ollama
-- tkinter
-- matplotlib
-- langchain_ollama
+- Python 3.8+
+- Ollama (for AI-generated content)
+- Required Python packages:
+  ```
+  matplotlib>=3.5.0
+  numpy>=1.21.0
+  langchain_ollama>=0.1.0
+  tk>=8.6.0
+  ```
 
 ## Installation
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/ollama-fake-stock-market.git
-   cd ollama-fake-stock-market
-   ```
+1. Clone the repository
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+3. Ensure Ollama is installed and running for news generation
 
-2. Install the required packages
+## Running the Simulation
 
-3. Ensure Ollama is installed and running on your system.
+Start the simulation with:
+```bash
+python -m market_simulator.main
+```
 
-## Usage
+This will launch:
+1. The main GUI application
+2. Price history API server (port 5000)
+3. Web charting interface (port 8000)
 
-Run the simulation:
-python SingleFileImplementation.py
+Access the web charts at: `http://localhost:8000`
 
+## Configuration
 
-The GUI will open, displaying:
-- A dropdown to select different assets
-- A chart showing price history
-- A news feed with generated headlines
-- Real-time price updates for all assets
+Key settings can be adjusted in `config.py`:
+- Available assets and their properties
+- Initial prices and spreads
+- World context for news generation
+- Various simulation parameters
 
-## Components
+## Architecture
 
-- `OrderBook`: Manages buy and sell orders for each asset
-- `Account`: Represents a trading account with positions and cash
-- `MarketAgent`: Base class for all trading agents
-- `MarketMaker`: Provides liquidity to the market
-- `RetailTrader`: Simulates retail investor behavior (almost entirely random, centered around sentiment)
-- `HedgeFund` and `ExecutionalTrader`: Simulates behavior of more sophisticated firms (front running retail, trading market structure)
-- `genNews()`: Generates news headlines using Ollama and updates market sentiment
+The simulation runs multiple components in parallel:
+1. Main simulation loop (market mechanics)
+2. GUI updates and user interface
+3. News and chat generation with real-time web notifications
+4. Price history API server
+5. Web interface server with Socket.IO for real-time updates
 
-## Customization
+```
+market_simulator/
+├── __init__.py
+├── main.py                 # Main simulation loop
+├── config.py              # Centralized configuration
+├── setup.py              # Package setup and dependencies
+├── requirements.txt      # Project dependencies
+├── models/
+│   ├── __init__.py
+│   ├── account.py         # Account management
+│   ├── order_book.py      # Order book implementation with OrderLevel inner class
+│   └── order_level.py     # Order level management
+├── agents/
+│   ├── __init__.py
+│   ├── base_agent.py      # Base MarketAgent class
+│   ├── executional_trader.py  # Base class for complex trading strategies
+│   ├── market_maker.py    # Market making agent
+│   ├── retail_trader.py   # Retail trading agent
+│   ├── hedge_fund.py      # Mean reversion and macro strategies
+│   ├── ta_trader.py       # Technical analysis trader
+│   └── hft_fund.py        # High-frequency trading agent
+├── gui/
+│   ├── __init__.py
+│   ├── main_window.py     # Main GUI window with Tkinter
+│   ├── charts.py          # Matplotlib price chart visualization
+│   └── news_feed.py       # News and chat display with web emission
+├── web/
+│   ├── index.html         # Web-based charting interface with news notifications
+│   └── server.py          # Flask-SocketIO server for real-time updates
+├── price_server.py        # Flask price history API server
+└── utils/
+    ├── __init__.py
+    ├── market_utils.py    # Market-related utilities and globals
+    └── news_generator.py  # Ollama-based news generation
+```
 
-You can modify the simulation by:
-- Adjusting initial prices and cash for different agents
-- Adding new trading strategies
-- Tweaking news generation and sentiment analysis parameters
+## Dependencies
+
+- Python 3.8+
+- Numpy for efficient data handling
+- Flask for API server
+- Flask-SocketIO for real-time updates
+- TradingView Lightweight Charts for web visualization
+- Tkinter for main GUI
+- Ollama for AI-powered news generation
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Feel free to submit issues and pull requests for:
+- New trading strategies
+- UI improvements
+- Performance optimizations
+- Additional features
 
-## License
+### Version 0.1.2 (Latest)
+- Added real-time news notifications to web interface
+- Integrated Flask-SocketIO for seamless updates
+- Enhanced web UI with interactive order book
+- Added trade log with agent activity tracking
+- Improved news feed with web emission
+- Added interactive news submission through GUI
+- Tweaked agent configurations
+- Added market depth / order book visualization
 
-This project is open source and available under the [MIT License](LICENSE).
+### Version 0.1.1
+- Added centralized configuration in config.py
+- Implemented sentiment analysis for news events
+- Added fair value calculation and display
+- Updated GUI with price and sentiment tables
+- Added world context configuration
+- Improved news generation with impact analysis
+- Added executional_trader.py as base class for complex strategies
 
-## Disclaimer
-
-This is a simulated market for educational and entertainment purposes only. It does not reflect real-world financial markets and should not be used for actual trading decisions.
+### Version 0.1.0 (Initial)
+- Basic market simulation with multiple agents
+- Simple price charts
+- Basic news generation
+- Initial GUI implementation 
