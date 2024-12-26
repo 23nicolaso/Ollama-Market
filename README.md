@@ -6,8 +6,9 @@ This was mainly done to experiment with prompt engineering and as random program
 ## Features
 
 ### Market Structure
-- Multiple tradable assets with configurable initial prices and spreads
-- Order book with limit and market orders
+- Fully configurable universe of tradable assets with different initial prices and spreads
+- Order book with functional limit, market orders
+- Iceberg-style orders for trading large volumes
 - Real-time price discovery based on supply and demand
 
 ### Trading Agents
@@ -26,7 +27,9 @@ This was mainly done to experiment with prompt engineering and as random program
 - Interactive news submission through GUI
 
 ### Real-Time Visualization
-- Tkinter-based GUI for market monitoring
+- Tkinter-based GUI for market monitoring and running server commands
+![TKINTERGUI](https://github.com/23nicolaso/Ollama-Market/blob/main/Refactored-Version/images/Screenshot%20(219).png)
+
 - Real-time price and sentiment displays
 - News and chat feed windows
 - Web-based charting interface using TradingView's Lightweight Charts
@@ -37,6 +40,9 @@ This was mainly done to experiment with prompt engineering and as random program
   - Real-time news notifications with sleek overlay design
   - Interactive order book visualization
   - Trade log with agent activity tracking
+![TRADINGCHART](https://github.com/23nicolaso/Ollama-Market/blob/main/Refactored-Version/images/Screenshot%20(250).png)
+![DEPTHOFMARKET](https://github.com/23nicolaso/Ollama-Market/blob/main/Refactored-Version/images/Screenshot%20(249).png)
+
 
 ## Requirements
 
