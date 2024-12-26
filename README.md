@@ -89,7 +89,7 @@ Key settings can be adjusted in `config.py`:
 
 ## Architecture
 
-The simulation runs multiple components in parallel:
+The simulation runs multiple components in parallel using threading:
 1. Main simulation loop (market mechanics)
 2. GUI updates and user interface
 3. News and chat generation with real-time web notifications
