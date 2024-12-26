@@ -21,8 +21,8 @@ This codebase was designed to simulate a market in a fake world!
 It is designed to be a simple simulation of how a market could react to random news events in short time periods.
 
 Notes:                                                                                                  
- - ignore the fact that it was implemented in a single file, I just started coding it that way and then  
-    it became too much effort to split up into multiple files.                                                                                                 
+ - ignore this single file implementation I started by coding it this way and then  
+     split it up into multiple files.                                                                                                 
  - make sure you are running with Ollama open, as it is the model that powers the simulation.     
 '''
 
