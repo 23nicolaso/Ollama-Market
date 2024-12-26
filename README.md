@@ -1,11 +1,7 @@
 # Market Simulator
 
-<<<<<<< HEAD
-A Python-based market simulation that models various types of traders and their interactions in a multi-asset market environment.
-=======
 This project simulates a fictional stock market. It uses Python and Meta's LLama 3.1-8B language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
 This was mainly done to experiment with prompt engineering and as random programming practice. 
->>>>>>> b4751d7a444f5b5db06180586dfb3ad46f6e35b4
 
 ## Features
 
