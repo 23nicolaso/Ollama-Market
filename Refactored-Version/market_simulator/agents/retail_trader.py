@@ -62,16 +62,18 @@ class RetailTrader(MarketAgent):
 
         sentiment_diff = abs(final_sentiment - 0.5)  # How far sentiment is from neutral
         base_quantity = random.randint(1, RETAIL_MAX_ORDER_SIZE)
-        quantity = int(base_quantity * (1 + sentiment_diff * 4))  # Scale up quantity based on sentiment difference
+        s_quantity = int(base_quantity * (1 + sentiment_diff * 4))  # Scale up quantity based on sentiment difference
         position = self.account.getPosition(orderBook.asset)
+        type = random.choice(["market", "limit"])
+        quantity = s_quantity if type == "market" else s_quantity * 4
 
         if quantity > 0:
             if direction == "buy":
                 if position + quantity < RETAIL_POSITION_LIMIT:
-                    self.placeOrder(orderBook, "buy", bid, quantity, "market")
+                    self.placeOrder(orderBook, "buy", bid+0.01, quantity, type)
             else:
                 if position - quantity > 0: 
-                    self.placeOrder(orderBook, "sell", ask, quantity, "market")
+                    self.placeOrder(orderBook, "sell", ask-0.01, quantity, type)
 
     def setReversionUrgency(self, urgency):
         """Sets how quickly sentiment should revert to mean after news events"""
@@ -87,11 +89,14 @@ class RetailTrader(MarketAgent):
             
             # Ensure base sentiment stays within bounds
             self.retailSentimentScore[asset] = max(0.1, min(0.9, self.retailSentimentScore[asset]))
-        
+
+            if self.retailSentimentScore[asset] > 0.49 and self.retailSentimentScore[asset] < 0.51:
+                self.retailSentimentScore[asset] += random.uniform(-0.1, 0.1)
+
         # Reduce news urgency if all sentiments are near mean
         if all(0.45 <= self.retailSentimentScore[asset] <= 0.55 for asset in self.retailSentimentScore):
             if self.newsUrgency > 1:
-                self.newsUrgency = 3
+                self.newsUrgency = 1
 
     def estimateSentiment(self, orderBook):
         """Estimates current sentiment including cyclical influences"""

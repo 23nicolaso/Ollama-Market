@@ -23,11 +23,12 @@ class HFTFund(ExecutionalTrader):
             if markets[market].asset == "SPY":
                 print("selling " + str(quantity) + " shares in " + markets[market].asset + " at " + str(current_price-estimated_price_impact))
 
-            pt = current_price-estimated_price_impact
-            self.placeOrder(markets[market], "sell", pt, int(quantity), "limit")
+            self.placeOrder(markets[market], "sell", current_price, int(quantity), "market")
+            self.executeTradeInLegs(markets[market], "sell", current_price, int(quantity))
+
         elif self.estimateSentiment(rt, market) >= 0.7:
             current_price = markets[market].getLastPrice()
 
             quantity = self.estimateImportance(rt)*HFT_BASE_ORDER_SIZE
-            pt = current_price+estimated_price_impact
-            self.placeOrder(markets[market], "buy", pt, int(quantity), "limit")
+            self.placeOrder(markets[market], "buy", current_price, int(quantity), "market")
+            self.executeTradeInLegs(markets[market], "buy", current_price, int(quantity))

@@ -26,9 +26,8 @@ class MarketMaker(MarketAgent):
 
     def makeMarket(self, orderBook):
         # Get current market state
-        midPrice = orderBook.getMidPrice()
-        if midPrice == None:
-            midPrice = orderBook.getLastPrice()
+
+        midPrice = orderBook.getLastPrice()
 
         # Clear existing orders
         self.wipeAllOrders(orderBook)

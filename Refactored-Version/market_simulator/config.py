@@ -114,24 +114,24 @@ LLM_MODEL = "llama3.1"
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
 HF_POSITION_LIMIT = 100000 
-HFT_BASE_ORDER_SIZE = 10000
+HFT_BASE_ORDER_SIZE = 3000
 
 # Market maker - provides liquidity
 MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 50  # Smaller base size for tighter spreads
+MM_BASE_ORDER_SIZE = 500  # Smaller base size for tighter spreads
 MM_MAX_VOLATILITY_MULT = 5  # Reduced to prevent extreme price moves
-MM_DEPTH = 20  # Increased for more liquidity levels
+MM_DEPTH = 5  # Increased for more liquidity levels
 
 # Retail traders - many small trades
 RETAIL_MAX_ORDER_SIZE = 50  # Small individual trades
-RETAIL_POSITION_LIMIT = 10000  # Limited position size
+RETAIL_POSITION_LIMIT = 100000  # Limited position size
 USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swings
-SENTIMENT_REVERSION_RATE = 100  # Faster sentiment changes
+SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
 TA_POSITION_LIMIT = 100000  # Moderate position limit
-TA_SMALL_ORDER_SIZE = 25  # Smaller regular trades
-TA_LARGE_ORDER_SIZE = 500  # Larger trades for strong signals
+TA_SMALL_ORDER_SIZE = 50  # Smaller regular trades
+TA_LARGE_ORDER_SIZE = 1000  # Larger trades for strong signals
 
 # Long-term investor - larger but infrequent trades
 LT_INVESTOR_MAX_ORDER_SIZE = 1000  # Increased for more impactful position building
