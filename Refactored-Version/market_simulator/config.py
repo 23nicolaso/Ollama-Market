@@ -21,20 +21,20 @@ ASSETS = [
 
 # Market configuration
 INITIAL_PRICES = {
-    "SPY": 4000,
-    "MSCI World ETF": 1000,
-    "Bitcoin": 100000,
-    "Gold": 4000,
-    "China ETF": 1000,
+    "SPY": 400,
+    "MSCI World ETF": 100,
+    "Bitcoin": 100,
+    "Gold": 100,
+    "China ETF": 100,
     "US 10Y Treasury Bills": 100
 }
 
 SPREADS = {
     "SPY": 0.02,
     "MSCI World ETF": 0.02,
-    "Bitcoin": 0.01,
+    "Bitcoin": 0.02,
     "Gold": 0.02,
-    "China ETF": 0.04,
+    "China ETF": 0.02,
     "US 10Y Treasury Bills": 0.02
 }
 

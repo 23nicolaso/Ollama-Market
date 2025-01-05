@@ -39,7 +39,7 @@ class RetailTrader(MarketAgent):
         try:
             # Get base sentiment and cyclical influence
             base_sentiment = self.retailSentimentScore[orderBook.asset]
-            if USE_CYCLICAL_SENTIMENT:
+            if USE_CYCLICAL_SENTIMENT and base_sentiment > 0.4 and base_sentiment < 0.6:
                 cyclical_influence = max(-0.01, min(0.01, self.get_cyclical_influence(orderBook.asset))) * 10
             else:
                 cyclical_influence = 0
@@ -70,10 +70,10 @@ class RetailTrader(MarketAgent):
         if quantity > 0:
             if direction == "buy":
                 if position + quantity < RETAIL_POSITION_LIMIT:
-                    self.placeOrder(orderBook, "buy", bid+0.01, quantity, type)
+                    self.placeOrder(orderBook, "buy", bid+random.choice([0,0.01]), quantity, type)
             else:
                 if position - quantity > 0: 
-                    self.placeOrder(orderBook, "sell", ask-0.01, quantity, type)
+                    self.placeOrder(orderBook, "sell", ask-random.choice([0,0.01]), quantity, type)
 
     def setReversionUrgency(self, urgency):
         """Sets how quickly sentiment should revert to mean after news events"""

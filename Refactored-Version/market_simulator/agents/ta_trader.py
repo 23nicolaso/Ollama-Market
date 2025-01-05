@@ -1,8 +1,8 @@
 from math import ceil
 import random
 from market_simulator.agents.executional_trader import ExecutionalTrader
-from market_simulator.utils.market_utils import price_history, spreads_by_market, markets
-from market_simulator.config import TA_POSITION_LIMIT, TA_SMALL_ORDER_SIZE, TA_LARGE_ORDER_SIZE
+from market_simulator.utils.market_utils import price_history, markets
+from market_simulator.config import TA_POSITION_LIMIT, TA_LARGE_ORDER_SIZE
 
 class TATrader(ExecutionalTrader):
     def __init__(self, accountID, cash):
@@ -17,50 +17,10 @@ class TATrader(ExecutionalTrader):
         std_dev = (sum((x - mean_price) ** 2 for x in price_list) / len(price_list)) ** 0.5
         current_price = markets[market].getLastPrice()
 
-        if len(price_history[market]) >= 30:
-            price_30_ticks_ago = price_history[market][-30]
-            price_change = abs(current_price - price_30_ticks_ago)
-
-            if price_change > 0.5:
-                # Add limit orders to calm down the move/push price back to average
-                if current_price > price_30_ticks_ago:
-                    # Price increased, add sell market orders
-                    self.placeOrder(markets[market], "sell", current_price-0.01, ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "limit")
-                else:
-                    # Price decreased, add buy market orders
-                    self.placeOrder(markets[market], "buy", current_price+0.01, ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "limit")
-
-        # Calculate 8-period moving average
-        if len(price_list) >= 30:
-            ma_8 = sum(price_list[-8:]) / 8
-            
-            # Determine action based on current price relative to 8-period MA
-            if current_price < ma_8:
-                if ma_8 - current_price <  spreads_by_market[market]*5:
-                    # Buy market
-                    self.placeOrder(markets[market], "buy", current_price, ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "market")
-                    self.placeOrder(markets[market], "sell", current_price+random.uniform(0.05, 0.1), ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "limit")
-            else:
-                if current_price - ma_8 < spreads_by_market[market]*5:
-                    # Sell market
-                    self.placeOrder(markets[market], "sell", current_price, ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "market")
-                    self.placeOrder(markets[market], "buy", current_price-random.uniform(0.05, 0.1), ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "limit")
-        
-        if len(price_list) > 30:
-            ma_30 = sum(price_list[-30:]) / 30
-            if current_price < ma_30:
-                # Sell market
-                self.placeOrder(markets[market], "sell", current_price, ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "limit")
-            else:
-                # Buy market
-                self.placeOrder(markets[market], "buy", current_price, ceil(random.uniform(0.5, 1.5)*TA_SMALL_ORDER_SIZE), "limit")
-
         if current_price > mean_price + std_dev*2 and self.account.getPosition(market) > -TA_POSITION_LIMIT:
-            self.placeOrder(markets[market], "sell", mean_price + std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
-            self.placeOrder(markets[market], "buy", mean_price + std_dev*2-random.uniform(0.05, 0.1), ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
+            self.placeOrder(markets[market], "sell", mean_price + std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
         elif current_price < mean_price - std_dev*2 and self.account.getPosition(market) < TA_POSITION_LIMIT:
-            self.placeOrder(markets[market], "buy", mean_price - std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
-            self.placeOrder(markets[market], "sell", mean_price - std_dev*2+random.uniform(0.05, 0.1), ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
+            self.placeOrder(markets[market], "buy", mean_price - std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
 
         vwap = sum(price_history[market]) / len(price_history[market])
         stdev = (sum((x - vwap) ** 2 for x in price_history[market]) / len(price_history[market])) ** 0.5

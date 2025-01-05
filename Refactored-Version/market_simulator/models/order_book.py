@@ -68,7 +68,7 @@ class OrderBook:
                 ask.cancelAll()
         
         self.clearEmptyOrderlevels()
-
+ 
     def clearEmptyOrderlevels(self):
         bid_prices = list(self.bids.keys())
         ask_prices = list(self.asks.keys())
@@ -124,6 +124,9 @@ class OrderBook:
             # Get the account IDs from the orders
             buyAccountID = bestBid.getAccountID()
             sellAccountID = bestAsk.getAccountID()
+
+            if not buyAccountID or not sellAccountID:
+                break # invalid book matching, no buy/sell accounts. 
             
             # Execute the trade
             bestBid.fulfillQuantity(quantityToFill)
