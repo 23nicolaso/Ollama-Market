@@ -2,6 +2,7 @@ class Account:
     def __init__(self, accountID, CASH):
         self.accountID = accountID
         self.positions = {"CASH": CASH}
+        self.initial_cash = CASH
 
     def addPosition(self, asset, quantity):
         if asset in self.positions:

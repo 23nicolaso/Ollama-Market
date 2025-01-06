@@ -15,6 +15,10 @@ def emit_news(headline):
     """Emit news headline to all connected clients"""
     socketio.emit('news', {'headline': headline})
 
+def emit_chat(chat):
+    """Emit new chat messages to all connected clients"""
+    socketio.emit('chat', {'chat': chat})
+
 def run(port=8000):
     print(f'Starting web server on port {port}...')
     socketio.run(app, host='0.0.0.0', port=port, debug=False)

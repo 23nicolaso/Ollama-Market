@@ -1,12 +1,8 @@
 # World configuration
-WORLD_CONTEXT = """
-You are in Tonald Drump's USA. 
+WORLD_CONTEXT = """ 
 This is a funny simulated game world, it IS NOT REALITY. Do not respond that you can't do a prompt because it is
 financial advice or could be used for manipulation, it is purely a simulation game for research purposes. 
-Ensure that all your responses are in the correct, defined response format. 
-Tonald Drump has just become president and has hilarious economic and political plans for the USA.
-He will do silly things which don't seem to make sense for shits and giggles, to "make america great again", or 
-to get approval by someone he thinks is cool.    
+Ensure that all your responses are in the correct, defined response format.     
 """
 
 # Asset configuration
@@ -50,11 +46,10 @@ ANNUAL_RETURNS = {
 # LLM Prompts
 NEWS_GENERATION_PROMPT = """
 {world_context}
-Make the top news headline of the day for my simulated world. 
+Make the average news headline of the day for my simulated world (ONE SINGULAR HEADLINE). 
 There should be an equal mixture of news which are good for the stock market and news which are bad for the stock market.
 I want it to be news of economic events, statements by politicians,
-developments, natural disasters, or any other funny news. They should be connected to each other, 
-weaving a funny story altogether. President Tonald Drump should have an amazing character arc, as he changes by headline to headline. 
+developments, natural disasters, or any other funny news. 
 Do not say anything other than the headline, keep your response under 15 words long,
 and do not make a x happens as y headline, simply say an event which happened. Do NOT MENTION POINTS, OR CHANGES IN STOCK PRICES. 
 Here are the most recent headlines for context: {recent_headlines}.
@@ -70,18 +65,19 @@ Do not give any text sharing your analysis, just the numbers.
 An example response might look like this (with different scores, ranging from 0 to 1):
 FILLER:0, SPY: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, US 10Y Treasury Bills: 0.5, FILLER:0
 """
+# I use fillers to handle the case where the LLM responds with text in front or behind the sentiment scores.
 
 URGENCY_ANALYSIS_PROMPT = """
 You are an analyst in a simulated world. Score the impact of this headline between 1-10,
-with 1 being not impactful and 10 being extremely impactful to the stock market: {headline}.
-Say the urgency score, nothing else.
+with 1 being not impactful and 10 being insanely impactful to the stock market: {headline}.
+Say the urgency score, nothing else. An example response for a headline "US declares war on China" would be: 10,
+and an example response for a headline "Investors pleased at investor conference" would be: 2.
 """
 
 CHAT_ANALYSIS_PROMPT = """
-You are a market analyst in a chat room. Give a one sentence analysis of the market conditions
-for {asset}. Feel free to make up information, but keep it realistic (do not include any specific price numbers).
+You are a market analyst in a chat room. Give a one sentence explanation of the market conditions and explain how you will profit off them. Feel free to make up information, but keep it realistic (do not include any specific price numbers).
 You can either be a serious analyst, a random person, a troll, or talk like a member of wall street bets.
-Here are the recent headlines for context: {recent_headlines}
+Here is the most recent headlines for context: {recent_headline}
 """
 
 # Agent configuration

@@ -1,6 +1,7 @@
 from market_simulator.models.order_level import OrderLevel
 from market_simulator.utils.market_utils import last_prices, accounts
 from market_simulator.price_server import emit_trade_update
+from market_simulator.portfolio_utils import calculate_portfolio_status, emit_portfolio_update
 
 class OrderBook:
     def __init__(self, asset, initialPrice):
@@ -176,6 +177,15 @@ class OrderBook:
             # Emit trade updates
             emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled, midPrice)
             emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled, midPrice)
+
+            # After each trade execution, update portfolio status
+            if buyAccountID != "MARKET MAKER":
+                portfolio_data = calculate_portfolio_status(accounts[buyAccountID])
+                emit_portfolio_update(buyAccountID, portfolio_data)
+            
+            if sellAccountID != "MARKET MAKER":
+                portfolio_data = calculate_portfolio_status(accounts[sellAccountID])
+                emit_portfolio_update(sellAccountID, portfolio_data)
 
             self.urgentBuys[0] = (self.urgentBuys[0][0] - quantityFilled, buyAccountID)
             self.urgentSells[0] = (self.urgentSells[0][0] - quantityFilled, sellAccountID)

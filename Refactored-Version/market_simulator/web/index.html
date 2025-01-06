@@ -218,6 +218,72 @@
                 opacity: 0;
             }
         }
+        .trading-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            background-color: #2a2e39;
+            border-radius: 4px;
+        }
+        .portfolio-status, .order-form {
+            background-color: #363c4e;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #2a2e39;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #787b86;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 8px;
+            background-color: #2a2e39;
+            border: 1px solid #363c4e;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+        .submit-order {
+            width: 100%;
+            padding: 10px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .submit-order:hover {
+            background-color: #1976D2;
+        }
+        #positions-list {
+            margin-top: 20px;
+        }
+        .position-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #2a2e39;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -231,6 +297,7 @@
             <button class="tab active" data-tab="chart">Price Chart</button>
             <button class="tab" data-tab="orderbook">Order Book</button>
             <button class="tab" data-tab="trades">Trade Log</button>
+            <button class="tab" data-tab="trading">Trading Panel</button>
         </div>
 
         <div id="chart-tab" class="tab-content active">
@@ -272,6 +339,55 @@
                 </div>
             </div>
         </div>
+
+        <div id="trading-tab" class="tab-content">
+            <div class="trading-panel">
+                <div class="portfolio-status">
+                    <h2>Portfolio Status</h2>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span>Cash Balance</span>
+                            <span id="cash-balance">$0.00</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Total P&L</span>
+                            <span id="total-pnl">$0.00</span>
+                        </div>
+                    </div>
+                    <div id="positions-list"></div>
+                </div>
+
+                <div class="order-form">
+                    <h2>Place Order</h2>
+                    <form id="trade-form">
+                        <div class="form-group">
+                            <label for="order-type">Order Type:</label>
+                            <select id="order-type" required>
+                                <option value="limit">Limit</option>
+                                <option value="market">Market</option>
+                                <option value="iceberg">Iceberg</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="order-direction">Direction:</label>
+                            <select id="order-direction" required>
+                                <option value="buy">Buy</option>
+                                <option value="sell">Sell</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="order-quantity">Quantity:</label>
+                            <input type="number" id="order-quantity" min="1" required>
+                        </div>
+                        <div class="form-group" id="price-input-group">
+                            <label for="order-price">Price:</label>
+                            <input type="number" id="order-price" step="0.01" min="0">
+                        </div>
+                        <button type="submit" class="submit-order">Place Order</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -298,7 +414,7 @@
             // Remove notification after animation completes
             setTimeout(() => {
                 notification.remove();
-            }, 5000);
+            }, 20000);
         });
 
         // Format timestamp
@@ -426,6 +542,8 @@
                     updatePriceInfo(data.price, data.history);
                 }
             });
+
+            
 
             socket.on('orderbook_update', (data) => {
                 if (data.asset === currentAsset) {
@@ -717,6 +835,66 @@
                 depthChart.update('none'); // Update without animation for better performance
             }
         }
+
+        // Add to existing scripts after socket initialization
+        let userInitialized = false;
+
+        // Initialize user trader when page loads
+        window.addEventListener('load', () => {
+            if (!userInitialized) {
+                socket.emit('initialize_user_trader', { initial_cash: 1000000 });
+                userInitialized = true;
+                console.log("User trader initialized");
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('trade-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            console.log("Form submitted");
+            const orderData = {
+                ticker: document.getElementById('asset-selector').value,
+                direction: document.getElementById('order-direction').value,
+                quantity: parseInt(document.getElementById('order-quantity').value),
+                order_type: document.getElementById('order-type').value,
+                price: parseFloat(document.getElementById('order-price').value)
+            };
+            console.log("Order data: ", orderData);
+            
+            socket.emit('place_order', orderData, (response) => {
+                console.log("Response: ", response);
+                if (response.status === 'success') {
+                    alert('Order placed successfully: ' + response.message);
+                } else {
+                    alert('Error placing order: ' + response.message);
+                }
+            });
+        });
+
+        // Update portfolio display when we receive updates
+        socket.on('portfolio_update', (data) => {
+            document.getElementById('cash-balance').textContent = `$${data.cash.toFixed(2)}`;
+            document.getElementById('total-pnl').textContent = `$${data.pnl.toFixed(2)}`;
+            
+            const positionsList = document.getElementById('positions-list');
+            positionsList.innerHTML = '';
+            
+            Object.entries(data.positions).forEach(([ticker, quantity]) => {
+                const positionItem = document.createElement('div');
+                positionItem.className = 'position-item';
+                positionItem.innerHTML = `
+                    <span>${ticker}</span>
+                    <span>${quantity}</span>
+                `;
+                positionsList.appendChild(positionItem);
+            });
+        });
+
+        // Toggle price input visibility based on order type
+        document.getElementById('order-type').addEventListener('change', (e) => {
+            const priceGroup = document.getElementById('price-input-group');
+            priceGroup.style.display = e.target.value === 'market' ? 'none' : 'block';
+        });
     </script>
 </body>
 </html> 

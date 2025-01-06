@@ -3,6 +3,7 @@ import random
 import threading
 import sys
 from pathlib import Path
+from market_simulator.price_server import user_account
 
 # Add the parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -58,6 +59,8 @@ def run_simulation(root, main_window):
                 
                 long_term_investor.trade(markets[market], retail_trader)
                 long_term_investor.updatePositioning(market)
+
+                user_account.updatePositioning(market)
 
                 update_price_history(market, markets[market].getLastPrice())
                 ta_traders.manageTATrades(market)

@@ -1,14 +1,16 @@
 from flask import Flask, jsonify
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import threading
 import time
 from market_simulator.utils.market_utils import price_history, assets, markets
 from market_simulator.utils.news_generator import generate_news_thread
+from market_simulator.agents.user_trader import UserTrader
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+user_account = UserTrader("USER_001", 1000000)
 
 def emit_trade_update(agent, asset, side, quantity, price):
     """Emit a trade update through websocket"""
@@ -55,6 +57,34 @@ def get_price_history(asset):
             'prices': price_history[asset]
         })
     return jsonify({'error': 'Asset not found'}), 404
+
+@socketio.on('place_order')
+def handle_place_order(data):
+    try:
+        # Extract order details
+        ticker = data['ticker']
+        direction = data['direction']
+        quantity = data['quantity']
+        order_type = data['order_type']
+        price = data.get('price', 0)  # Optional for market orders
+        
+        if ticker not in markets:
+            return {'status': 'error', 'message': 'Invalid ticker'}
+        
+        # Create and execute the order
+        order = type('Order', (), {
+            'market': ticker,
+            'direction': direction,
+            'price': price,
+            'quantity': quantity,
+            'order_type': order_type
+        })()
+        user_account.execute_order(order)
+        
+        return {'status': 'success', 'message': f'{order_type.capitalize()} {direction} order placed for {quantity} {ticker}'}
+        
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
 
 def emit_updates():
     """Emit price and order book updates through websocket"""

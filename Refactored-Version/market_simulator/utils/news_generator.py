@@ -67,7 +67,7 @@ def generate_news(custom_headline=None):
                 continue
             asset, score = asset_sentiment.split(':')
             score = score.replace(" ", "")
-            sentiment_scores_dict[asset] = min(0.8, max(0.2, float(score)))
+            sentiment_scores_dict[asset] = min(0.7, max(0.3, float(score)))
         except:
             print(f"Error parsing sentiment score: {asset_sentiment}")
     
@@ -87,11 +87,9 @@ def generate_news(custom_headline=None):
 
 def generate_chat():
     """Generates chat messages about market conditions"""
-    current_asset = random.choice(assets)
     chat = model.invoke(
         CHAT_ANALYSIS_PROMPT.format(
-            asset=current_asset,
-            recent_headlines=recentHeadlines
+            recent_headline=recentHeadlines
         )
     )
     print(f"Chat: {chat}")

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 from market_simulator.utils.market_utils import news_queue, chat_queue
-from market_simulator.web.server import emit_news  # Import the emit function
+from market_simulator.web.server import emit_news, emit_chat  # Import the emit function
 
 class NewsFeedFrame(ttk.Frame):
     def __init__(self, parent):
@@ -58,6 +58,8 @@ class NewsFeedFrame(ttk.Frame):
                 message = chat_queue.get_nowait()
                 self.chat_window.insert(tk.END, f"{message}\n\n")
                 self.chat_window.see(tk.END)
+                # Emit the chat message to web clients
+                emit_chat(message)
         except queue.Empty:
             pass
         finally:
