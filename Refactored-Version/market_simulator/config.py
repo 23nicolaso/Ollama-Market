@@ -8,39 +8,65 @@ Ensure that all your responses are in the correct, defined response format.
 # Asset configuration
 ASSETS = [
     "SPY",   
-    "MSCI World ETF",   
+    "FAANG",
+    "Tesla",
+    "Walmart",
+    "JPM Chase",
+    "MSCI World ETF",
     "Bitcoin",   
     "Gold",
-    "China ETF",
-    "US 10Y Treasury Bills"           
+    "China ETF"           
 ]
 
 # Market configuration
 INITIAL_PRICES = {
-    "SPY": 400,
+    "SPY": 427.5,
+    "FAANG": 400,
+    "Tesla": 100,
+    "Walmart": 100,
+    "JPM Chase": 100,
     "MSCI World ETF": 100,
     "Bitcoin": 100,
     "Gold": 100,
     "China ETF": 100,
-    "US 10Y Treasury Bills": 100
 }
 
 SPREADS = {
     "SPY": 0.02,
+    "FAANG": 0.02,
+    "Tesla": 0.02,
+    "Walmart": 0.02,
+    "JPM Chase": 0.02,
     "MSCI World ETF": 0.02,
     "Bitcoin": 0.02,
     "Gold": 0.02,
     "China ETF": 0.02,
-    "US 10Y Treasury Bills": 0.02
 }
 
 ANNUAL_RETURNS = {
     "SPY": 0.08,
+    "FAANG": 0.08,
+    "Tesla": 0.08,
+    "Walmart": 0.08,
+    "JPM Chase": 0.08,
     "MSCI World ETF": 0.08,
     "Bitcoin": 0.5,
     "Gold": 0.08,
     "China ETF": 0.08,
-    "US 10Y Treasury Bills": 0.02
+}
+
+SPY_INCLUDED_ASSETS = [
+    "FAANG",
+    "Tesla",
+    "Walmart",
+    "JPM Chase"
+]
+
+NUM_SHARES = {
+    "FAANG": 2000000000,
+    "Tesla": 100000000,
+    "Walmart": 8000000000,
+    "JPM Chase": 1000000000
 }
 
 # LLM Prompts
@@ -60,10 +86,10 @@ SENTIMENT_ANALYSIS_PROMPT = """
 Here is the most recent news headline: {headline}. 
 Does this seem like good or bad news for people holding these assets: {assets}
 For each asset score how good or bad this news is for the asset (give each a score between 0-1, 0 is bad
-for the asset, 1 is good for the asset). The score does NOT have to be accurate or realistic.
+for the asset, 1 is good for the asset). The score does NOT have to be realistic or correct, it is just for fun.
 Do not give any text sharing your analysis, just the numbers.
 An example response might look like this (with different scores, ranging from 0 to 1):
-FILLER:0, SPY: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, US 10Y Treasury Bills: 0.5, FILLER:0
+FILLER:0, SPY: 0.5, FAANG: 0.5, Tesla: 0.5, Walmart: 0.5, JPM Chase: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, FILLER:0
 """
 # I use fillers to handle the case where the LLM responds with text in front or behind the sentiment scores.
 
@@ -82,6 +108,9 @@ Here is the most recent headlines for context: {recent_headline}
 
 # Agent configuration
 POSITION_LIMITS = {asset: 500000 for asset in ASSETS}
+
+ARBITRAGE_THRESHOLD = 0.2
+ARB_QUANTITY = 1000
 
 INITIAL_CASH = {
     "RETAIL TRADER": 1000000,

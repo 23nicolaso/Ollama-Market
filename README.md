@@ -1,6 +1,6 @@
 # Market Simulator
 
-This project simulates a fictional stock market. It uses Python and Meta's LLama 3.1-8B language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
+This project simulates a fictional stock market. It uses Python, HTML and Meta's LLama 3.1-8B language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
 This was mainly done to experiment with prompt engineering and as fun programming practice. 
 
 ## Features
@@ -10,13 +10,15 @@ This was mainly done to experiment with prompt engineering and as fun programmin
 - Order book with functional limit, market orders
 - Iceberg-style orders for trading large volumes
 - Real-time price discovery based on supply and demand
+- Arbitrage fund that arbitrages the SPY basket against the SPY index 
 
 ### Trading Agents
 - Retail Trader: Simulates individual investors with sentiment-based trading
 - Market Maker: Provides liquidity and maintains orderly markets
-- HFT Fund: High-frequency trading strategies
-- Hedge Funds: Mean reversion and macro strategies
+- HFT Fund: High-frequency trading strategy which trades news as soon as it comes out
+- Hedge Funds: Mean reversion strategies
 - Technical Analysis Traders: Trades based on technical indicators
+- SPY Arbitrage Fund: Arbitrages the SPY basket against the SPY index
 
 ### News and Events System
 - AI-powered news generation using Ollama
@@ -30,16 +32,25 @@ This was mainly done to experiment with prompt engineering and as fun programmin
 - Tkinter-based GUI for market monitoring and running server commands
 ![TKINTERGUI](https://github.com/23nicolaso/Ollama-Market/blob/main/Refactored-Version/images/Screenshot%20(219).png)
 
-- Real-time price and sentiment displays
-- News and chat feed windows
-- Web-based charting interface using TradingView's Lightweight Charts
-  - 10-second OHLC candles
-  - Real-time updates
-  - Historical data preservation
-  - Multiple asset views
+- Real-time price charts using TradingView's Lightweight Charts
+  - Interactive OHLC candlestick charts
+  - 10-second candle intervals
+  - Multiple asset views with dropdown selection
+  - Real-time price updates via WebSocket
+- Advanced order book visualization
+  - Depth chart showing cumulative volume
+  - Real-time bid/ask updates
+  - Interactive tooltips showing price levels
+- Trading Interface
+  - Place market/limit/iceberg orders
+  - Real-time portfolio value updates
+  - Position tracking across multiple assets
+  - Cash balance monitoring
+- News & Events
   - Real-time news notifications with sleek overlay design
-  - Interactive order book visualization
-  - Trade log with agent activity tracking
+  - Interactive news submission through GUI
+  - Agent chat messages in real-time
+  
 ![TRADINGCHART](https://github.com/23nicolaso/Ollama-Market/blob/main/Refactored-Version/images/Screenshot%20(250).png)
 ![DEPTHOFMARKET](https://github.com/23nicolaso/Ollama-Market/blob/main/Refactored-Version/images/Screenshot%20(249).png)
 
@@ -79,68 +90,105 @@ This will launch:
 
 Access the web charts at: `http://localhost:8000`
 
-## Configuration
+## System Architecture
 
-Key settings can be adjusted in `config.py`:
-- Available assets and their properties
-- Initial prices and spreads
-- World context for news generation
-- Various simulation parameters
+The system uses a multi-threaded architecture with real-time communication:
 
-## Architecture
+1. Core Market Engine
+   - Main simulation loop handling market mechanics
+   - Order book management and trade matching
+   - Agent behavior and decision making
 
-The simulation runs multiple components in parallel using threading:
-1. Main simulation loop (market mechanics)
-2. GUI updates and user interface
-3. News and chat generation with real-time web notifications
-4. Price history API server
-5. Web interface server with Socket.IO for real-time updates
+2. GUI Layer
+   - Tkinter-based main control interface
+   - Real-time price charts and order book
+   - News feed and chat windows
+   - Interactive trading controls
+
+3. Web Interface
+   - Flask + Socket.IO server for real-time updates
+   - TradingView charts for price visualization
+   - WebSocket events for:
+     - Price updates
+     - Order book changes
+     - News notifications
+     - Trade confirmations
+     - Portfolio updates
+
+4. Communication Flow
+   - Core engine → GUI updates via queues
+   - Core engine → Web clients via Socket.IO
+   - Web clients → Core engine via Socket.IO events
+   - News generation → All interfaces via event emission
 
 ```
 market_simulator/
 ├── __init__.py
 ├── main.py                 # Main simulation loop
 ├── config.py              # Centralized configuration
-├── setup.py              # Package setup and dependencies
 ├── requirements.txt      # Project dependencies
 ├── models/
 │   ├── __init__.py
 │   ├── account.py         # Account management
-│   ├── order_book.py      # Order book implementation with OrderLevel inner class
+│   ├── order_book.py      # Order book implementation
 │   └── order_level.py     # Order level management
 ├── agents/
 │   ├── __init__.py
 │   ├── base_agent.py      # Base MarketAgent class
-│   ├── executional_trader.py  # Base class for complex trading strategies
+│   ├── executional_trader.py  # Base class for complex strategies
 │   ├── market_maker.py    # Market making agent
 │   ├── retail_trader.py   # Retail trading agent
-│   ├── hedge_fund.py      # Mean reversion and macro strategies
+│   ├── hedge_fund.py      # Mean reversion strategies
 │   ├── ta_trader.py       # Technical analysis trader
 │   └── hft_fund.py        # High-frequency trading agent
 ├── gui/
 │   ├── __init__.py
-│   ├── main_window.py     # Main GUI window with Tkinter
-│   ├── charts.py          # Matplotlib price chart visualization
-│   └── news_feed.py       # News and chat display with web emission
+│   ├── main_window.py     # Main GUI window
+│   ├── news_feed.py       # News and chat display
+│   └── charts.py          # Price chart visualization
 ├── web/
-│   ├── index.html         # Web-based charting interface with news notifications
-│   └── server.py          # Flask-SocketIO server for real-time updates
-├── price_server.py        # Flask price history API server
+│   ├── static/
+│   │   ├── css/          # Web interface styling
+│   │   ├── js/           # Client-side JavaScript
+│   │   └── index.html    # Main web interface
+│   └── server.py         # Flask-SocketIO server
 └── utils/
     ├── __init__.py
-    ├── market_utils.py    # Market-related utilities and globals
+    ├── market_utils.py    # Market-related utilities
     └── news_generator.py  # Ollama-based news generation
 ```
+
+## Configuration
+
+The system is highly configurable through multiple files:
+
+- `config.py`: Core simulation parameters
+  - Available assets and initial prices
+  - Spread configurations
+  - Agent parameters
+  - World context for news generation
+
+- `web/server.py`: Web interface settings
+  - Server ports and hosts
+  - WebSocket configurations
+  - CORS settings
+
+- `gui/news_feed.py`: News and chat settings
+  - Update frequencies
+  - Display formats
+  - Message queuing
 
 ## Dependencies
 
 - Python 3.8+
-- Numpy for efficient data handling
-- Flask for API server
-- Flask-SocketIO for real-time updates
-- TradingView Lightweight Charts for web visualization
-- Tkinter for main GUI
-- Ollama for AI-powered news generation
+- Numpy >= 1.24.0
+- Flask >= 2.0.0
+- Flask-SocketIO >= 5.0.0
+- Flask-CORS >= 3.0.0
+- Eventlet >= 0.30.0
+- Matplotlib >= 3.5.0
+- Langchain-Ollama >= 0.1.0
+- Tkinter >= 8.6.0
 
 ## Contributing
 

@@ -13,6 +13,7 @@ from market_simulator.agents.retail_trader import RetailTrader
 from market_simulator.agents.hedge_fund import HedgeFund
 from market_simulator.agents.ta_trader import TATrader
 from market_simulator.agents.hft_fund import HFTFund
+from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.agents.long_term_investor import LongTermInvestor
 from market_simulator.gui.main_window import MainWindow
 from market_simulator.utils.market_utils import makeMarkets, markets, price_history, simulation_age, update_price_history, spreads_by_market
@@ -51,6 +52,7 @@ def run_simulation(root, main_window):
         
             for market in markets:
                 retail_trader.trade(markets[market])
+                spy_arb_fund.arbitrage()
                 market_maker.makeMarket(markets[market])
                 hft_fund.updatePositioning(market)
 
@@ -90,17 +92,18 @@ def main():
     root = tk.Tk()
     main_window = MainWindow(root)
 
+    # Initialize markets
+    makeMarkets()
+    
     # Initialize agents
-    global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor
+    global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund
     retail_trader = RetailTrader("RETAIL TRADER", 1000000)
     hft_fund = HFTFund("EVENTS TRADING FUND", 10000000)
+    spy_arb_fund = SpyArbFund("SPY ARBITRAGE FUND", 10000000)
     mean_reversion_fund = HedgeFund("Mean Reversion Fund", 10000000, "mean_reversion")
     ta_traders = TATrader("TA TRADING FIRM", 1000000)
     market_maker = MarketMaker("MARKET MAKER", 100000000000000, spreads=spreads_by_market)
     long_term_investor = LongTermInvestor("LONG TERM INVESTOR", 10000000)
-
-    # Initialize markets
-    makeMarkets()
 
     # Initialize news generator with agents
     init_agents(retail_trader, hft_fund, market_maker)
