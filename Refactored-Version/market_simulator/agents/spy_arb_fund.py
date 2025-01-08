@@ -43,7 +43,7 @@ class SpyArbFund(ExecutionalTrader):
         
         spy_price = markets["SPY"].getLastPrice()
         
-        # If basket is cheaper than SPY by more than 0.2, buy basket and sell SPY
+        # If basket is cheaper than SPY by more than arbitrage threshold, buy basket and sell SPY
         if self.navps < spy_price - ARBITRAGE_THRESHOLD:
             # Sell SPY
             self.placeOrder(
@@ -64,7 +64,7 @@ class SpyArbFund(ExecutionalTrader):
                     "market"
                 )
                 
-        # If basket is more expensive than SPY by more than 0.2, sell basket and buy SPY
+        # If basket is more expensive than SPY by more than arbitrage threshold, sell basket and buy SPY
         elif self.navps > spy_price + ARBITRAGE_THRESHOLD:
             # Buy SPY
             self.placeOrder(

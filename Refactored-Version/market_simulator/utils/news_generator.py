@@ -1,6 +1,6 @@
 import threading
 import random
-from market_simulator.utils.market_utils import model, recentHeadlines, assets, news_queue, chat_queue, markets
+from market_simulator.utils.market_utils import model, recentHeadlines, news_queue, chat_queue, markets
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
     URGENCY_ANALYSIS_PROMPT, ASSETS, CHAT_ANALYSIS_PROMPT
@@ -10,13 +10,15 @@ from market_simulator.config import (
 _retail_trader = None
 _hft_fund = None
 _market_maker = None
+_long_term_investor = None
 
-def init_agents(retail_trader, hft_fund, market_maker):
+def init_agents(retail_trader, hft_fund, market_maker, long_term_investor):
     """Initialize the global agent references"""
-    global _retail_trader, _hft_fund, _market_maker
+    global _retail_trader, _hft_fund, _market_maker, _long_term_investor
     _retail_trader = retail_trader
     _hft_fund = hft_fund
     _market_maker = market_maker
+    _long_term_investor = long_term_investor
 
 def generate_news(custom_headline=None):
     """Generates a news headline and updates market sentiment"""
@@ -67,7 +69,7 @@ def generate_news(custom_headline=None):
                 continue
             asset, score = asset_sentiment.split(':')
             score = score.replace(" ", "")
-            sentiment_scores_dict[asset] = min(0.7, max(0.3, float(score)))
+            sentiment_scores_dict[asset] = min(0.7, max(0.1, float(score)))
         except:
             print(f"Error parsing sentiment score: {asset_sentiment}")
     
@@ -83,6 +85,7 @@ def generate_news(custom_headline=None):
         _market_maker.makeMarket(markets[market])
         _hft_fund.tradeTheNews(market, _retail_trader)
         _retail_trader.trade(markets[market])
+        _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
         _market_maker.provideLiquidity(markets[market])
 
 def generate_chat():

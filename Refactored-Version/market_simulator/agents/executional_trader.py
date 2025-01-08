@@ -38,29 +38,21 @@ class ExecutionalTrader(MarketAgent):
         self.partialExecuteMarket(markets[market])
     
     def partialExecuteMarket(self, orderBook):
-        if random.random() < 0.1:
-            if orderBook in self.intendedOrders:
-                order = self.intendedOrders[orderBook]
-                # only execute if price has moved in opposite direction
-                if order["direction"] == "buy" and orderBook.getLastPrice() > order["price"]:
-                    return
-                elif order["direction"] == "sell" and orderBook.getLastPrice() < order["price"]:
-                    return
+        if orderBook in self.intendedOrders:
+            order = self.intendedOrders[orderBook]
+            if order["quantity"] > 0:
+                # Determine a random amount to fill, between 0.05 and 0.1 x quantity
+                quantity_to_fill = max(1, int(random.uniform(0.01, 0.05) * order["quantity"]))
+        
+                # Place the order
+                self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice(), quantity_to_fill, "limit")
+
+                # Update the remaining quantity
+                order["quantity"] -= quantity_to_fill
                 
-                if order["quantity"] > 0:
-                    # Determine a random amount to fill, between 0.05 and 0.1 x quantity
-                    quantity_to_fill = max(1, int(random.uniform(0.01, 0.05) * order["quantity"]))
-                    
-                    # Place the order
-                    priceChange = 0.05 if order["direction"] == "buy" else -0.05
-                    self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice()+priceChange, quantity_to_fill, "limit")
-                    
-                    # Update the remaining quantity
-                    order["quantity"] -= quantity_to_fill
-                    
-                    # If the order is completely filled, remove it from intended orders
-                    if order["quantity"] <= 0:
-                        del self.intendedOrders[orderBook]
+                # If the order is completely filled, remove it from intended orders
+                if order["quantity"] <= 0:
+                    del self.intendedOrders[orderBook]
 
     def updateOrdersInLegs(self, orderBook):
         if orderBook.getBestBid() is None or orderBook.getBestAsk() is None:

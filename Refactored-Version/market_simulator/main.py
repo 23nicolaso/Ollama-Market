@@ -59,7 +59,7 @@ def run_simulation(root, main_window):
                 mean_reversion_fund.calculate_target_positions()
                 mean_reversion_fund.update_positions(market)
                 
-                long_term_investor.trade(markets[market], retail_trader)
+                long_term_investor.trade(markets[market])
                 long_term_investor.updatePositioning(market)
 
                 user_account.updatePositioning(market)
@@ -67,6 +67,8 @@ def run_simulation(root, main_window):
                 update_price_history(market, markets[market].getLastPrice())
                 ta_traders.manageTATrades(market)
                 ta_traders.checkConditionalOrders(market)
+                
+                ta_traders.updatePositioning(market)
                 markets[market].clearEmptyOrderlevels()
                 markets[market].cancelAllOldOrders()
                 markets[market].clearFarOrders()
@@ -106,7 +108,7 @@ def main():
     long_term_investor = LongTermInvestor("LONG TERM INVESTOR", 10000000)
 
     # Initialize news generator with agents
-    init_agents(retail_trader, hft_fund, market_maker)
+    init_agents(retail_trader, hft_fund, market_maker, long_term_investor)
 
     # Generate initial news and chat
     generate_news_thread()

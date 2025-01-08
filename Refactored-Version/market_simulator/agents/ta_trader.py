@@ -2,7 +2,7 @@ from math import ceil
 import random
 from market_simulator.agents.executional_trader import ExecutionalTrader
 from market_simulator.utils.market_utils import price_history, markets
-from market_simulator.config import TA_POSITION_LIMIT, TA_LARGE_ORDER_SIZE
+from market_simulator.config import TA_POSITION_LIMIT, TA_LARGE_ORDER_SIZE, TA_MEGA_ORDER_SIZE
 
 class TATrader(ExecutionalTrader):
     def __init__(self, accountID, cash):
@@ -31,6 +31,15 @@ class TATrader(ExecutionalTrader):
             self.placeOrder(markets[market], "sell", vwap + stdev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
         elif current_price < vwap + (vndo-1)*stdev and self.account.getPosition(market) < TA_POSITION_LIMIT:
             self.placeOrder(markets[market], "buy", vwap - stdev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
+
+        # If 5% drop over past 1000 ticks, execute a dip-buying strategy
+        if len(price_history[market]) >= 1000:
+            start_price = price_history[market][-1000]
+            current_price = price_history[market][-1]
+            price_drop = (start_price - current_price) / start_price
+            
+            if price_drop > 0.02 and self.account.getPosition(market) < TA_POSITION_LIMIT:
+                self.executeTradeInLegs(markets[market], "buy", current_price, int(TA_MEGA_ORDER_SIZE*random.uniform(0.5, 1.5)))
 
         # Limit the number of limitorders placed to save on compute
         max_orders = 200

@@ -8,10 +8,10 @@ Ensure that all your responses are in the correct, defined response format.
 # Asset configuration
 ASSETS = [
     "SPY",   
-    "FAANG",
-    "Tesla",
-    "Walmart",
-    "JPM Chase",
+    "TECH ETF",
+    "CONSUMER ETF",
+    "UTILITIES ETF",
+    "BANKING ETF",
     "MSCI World ETF",
     "Bitcoin",   
     "Gold",
@@ -20,11 +20,11 @@ ASSETS = [
 
 # Market configuration
 INITIAL_PRICES = {
-    "SPY": 427.5,
-    "FAANG": 400,
-    "Tesla": 100,
-    "Walmart": 100,
-    "JPM Chase": 100,
+    "SPY": 350,
+    "TECH ETF": 200,
+    "CONSUMER ETF": 200,
+    "UTILITIES ETF": 100,
+    "BANKING ETF": 200,
     "MSCI World ETF": 100,
     "Bitcoin": 100,
     "Gold": 100,
@@ -33,10 +33,10 @@ INITIAL_PRICES = {
 
 SPREADS = {
     "SPY": 0.02,
-    "FAANG": 0.02,
-    "Tesla": 0.02,
-    "Walmart": 0.02,
-    "JPM Chase": 0.02,
+    "TECH ETF": 0.02,
+    "CONSUMER ETF": 0.02,
+    "UTILITIES ETF": 0.02,
+    "BANKING ETF": 0.02,
     "MSCI World ETF": 0.02,
     "Bitcoin": 0.02,
     "Gold": 0.02,
@@ -45,10 +45,10 @@ SPREADS = {
 
 ANNUAL_RETURNS = {
     "SPY": 0.08,
-    "FAANG": 0.08,
-    "Tesla": 0.08,
-    "Walmart": 0.08,
-    "JPM Chase": 0.08,
+    "TECH ETF": 0.08,
+    "CONSUMER ETF": 0.08,
+    "UTILITIES ETF": 0.08,
+    "BANKING ETF": 0.08,
     "MSCI World ETF": 0.08,
     "Bitcoin": 0.5,
     "Gold": 0.08,
@@ -56,17 +56,22 @@ ANNUAL_RETURNS = {
 }
 
 SPY_INCLUDED_ASSETS = [
-    "FAANG",
-    "Tesla",
-    "Walmart",
-    "JPM Chase"
+    "TECH ETF",
+    "CONSUMER ETF",
+    "UTILITIES ETF",
+    "BANKING ETF"
 ]
 
 NUM_SHARES = {
-    "FAANG": 2000000000,
-    "Tesla": 100000000,
-    "Walmart": 8000000000,
-    "JPM Chase": 1000000000
+    "SPY": 10000000,
+    "TECH ETF": 2000000000,
+    "CONSUMER ETF": 2000000000,
+    "UTILITIES ETF": 2000000000,
+    "BANKING ETF": 2000000000,
+    "MSCI World ETF": 1000000000,
+    "Bitcoin": 1000000000,
+    "Gold": 1000000000,
+    "China ETF": 1000000000
 }
 
 # LLM Prompts
@@ -89,7 +94,7 @@ For each asset score how good or bad this news is for the asset (give each a sco
 for the asset, 1 is good for the asset). The score does NOT have to be realistic or correct, it is just for fun.
 Do not give any text sharing your analysis, just the numbers.
 An example response might look like this (with different scores, ranging from 0 to 1):
-FILLER:0, SPY: 0.5, FAANG: 0.5, Tesla: 0.5, Walmart: 0.5, JPM Chase: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, FILLER:0
+FILLER:0, SPY: 0.5, TECH ETF: 0.5, CONSUMER ETF: 0.5, UTILITIES ETF: 0.5, BANKING ETF: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, FILLER:0
 """
 # I use fillers to handle the case where the LLM responds with text in front or behind the sentiment scores.
 
@@ -155,7 +160,7 @@ SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
 TA_POSITION_LIMIT = 100000  # Moderate position limit
-TA_SMALL_ORDER_SIZE = 50  # Smaller regular trades
+TA_MEGA_ORDER_SIZE = 10000  # Huge, infrequent trades
 TA_LARGE_ORDER_SIZE = 1000  # Larger trades for strong signals
 
 # Long-term investor - larger but infrequent trades
