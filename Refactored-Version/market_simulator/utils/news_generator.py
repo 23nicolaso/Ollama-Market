@@ -1,6 +1,6 @@
 import threading
-import random
-from market_simulator.utils.market_utils import model, recentHeadlines, news_queue, chat_queue, markets
+import re
+from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
     URGENCY_ANALYSIS_PROMPT, ASSETS, CHAT_ANALYSIS_PROMPT
@@ -25,7 +25,7 @@ def generate_news(custom_headline=None):
     if custom_headline:
         headline = custom_headline
     else:
-        headline = model.invoke(
+        headline = invoke_model(
             NEWS_GENERATION_PROMPT.format(
                 world_context=WORLD_CONTEXT,
                 recent_headlines=recentHeadlines
@@ -37,7 +37,7 @@ def generate_news(custom_headline=None):
         recentHeadlines.pop(0)
 
     # Get sentiment scores for each asset
-    sentiment_scores = model.invoke(
+    sentiment_scores = invoke_model(
         SENTIMENT_ANALYSIS_PROMPT.format(
             world_context=WORLD_CONTEXT,
             headline=recentHeadlines[-1],
@@ -46,7 +46,7 @@ def generate_news(custom_headline=None):
     )
 
     # Get urgency score
-    urgency_score = model.invoke(
+    urgency_score = invoke_model(
         URGENCY_ANALYSIS_PROMPT.format(
             headline=recentHeadlines[-1]
         )
@@ -62,20 +62,15 @@ def generate_news(custom_headline=None):
 
     # Parse the sentiment score response
     print(sentiment_scores)
+    pattern = r'(\w[\w\s]*):\s*([\d.]+)' # apply regex to the sentiment scores
     sentiment_scores_dict = {}
-    for asset_sentiment in sentiment_scores.split(', '):
-        try:
-            if "FILLER" in asset_sentiment:
-                continue
-            asset, score = asset_sentiment.split(':')
-            score = score.replace(" ", "")
-            sentiment_scores_dict[asset] = min(0.7, max(0.1, float(score)))
-        except:
-            print(f"Error parsing sentiment score: {asset_sentiment}")
+    scores = {match[0]: float(match[1]) for match in re.findall(pattern, sentiment_scores)}
     
     # Ensure all assets have a sentiment score, defaulting to 0.5 if not set
     for asset in ASSETS:
-        if asset not in sentiment_scores_dict:
+        if asset in scores:
+            sentiment_scores_dict[asset] = scores[asset]
+        else:
             sentiment_scores_dict[asset] = 0.5
 
     _retail_trader.retailSentimentScore = sentiment_scores_dict
@@ -90,13 +85,14 @@ def generate_news(custom_headline=None):
 
 def generate_chat():
     """Generates chat messages about market conditions"""
-    chat = model.invoke(
-        CHAT_ANALYSIS_PROMPT.format(
-            recent_headline=recentHeadlines
-        )
-    )
-    print(f"Chat: {chat}")
-    chat_queue.put(chat)
+    return
+    # chat = invoke_model(
+    #     CHAT_ANALYSIS_PROMPT.format(
+    #         recent_headline=recentHeadlines
+    #     )
+    # )
+    # print(f"Chat: {chat}")
+    # chat_queue.put(chat)
 
 def generate_news_thread(headline=None):
     """Creates a thread to generate news"""

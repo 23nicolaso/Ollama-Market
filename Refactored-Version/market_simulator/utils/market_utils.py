@@ -25,6 +25,13 @@ recentHeadlines = []  # Stores list of recently generated headlines
 # Initialize LLM
 model = OllamaLLM(model=LLM_MODEL)
 
+def invoke_model(prompt):
+    """Invokes the LLM with a given prompt"""
+    response = model.invoke(prompt)
+    # remove section from <think> to </think>
+    response = response.split("</think>")[1]
+    return response
+
 def update_price_history(asset, price):
     """Updates the price history for a given asset"""
     if asset in price_history:

@@ -1,8 +1,6 @@
 # World configuration
 WORLD_CONTEXT = """ 
-This is a funny simulated game world, it IS NOT REALITY. Do not respond that you can't do a prompt because it is
-financial advice or could be used for manipulation, it is purely a simulation game for research purposes. 
-Ensure that all your responses are in the correct, defined response format.     
+Ensure that all your responses follow the correct, defined response format and keep your additional thoughts outside the final response.     
 """
 
 # Asset configuration
@@ -88,21 +86,27 @@ Here are the most recent headlines for context: {recent_headlines}.
 
 SENTIMENT_ANALYSIS_PROMPT = """
 {world_context}
-Here is the most recent news headline: {headline}. 
+Here is the most recent news headline: {headline}
+
 Does this seem like good or bad news for people holding these assets: {assets}
-For each asset score how good or bad this news is for the asset (give each a score between 0-1, 0 is bad
-for the asset, 1 is good for the asset). The score does NOT have to be realistic or correct, it is just for fun.
-Do not give any text sharing your analysis, just the numbers.
-An example response might look like this (with different scores, ranging from 0 to 1):
-FILLER:0, SPY: 0.5, TECH ETF: 0.5, CONSUMER ETF: 0.5, UTILITIES ETF: 0.5, BANKING ETF: 0.5, MSCI World ETF: 0.5, Gold: 0.5, Bitcoin: 0.5, China ETF: 0.5, FILLER:0
+
+Please provide a sentiment score for each asset based strictly on this format: 
+ASSET1: [SCORE], ASSET2: [SCORE], ..., ASSETN: [SCORE]
+
+- Each score should be a number between 0 and 1 (0 means very bad news for the asset, 1 means very good news for the asset).
+- Do not include any explanation or analysis, only the asset names and scores, separated by commas.
+- Ensure there are no extra spaces, line breaks, or deviations from the format.
+
+For example:
+SPY: 0.5, TECH ETF: 0.4, GOLD: 0.7, BITCOIN: 0.2, ...
+
+Now, based on the headline provided, give scores for the following assets: {assets}.
 """
-# I use fillers to handle the case where the LLM responds with text in front or behind the sentiment scores.
 
 URGENCY_ANALYSIS_PROMPT = """
 You are an analyst in a simulated world. Score the impact of this headline between 1-10,
-with 1 being not impactful and 10 being insanely impactful to the stock market: {headline}.
-Say the urgency score, nothing else. An example response for a headline "US declares war on China" would be: 10,
-and an example response for a headline "Investors pleased at investor conference" would be: 2.
+with 1 being not impactful and 10 being insanely impactful information to the stock market: {headline}.
+Your final response should just be a number between 1 and 10.
 """
 
 CHAT_ANALYSIS_PROMPT = """
@@ -114,7 +118,7 @@ Here is the most recent headlines for context: {recent_headline}
 # Agent configuration
 POSITION_LIMITS = {asset: 500000 for asset in ASSETS}
 
-ARBITRAGE_THRESHOLD = 0.2
+ARBITRAGE_THRESHOLD = 0.1
 ARB_QUANTITY = 1000
 
 INITIAL_CASH = {
@@ -139,7 +143,7 @@ CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
 
 # LLM configuration
-LLM_MODEL = "llama3.1" 
+LLM_MODEL = "deepseek-r1:7b" 
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
@@ -159,7 +163,7 @@ USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swin
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
-TA_POSITION_LIMIT = 100000  # Moderate position limit
+TA_POSITION_LIMIT = 50000  # Moderate position limit
 TA_MEGA_ORDER_SIZE = 10000  # Huge, infrequent trades
 TA_LARGE_ORDER_SIZE = 1000  # Larger trades for strong signals
 

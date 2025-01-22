@@ -12,7 +12,7 @@ class TATrader(ExecutionalTrader):
 
     def manageTATrades(self, market):
         # Calculate mean and standard deviation of price history
-        price_list = price_history[market][-20:]
+        price_list = price_history[market][-100:]
         mean_price = sum(price_list) / len(price_list)
         std_dev = (sum((x - mean_price) ** 2 for x in price_list) / len(price_list)) ** 0.5
         current_price = markets[market].getLastPrice()
@@ -22,23 +22,25 @@ class TATrader(ExecutionalTrader):
         elif current_price < mean_price - std_dev*2 and self.account.getPosition(market) < TA_POSITION_LIMIT:
             self.placeOrder(markets[market], "buy", mean_price - std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
 
-        vwap = sum(price_history[market]) / len(price_history[market])
-        stdev = (sum((x - vwap) ** 2 for x in price_history[market]) / len(price_history[market])) ** 0.5
-        stma = sum(price_list[-10:]) / 10
-        vndo = (stma - vwap) / max(stdev,0.001)
+        # trade on cross of close and moving average of 1000 ticks
+        if len(price_list) >= 1000:
+            stma = sum(price_list[-1000:]) / 1000
+            
+            # If price crosses above MA, buy
+            if current_price > stma and price_list[-2] <= stma and self.account.getPosition(market) < TA_POSITION_LIMIT:
+                self.placeOrder(markets[market], "buy", current_price, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
+                
+            # If price crosses below MA, sell    
+            elif current_price < stma and price_list[-2] >= stma and self.account.getPosition(market) > -TA_POSITION_LIMIT:
+                self.placeOrder(markets[market], "sell", current_price, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
 
-        if current_price > vwap + (vndo+1)*stdev and self.account.getPosition(market) > -TA_POSITION_LIMIT:
-            self.placeOrder(markets[market], "sell", vwap + stdev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
-        elif current_price < vwap + (vndo-1)*stdev and self.account.getPosition(market) < TA_POSITION_LIMIT:
-            self.placeOrder(markets[market], "buy", vwap - stdev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
-
-        # If 5% drop over past 1000 ticks, execute a dip-buying strategy
+        # If 2% drop over past 1000 ticks, execute a dip-buying strategy
         if len(price_history[market]) >= 1000:
             start_price = price_history[market][-1000]
             current_price = price_history[market][-1]
             price_drop = (start_price - current_price) / start_price
             
-            if price_drop > 0.02 and self.account.getPosition(market) < TA_POSITION_LIMIT:
+            if price_drop > 0.02:
                 self.executeTradeInLegs(markets[market], "buy", current_price, int(TA_MEGA_ORDER_SIZE*random.uniform(0.5, 1.5)))
 
         # Limit the number of limitorders placed to save on compute
