@@ -1,6 +1,6 @@
 # Market Simulator
 
-This project simulates a fictional stock market. It uses Python, HTML and Meta's LLama 3.1-8B language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
+This project simulates a fictional stock market. It uses Python, HTML and the Deepseek-R1-7B language model to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
 This was mainly done to experiment with prompt engineering and as fun programming practice. 
 
 ## Features
