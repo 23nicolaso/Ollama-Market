@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Market Simulator Charts</title>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -428,6 +428,12 @@
         function createChart() {
             const container = document.getElementById('chart-container');
             
+            // Ensure the library is available
+            if (typeof LightweightCharts === 'undefined') {
+                console.error('LightweightCharts library not loaded');
+                return;
+            }
+            
             chart = LightweightCharts.createChart(container, {
                 layout: {
                     background: { color: '#2a2e39' },
@@ -499,12 +505,15 @@
                 candleData.get(asset).push({ ...currentCandle });
                 
                 // Create new candle
-                currentCandles.set(asset, createCandle(price, timestamp));
+                const newCandle = createCandle(price, timestamp);
+                currentCandles.set(asset, newCandle);
                 
                 // Update the chart if this is the current asset
                 if (asset === currentAsset) {
-                    const allCandles = [...candleData.get(asset), currentCandles.get(asset)];
-                    candleSeries.setData(allCandles);
+                    candleSeries.update(currentCandle);
+                    setTimeout(() => {
+                        candleSeries.update(newCandle);
+                    }, 0);
                 }
             } else {
                 // Update current candle
@@ -657,7 +666,15 @@
                 currentAsset = e.target.value;
                 const candles = candleData.get(currentAsset);
                 const currentCandle = currentCandles.get(currentAsset);
-                candleSeries.setData(currentCandle ? [...candles, currentCandle] : candles);
+                
+                if (candles && candles.length > 0) {
+                    candleSeries.setData(candles);
+                    if (currentCandle) {
+                        setTimeout(() => {
+                            candleSeries.update(currentCandle);
+                        }, 0);
+                    }
+                }
             });
 
             // Set initial asset
@@ -696,6 +713,18 @@
 
         // Initialize everything
         async function initialize() {
+            // Wait for the LightweightCharts library to load
+            if (typeof LightweightCharts === 'undefined') {
+                await new Promise(resolve => {
+                    const checkLibrary = setInterval(() => {
+                        if (typeof LightweightCharts !== 'undefined') {
+                            clearInterval(checkLibrary);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+            
             createChart();
             await initializeAssetSelector();
             initializeWebSocket();
@@ -703,7 +732,7 @@
         }
 
         // Start initialization when page loads
-        document.addEventListener('DOMContentLoaded', initialize);
+        window.addEventListener('load', initialize);
 
         // Order book management
         function updateOrderBook(bids, asks) {
