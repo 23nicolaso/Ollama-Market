@@ -4,78 +4,84 @@ Ensure that all your responses follow the correct, defined response format and k
 """
 
 # Asset configuration
-ASSETS = [
-    "SPY",   
-    "TECH ETF",
-    "CONSUMER ETF",
-    "UTILITIES ETF",
-    "BANKING ETF",
-    "MSCI World ETF",
-    "Bitcoin",   
-    "Gold",
-    "China ETF"           
-]
-
-# Market configuration
-INITIAL_PRICES = {
-    "SPY": 350,
-    "TECH ETF": 200,
-    "CONSUMER ETF": 200,
-    "UTILITIES ETF": 100,
-    "BANKING ETF": 200,
-    "MSCI World ETF": 100,
-    "Bitcoin": 100,
-    "Gold": 100,
-    "China ETF": 100,
+ASSETS_CONFIG = {
+    "SPY": {
+        "initial_price": 350,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 10000000,
+        "included_in_spy": False
+    },
+    "TECH ETF": {
+        "initial_price": 200,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 2000000000,
+        "included_in_spy": True
+    },
+    "CONSUMER ETF": {
+        "initial_price": 200,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 2000000000,
+        "included_in_spy": True
+    },
+    "UTILITIES ETF": {
+        "initial_price": 100,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 2000000000,
+        "included_in_spy": True
+    },
+    "BANKING ETF": {
+        "initial_price": 200,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 2000000000,
+        "included_in_spy": True
+    },
+    "MSCI World ETF": {
+        "initial_price": 100,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 1000000000,
+        "included_in_spy": False
+    },
+    "Bitcoin": {
+        "initial_price": 100,
+        "spread": 0.02,
+        "annual_return": 0.5,
+        "num_shares": 1000000000,
+        "included_in_spy": False
+    },
+    "Gold": {
+        "initial_price": 100,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 1000000000,
+        "included_in_spy": False
+    },
+    "China ETF": {
+        "initial_price": 100,
+        "spread": 0.02,
+        "annual_return": 0.08,
+        "num_shares": 1000000000,
+        "included_in_spy": False
+    }
 }
 
-SPREADS = {
-    "SPY": 0.02,
-    "TECH ETF": 0.02,
-    "CONSUMER ETF": 0.02,
-    "UTILITIES ETF": 0.02,
-    "BANKING ETF": 0.02,
-    "MSCI World ETF": 0.02,
-    "Bitcoin": 0.02,
-    "Gold": 0.02,
-    "China ETF": 0.02,
-}
-
-ANNUAL_RETURNS = {
-    "SPY": 0.08,
-    "TECH ETF": 0.08,
-    "CONSUMER ETF": 0.08,
-    "UTILITIES ETF": 0.08,
-    "BANKING ETF": 0.08,
-    "MSCI World ETF": 0.08,
-    "Bitcoin": 0.5,
-    "Gold": 0.08,
-    "China ETF": 0.08,
-}
-
-SPY_INCLUDED_ASSETS = [
-    "TECH ETF",
-    "CONSUMER ETF",
-    "UTILITIES ETF",
-    "BANKING ETF"
-]
-
-NUM_SHARES = {
-    "SPY": 10000000,
-    "TECH ETF": 2000000000,
-    "CONSUMER ETF": 2000000000,
-    "UTILITIES ETF": 2000000000,
-    "BANKING ETF": 2000000000,
-    "MSCI World ETF": 1000000000,
-    "Bitcoin": 1000000000,
-    "Gold": 1000000000,
-    "China ETF": 1000000000
-}
+# Derived configurations
+ASSETS = list(ASSETS_CONFIG.keys())
+INITIAL_PRICES = {asset: config["initial_price"] for asset, config in ASSETS_CONFIG.items()}
+SPREADS = {asset: config["spread"] for asset, config in ASSETS_CONFIG.items()}
+ANNUAL_RETURNS = {asset: config["annual_return"] for asset, config in ASSETS_CONFIG.items()}
+NUM_SHARES = {asset: config["num_shares"] for asset, config in ASSETS_CONFIG.items()}
+SPY_INCLUDED_ASSETS = [asset for asset, config in ASSETS_CONFIG.items() if config["included_in_spy"]]
 
 # LLM Prompts
 NEWS_GENERATION_PROMPT = """
 {world_context}
-Make one news headline for my simulated world. 
+Make one dramatic breaking news headline for my simulated world. 
 I want it to be news of economic events, statements by politicians,
 developments, natural disasters, or any funny news. 
 Do not say anything other than the headline, keep your response under 15 words long,

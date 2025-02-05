@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from market_simulator.gui.charts import ChartFrame
 from market_simulator.gui.news_feed import NewsFeedFrame
-from market_simulator.utils.market_utils import assets, last_prices, estimateUnderlyingValue
+from market_simulator.utils.market_utils import assets, last_prices, estimateUnderlyingValue, reset_markets, price_history, initial_prices
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread
 import tkinter.messagebox as messagebox
 
@@ -137,8 +137,20 @@ class MainWindow:
         self.root.update()
 
     def wipe_database(self):
-        """Wipes the price history database after confirmation"""
-        if messagebox.askyesno("Confirm", "Are you sure you want to wipe the price history database?"):
+        """Wipes the price history database and resets markets after confirmation"""
+        if messagebox.askyesno("Confirm", "Are you sure you want to wipe the price history database and reset all markets?"):
             from market_simulator.utils.db_utils import wipe_db
+            from market_simulator.utils.market_utils import reset_markets, price_history, last_prices, initial_prices
+            
+            # Wipe database
             wipe_db()
-            messagebox.showinfo("Success", "Database has been wiped") 
+            
+            # Reset all markets and prices
+            reset_markets()
+            
+            # Reset price history and last prices to initial values
+            for asset in price_history:
+                price_history[asset] = [initial_prices[asset]]
+                last_prices[asset] = initial_prices[asset]
+            
+            messagebox.showinfo("Success", "Database has been wiped and markets reset") 

@@ -22,6 +22,14 @@ class TATrader(ExecutionalTrader):
         elif current_price < mean_price - std_dev*2 and self.account.getPosition(market) < TA_POSITION_LIMIT:
             self.placeOrder(markets[market], "buy", mean_price - std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
 
+        # if price changed by over 0.5 in 100 ticks, mean revert by fading the trade
+        if len(price_list) >= 100:
+            price_change = price_list[-1] - price_list[-100]
+            if price_change > 0.5:
+                self.placeOrder(markets[market], "sell" if self.account.getPosition(market) > 0 else "buy", current_price, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
+            elif price_change < -0.5:
+                self.placeOrder(markets[market], "buy" if self.account.getPosition(market) > 0 else "sell", current_price, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
+
         # trade on cross of close and moving average of 500 ticks
         if len(price_list) >= 500:
             stma = sum(price_list[-500:]) / 500
@@ -35,7 +43,7 @@ class TATrader(ExecutionalTrader):
                 self.placeOrder(markets[market], "sell", current_price, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
 
         # If price is near a key level (nearest number), trade off the level
-        if abs(round(current_price) - current_price) < 0.05:
+        if abs(round(current_price) - current_price) < 0.1:
             if markets[market].asset == "SPY":
                 print(f"Trading off level {round(current_price)}")
             stma = sum(price_list[-200:]) / 200
@@ -44,7 +52,7 @@ class TATrader(ExecutionalTrader):
             elif stma < round(current_price) and self.account.getPosition(market) < TA_POSITION_LIMIT:
                 self.placeOrder(markets[market], "buy", round(current_price), ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
 
-        # If 1% drop over past 500 ticks, execute a dip-buying strategy
+        # If 2% drop over past 500 ticks, execute a dip-buying strategy
         if len(price_history[market]) >= 500:
             start_price = price_history[market][-500]
             current_price = price_history[market][-1]

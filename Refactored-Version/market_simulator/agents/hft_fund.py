@@ -1,4 +1,3 @@
-import random
 from market_simulator.agents.executional_trader import ExecutionalTrader
 from market_simulator.utils.market_utils import markets
 from market_simulator.config import SPREADS, HFT_BASE_ORDER_SIZE

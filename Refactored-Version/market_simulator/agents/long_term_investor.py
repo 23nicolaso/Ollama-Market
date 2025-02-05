@@ -21,5 +21,5 @@ class LongTermInvestor(ExecutionalTrader):
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.2 and importance > 8:
             position = self.account.getPosition(ticker)
-            proportion = 0.02*importance
+            proportion = 0.005*max(1, importance)
             self.executeTradeInLegs(markets[ticker], "sell", markets[ticker].getLastPrice(), int(proportion*position))

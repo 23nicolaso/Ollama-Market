@@ -113,3 +113,20 @@ def get_price_history(asset, start_time=None, end_time=None):
     combined_prices.extend(memory_prices)
     
     return combined_prices
+
+def reset_markets():
+    """Reset all markets to initial state"""
+    # Clear all order books
+    for market in markets.values():
+        market.bids.clear()
+        market.asks.clear()
+        market.urgentBuys.clear()
+        market.urgentSells.clear()
+        market.lastPrice = initial_prices[market.asset]
+    
+    # Clear all executional trader intended trades
+    for account in accounts.values():
+        if hasattr(account, 'intendedOrders'):
+            account.intendedOrders.clear()
+        if hasattr(account, 'conditionalOrders'):
+            account.conditionalOrders.clear()

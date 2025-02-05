@@ -41,18 +41,19 @@ class ExecutionalTrader(MarketAgent):
         if orderBook in self.intendedOrders:
             order = self.intendedOrders[orderBook]
             if order["quantity"] > 0:
-                # Determine a random amount to fill, between 0.05 and 0.1 x quantity
-                quantity_to_fill = max(1, int(random.uniform(0.01, 0.05) * order["quantity"]))
-        
-                # Place the order
-                self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice(), quantity_to_fill, "market")
+                if random.random() < 0.1:
+                    # Determine a random amount to fill, between 0.05 and 0.01 x quantity
+                    quantity_to_fill = max(1, int(random.uniform(0.01, 0.05) * order["quantity"]))
+            
+                    # Place the order
+                    self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice(), quantity_to_fill, "market")
 
-                # Update the remaining quantity
-                order["quantity"] -= quantity_to_fill
-                
-                # If the order is completely filled, remove it from intended orders
-                if order["quantity"] <= 0:
-                    del self.intendedOrders[orderBook]
+                    # Update the remaining quantity
+                    order["quantity"] -= quantity_to_fill
+                    
+                    # If the order is completely filled, remove it from intended orders
+                    if order["quantity"] <= 0:
+                        del self.intendedOrders[orderBook]
 
     def updateOrdersInLegs(self, orderBook):
         if orderBook.getBestBid() is None or orderBook.getBestAsk() is None:
