@@ -4,7 +4,7 @@ This project is a full stack stock market simulation experiment. It uses Python,
 
 This was done to experiment with prompt engineering, experiment with coding with AI, and to have fun programming for practice. 
 
-## SIMULATION FEATURES
+## Simulation Features
 As a simulation, Ollama Market uses realistic market structure, trading agents, AI generated news events and charts in an attempt to model how stock markets work.
 This section expands on each of these components in depth. 
 
