@@ -59,16 +59,8 @@ class OrderBook:
         return sum([ask.netQuantity for ask in self.asks.values()])
 
     def clearFarOrders(self):
-        # To stop my computer from exploding, I clear orders that are too far away from the current price
-        for bid in self.bids.values():
-            if bid.price < self.getLastPrice() - 5:
-                bid.cancelAll()
-
-        for ask in self.asks.values():
-            if ask.price > self.getLastPrice() + 5:
-                ask.cancelAll()
-        
-        self.clearEmptyOrderlevels()
+        # delete this
+        return
  
     def clearEmptyOrderlevels(self):
         bid_prices = list(self.bids.keys())

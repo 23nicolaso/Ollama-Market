@@ -104,6 +104,7 @@
         }
         .buy { color: #26a69a; }
         .sell { color: #ef5350; }
+        .net { color: #ffffff; }
         
         /* Order book styles */
         .order-book {
@@ -423,7 +424,6 @@
             return date.toLocaleTimeString();
         }
 
-
         // Create chart
         function createChart() {
             const container = document.getElementById('chart-container');
@@ -552,8 +552,6 @@
                 }
             });
 
-            
-
             socket.on('orderbook_update', (data) => {
                 if (data.asset === currentAsset) {
                     updateOrderBook(data.bids, data.asks);
@@ -613,7 +611,8 @@
                         <span>${asset}</span>
                         <span>
                             <span class="buy">+${data.buys}</span> / 
-                            <span class="sell">-${data.sells}</span>
+                            <span class="sell">-${data.sells}</span> /
+                            <span class="net">${data.buys - data.sells}</span>
                         </span>
                     `;
                     agentCard.appendChild(tradeItem);
@@ -623,36 +622,23 @@
             }
         }
 
-        // Initialize asset selector
+        // Update asset change handler
+        async function onAssetChange(newAsset) {
+            currentAsset = newAsset;
+            
+            // Clear existing chart data
+            candleSeries.setData([]);
+            currentCandles.clear();
+            
+            // Load new asset's price history
+            await updatePriceHistory(currentAsset);
+        }
+
+        // Update asset selector initialization
         async function initializeAssetSelector() {
             const response = await fetch('http://localhost:5000/assets');
             const assets = await response.json();
             
-            // Load historical data for all assets
-            await Promise.all(assets.map(async (asset) => {
-                const response = await fetch(`http://localhost:5000/price_history/${asset}`);
-                const data = await response.json();
-                
-                // Convert historical data to candles
-                const candles = [];
-                const prices = data.prices;
-                const now = Date.now();
-                const timeStep = CANDLE_INTERVAL * 1000;
-                
-                for (let i = 0; i < prices.length; i++) {
-                    const timestamp = now - (prices.length - i) * timeStep;
-                    if (i === 0 || Math.floor(timestamp / timeStep) > Math.floor((now - (prices.length - (i-1)) * timeStep) / timeStep)) {
-                        candles.push(createCandle(prices[i], timestamp));
-                    }
-                    const currentCandle = candles[candles.length - 1];
-                    currentCandle.high = Math.max(currentCandle.high, prices[i]);
-                    currentCandle.low = Math.min(currentCandle.low, prices[i]);
-                    currentCandle.close = prices[i];
-                }
-                
-                candleData.set(asset, candles);
-            }));
-
             // Set up asset selector
             const selector = document.getElementById('asset-selector');
             assets.forEach(asset => {
@@ -663,26 +649,14 @@
             });
 
             selector.addEventListener('change', (e) => {
-                currentAsset = e.target.value;
-                const candles = candleData.get(currentAsset);
-                const currentCandle = currentCandles.get(currentAsset);
-                
-                if (candles && candles.length > 0) {
-                    candleSeries.setData(candles);
-                    if (currentCandle) {
-                        setTimeout(() => {
-                            candleSeries.update(currentCandle);
-                        }, 0);
-                    }
-                }
+                onAssetChange(e.target.value);
             });
 
             // Set initial asset
             if (assets.length > 0) {
                 currentAsset = assets[0];
                 selector.value = currentAsset;
-                const event = new Event('change');
-                selector.dispatchEvent(event);
+                await updatePriceHistory(currentAsset);
             }
         }
 
@@ -924,6 +898,69 @@
             const priceGroup = document.getElementById('price-input-group');
             priceGroup.style.display = e.target.value === 'market' ? 'none' : 'block';
         });
+
+        // Update the price history fetching and chart initialization
+        async function updatePriceHistory(asset) {
+            try {
+                // Fetch all price history from server without time constraints
+                const response = await fetch(`http://localhost:5000/price_history/${asset}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Transform data into candles
+                const candles = [];
+                let currentCandle = null;
+                
+                // Ensure we have data
+                if (!data.prices || data.prices.length === 0) {
+                    console.warn(`No price history available for ${asset}`);
+                    return;
+                }
+
+                // Sort prices by timestamp to ensure chronological order
+                const sortedPrices = data.prices.sort((a, b) => new Date(a[1]) - new Date(b[1]));
+                
+                sortedPrices.forEach(([price, timestamp]) => {
+                    const candleTime = Math.floor(new Date(timestamp).getTime() / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL;
+                    
+                    if (!currentCandle || currentCandle.time !== candleTime) {
+                        if (currentCandle) {
+                            candles.push(currentCandle);
+                        }
+                        currentCandle = {
+                            time: candleTime,
+                            open: price,
+                            high: price,
+                            low: price,
+                            close: price
+                        };
+                    } else {
+                        currentCandle.high = Math.max(currentCandle.high, price);
+                        currentCandle.low = Math.min(currentCandle.low, price);
+                        currentCandle.close = price;
+                    }
+                });
+                
+                if (currentCandle) {
+                    candles.push(currentCandle);
+                }
+
+                // Store the most recent candle in currentCandles
+                if (candles.length > 0) {
+                    currentCandles.set(asset, candles[candles.length - 1]);
+                }
+                
+                // Update candlestick series with all historical data
+                candleSeries.setData(candles);
+                
+            } catch (error) {
+                console.error('Error fetching price history:', error);
+            }
+        }
     </script>
 </body>
 </html> 

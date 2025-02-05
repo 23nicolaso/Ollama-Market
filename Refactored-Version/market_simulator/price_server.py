@@ -1,11 +1,13 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import threading
 import time
-from market_simulator.utils.market_utils import price_history, assets, markets
+from market_simulator.utils.db_utils import db_manager as db
+from market_simulator.utils.market_utils import price_history, assets, markets, get_price_history
 from market_simulator.utils.news_generator import generate_news_thread
 from market_simulator.agents.user_trader import UserTrader
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -51,12 +53,16 @@ def get_assets():
 @app.route('/price_history/<asset>')
 def get_price_history(asset):
     """Return price history for a specific asset"""
-    if asset in price_history:
+    try:
+        # Get historical data from database
+        historical_prices = db.get_price_history(asset)
+        
         return jsonify({
             'asset': asset,
-            'prices': price_history[asset]
+            'prices': historical_prices
         })
-    return jsonify({'error': 'Asset not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
 
 @socketio.on('place_order')
 def handle_place_order(data):

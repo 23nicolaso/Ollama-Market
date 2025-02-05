@@ -71,10 +71,12 @@ class MarketMaker(MarketAgent):
         total_sell_quantity = sum(order[0] for order in remaining_urgent_sells if order[1] != "MARKET MAKER")
 
         if total_buy_quantity > 0:
+            print("SELLING liquidity to the market")
             price_change = self.spreads[orderBook.asset] * total_buy_quantity / (MM_DEPTH*MM_BASE_ORDER_SIZE) # Adjust the divisor as needed
             self.placeOrder(orderBook, "sell", orderBook.getLastPrice() + round(price_change, 2), total_buy_quantity, "limit")
 
         if total_sell_quantity > 0:
+            print("BUYING liquidity from the market")
             price_change = self.spreads[orderBook.asset] * total_sell_quantity / (MM_DEPTH*MM_BASE_ORDER_SIZE) # Adjust the divisor as needed
             self.placeOrder(orderBook, "buy", orderBook.getLastPrice() - round(price_change, 2), total_sell_quantity, "limit")
 

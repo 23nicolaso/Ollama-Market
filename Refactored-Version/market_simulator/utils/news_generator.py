@@ -3,7 +3,7 @@ import re
 from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
-    URGENCY_ANALYSIS_PROMPT, ASSETS, CHAT_ANALYSIS_PROMPT
+    URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT
 )
 
 # Global variables to store agent references
@@ -45,6 +45,14 @@ def generate_news(custom_headline=None):
         )
     )
 
+    hft_sentiment_scores = invoke_model(
+        SENTIMENT_ANALYSIS_PROMPT_HFT.format(
+            world_context=WORLD_CONTEXT,
+            headline=recentHeadlines[-1],
+            assets=", ".join(ASSETS)
+        )
+    )
+
     # Get urgency score
     urgency_score = invoke_model(
         URGENCY_ANALYSIS_PROMPT.format(
@@ -53,8 +61,9 @@ def generate_news(custom_headline=None):
     )
 
     try:
-        urgency_score = int(urgency_score)
+        urgency_score = int(re.search(r'\d+', urgency_score).group())
     except:
+        print("Error parsing urgency score")
         urgency_score = 1
 
     _retail_trader.setReversionUrgency(urgency_score)
@@ -64,21 +73,43 @@ def generate_news(custom_headline=None):
     print(sentiment_scores)
     pattern = r'(\w[\w\s]*):\s*([\d.]+)' # apply regex to the sentiment scores
     sentiment_scores_dict = {}
+    hft_sentiment_scores_dict = {}
     scores = {match[0]: float(match[1]) for match in re.findall(pattern, sentiment_scores)}
-    
-    # Ensure all assets have a sentiment score, defaulting to 0.5 if not set
+    hft_scores = {match[0]: float(match[1]) for match in re.findall(pattern, hft_sentiment_scores)}
+
+    # First attempt to get sentiment scores
     for asset in ASSETS:
         if asset in scores:
             sentiment_scores_dict[asset] = scores[asset]
         else:
-            sentiment_scores_dict[asset] = 0.5
+            # Try one more time for missing assets
+            retry_sentiment = invoke_model(
+                SENTIMENT_ANALYSIS_PROMPT.format(
+                    world_context=WORLD_CONTEXT,
+                    headline=recentHeadlines[-1],
+                    assets=asset
+                )
+            )
+            retry_scores = {match[0]: float(match[1]) for match in re.findall(pattern, retry_sentiment)}
+            
+            # Use retry score if successful, otherwise default to 0.5
+            if asset in retry_scores:
+                sentiment_scores_dict[asset] = retry_scores[asset]
+            else:
+                sentiment_scores_dict[asset] = 0.5
+
+    for asset in ASSETS:
+        if asset in hft_scores:
+            hft_sentiment_scores_dict[asset] = hft_scores[asset]
+        else:
+            hft_sentiment_scores_dict[asset] = 0.5
 
     _retail_trader.retailSentimentScore = sentiment_scores_dict
     
     # Simulate HFT trading the news
     for market in markets:
         _market_maker.makeMarket(markets[market])
-        _hft_fund.tradeTheNews(market, _retail_trader)
+        _hft_fund.tradeTheNews(market, hft_sentiment_scores_dict[market])
         _retail_trader.trade(markets[market])
         _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
         _market_maker.provideLiquidity(markets[market])

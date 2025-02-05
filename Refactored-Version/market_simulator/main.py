@@ -20,6 +20,7 @@ from market_simulator.utils.market_utils import makeMarkets, markets, price_hist
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread, init_agents
 from market_simulator.price_server import start_server as start_api_server
 from market_simulator.web.server import run as run_web_server
+from market_simulator.utils.db_utils import init_db, shutdown_db
 
 def run_simulation(root, main_window):
     """Run the main simulation loop"""
@@ -37,7 +38,7 @@ def run_simulation(root, main_window):
         for market in markets:
             retail_trader.trade(markets[market])
 
-        max_history_length = 1000
+        max_history_length = 500
         for asset in price_history:
             if len(price_history[asset]) > max_history_length:
                 price_history[asset] = price_history[asset][-max_history_length:]
@@ -90,51 +91,54 @@ def run_simulation(root, main_window):
         tick += 1
 
 def main():
-    # Create root window
-    root = tk.Tk()
-    main_window = MainWindow(root)
-
-    # Initialize markets
-    makeMarkets()
+    # Initialize database
+    init_db()
     
-    # Initialize agents
-    global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund
-    retail_trader = RetailTrader("RETAIL TRADER", 1000000)
-    hft_fund = HFTFund("EVENTS TRADING FUND", 10000000)
-    spy_arb_fund = SpyArbFund("SPY ARBITRAGE FUND", 10000000)
-    mean_reversion_fund = HedgeFund("Mean Reversion Fund", 10000000, "mean_reversion")
-    ta_traders = TATrader("TA TRADING FIRM", 1000000)
-    market_maker = MarketMaker("MARKET MAKER", 100000000000000, spreads=spreads_by_market)
-    long_term_investor = LongTermInvestor("LONG TERM INVESTOR", 10000000)
-
-    # Initialize news generator with agents
-    init_agents(retail_trader, hft_fund, market_maker, long_term_investor)
-
-    # Generate initial news and chat
-    generate_news_thread()
-    generate_chat_thread()
-
-    # Start API server in a separate thread
-    api_thread = threading.Thread(target=start_api_server)
-    api_thread.daemon = True
-    api_thread.start()
-
-    # Start web server in a separate thread
-    web_thread = threading.Thread(target=lambda: run_web_server(8000))
-    web_thread.daemon = True
-    web_thread.start()
-
-    # Start simulation in a separate thread
-    sim_thread = threading.Thread(target=run_simulation, args=(root, main_window))
-    sim_thread.daemon = True
-    sim_thread.start()
-
-    # Start tkinter main loop
     try:
+        # Create root window
+        root = tk.Tk()
+        main_window = MainWindow(root)
+
+        # Initialize markets
+        makeMarkets()
+        
+        # Initialize agents
+        global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund
+        retail_trader = RetailTrader("RETAIL TRADER", 1000000)
+        hft_fund = HFTFund("EVENTS TRADING FUND", 10000000)
+        spy_arb_fund = SpyArbFund("SPY ARBITRAGE FUND", 10000000)
+        mean_reversion_fund = HedgeFund("Mean Reversion Fund", 10000000, "mean_reversion")
+        ta_traders = TATrader("TA TRADING FIRM", 1000000)
+        market_maker = MarketMaker("MARKET MAKER", 100000000000000, spreads=spreads_by_market)
+        long_term_investor = LongTermInvestor("LONG TERM INVESTOR", 10000000)
+
+        # Initialize news generator with agents
+        init_agents(retail_trader, hft_fund, market_maker, long_term_investor)
+
+        # Generate initial news and chat
+        generate_news_thread()
+        generate_chat_thread()
+
+        # Start API server in a separate thread
+        api_thread = threading.Thread(target=start_api_server)
+        api_thread.daemon = True
+        api_thread.start()
+
+        # Start web server in a separate thread
+        web_thread = threading.Thread(target=lambda: run_web_server(8000))
+        web_thread.daemon = True
+        web_thread.start()
+
+        # Start simulation in a separate thread
+        sim_thread = threading.Thread(target=run_simulation, args=(root, main_window))
+        sim_thread.daemon = True
+        sim_thread.start()
+
+        # Start tkinter main loop
         root.mainloop()
-    except KeyboardInterrupt:
-        print("Shutting down...")
-        sys.exit(0)
+    finally:
+        # Ensure database is properly shutdown
+        shutdown_db()
 
 if __name__ == "__main__":
     main() 

@@ -4,12 +4,44 @@ from market_simulator.gui.charts import ChartFrame
 from market_simulator.gui.news_feed import NewsFeedFrame
 from market_simulator.utils.market_utils import assets, last_prices, estimateUnderlyingValue
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread
+import tkinter.messagebox as messagebox
 
 class MainWindow:
     def __init__(self, root):
         self.root = root
-        self.root.title("Market Simulation")
+        self.root.title("Market Simulator")
         self.root.geometry("2000x800")
+
+        # Create top frame for controls
+        self.control_frame = ttk.Frame(root)
+        self.control_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        # Add asset selector
+        self.asset_var = tk.StringVar(value=assets[0])
+        self.asset_selector = ttk.Combobox(
+            self.control_frame, 
+            textvariable=self.asset_var,
+            values=assets
+        )
+        self.asset_selector.pack(side=tk.LEFT, padx=5)
+        self.asset_selector.bind('<<ComboboxSelected>>', self.on_asset_change)
+
+        # Add number selector
+        self.number_var = tk.StringVar(value="500")
+        self.number_selector = ttk.Entry(
+            self.control_frame,
+            textvariable=self.number_var,
+            width=10
+        )
+        self.number_selector.pack(side=tk.LEFT, padx=5)
+
+        # Add wipe database button
+        self.wipe_button = ttk.Button(
+            self.control_frame,
+            text="Wipe DB",
+            command=self.wipe_database
+        )
+        self.wipe_button.pack(side=tk.RIGHT, padx=5)
 
         # Create main frame
         self.frame = ttk.Frame(root)
@@ -102,4 +134,11 @@ class MainWindow:
 
     def update(self):
         self.chart_frame.update_chart(self.asset_var.get(), self.number_var.get())
-        self.root.update() 
+        self.root.update()
+
+    def wipe_database(self):
+        """Wipes the price history database after confirmation"""
+        if messagebox.askyesno("Confirm", "Are you sure you want to wipe the price history database?"):
+            from market_simulator.utils.db_utils import wipe_db
+            wipe_db()
+            messagebox.showinfo("Success", "Database has been wiped") 

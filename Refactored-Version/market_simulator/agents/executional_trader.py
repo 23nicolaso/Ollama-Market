@@ -45,7 +45,7 @@ class ExecutionalTrader(MarketAgent):
                 quantity_to_fill = max(1, int(random.uniform(0.01, 0.05) * order["quantity"]))
         
                 # Place the order
-                self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice(), quantity_to_fill, "limit")
+                self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice(), quantity_to_fill, "market")
 
                 # Update the remaining quantity
                 order["quantity"] -= quantity_to_fill

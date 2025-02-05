@@ -18,13 +18,13 @@ class TATrader(ExecutionalTrader):
         current_price = markets[market].getLastPrice()
 
         if current_price > mean_price + std_dev*2 and self.account.getPosition(market) > -TA_POSITION_LIMIT:
-            self.placeOrder(markets[market], "sell", mean_price + std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
+            self.placeOrder(markets[market], "sell", mean_price + std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
         elif current_price < mean_price - std_dev*2 and self.account.getPosition(market) < TA_POSITION_LIMIT:
-            self.placeOrder(markets[market], "buy", mean_price - std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "limit")
+            self.placeOrder(markets[market], "buy", mean_price - std_dev*2, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
 
-        # trade on cross of close and moving average of 1000 ticks
-        if len(price_list) >= 1000:
-            stma = sum(price_list[-1000:]) / 1000
+        # trade on cross of close and moving average of 500 ticks
+        if len(price_list) >= 500:
+            stma = sum(price_list[-500:]) / 500
             
             # If price crosses above MA, buy
             if current_price > stma and price_list[-2] <= stma and self.account.getPosition(market) < TA_POSITION_LIMIT:
@@ -34,9 +34,19 @@ class TATrader(ExecutionalTrader):
             elif current_price < stma and price_list[-2] >= stma and self.account.getPosition(market) > -TA_POSITION_LIMIT:
                 self.placeOrder(markets[market], "sell", current_price, ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
 
-        # If 2% drop over past 1000 ticks, execute a dip-buying strategy
-        if len(price_history[market]) >= 1000:
-            start_price = price_history[market][-1000]
+        # If price is near a key level (nearest number), trade off the level
+        if abs(round(current_price) - current_price) < 0.05:
+            if markets[market].asset == "SPY":
+                print(f"Trading off level {round(current_price)}")
+            stma = sum(price_list[-200:]) / 200
+            if stma > round(current_price) and self.account.getPosition(market) > -TA_POSITION_LIMIT:
+                self.placeOrder(markets[market], "sell", round(current_price), ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
+            elif stma < round(current_price) and self.account.getPosition(market) < TA_POSITION_LIMIT:
+                self.placeOrder(markets[market], "buy", round(current_price), ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE), "market")
+
+        # If 1% drop over past 500 ticks, execute a dip-buying strategy
+        if len(price_history[market]) >= 500:
+            start_price = price_history[market][-500]
             current_price = price_history[market][-1]
             price_drop = (start_price - current_price) / start_price
             
