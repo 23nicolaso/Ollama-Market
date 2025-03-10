@@ -167,7 +167,7 @@ CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
 
 # LLM configuration
-LLM_MODEL = "mistral:7b" 
+LLM_MODEL = "mistral-7b-q4km:latest" 
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
@@ -187,9 +187,9 @@ USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swin
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
-TA_POSITION_LIMIT = 50000  # Moderate position limit
-TA_MEGA_ORDER_SIZE = 10000  # Huge, infrequent trades
-TA_LARGE_ORDER_SIZE = 1000  # Larger trades for strong signals
+TA_POSITION_LIMIT = 500000  # Moderate position limit
+TA_MEGA_ORDER_SIZE = 100000  # Huge, infrequent trades
+TA_LARGE_ORDER_SIZE = 10000  # Larger trades for strong signals
 
 # Long-term investor - larger but infrequent trades
 LT_INVESTOR_MAX_ORDER_SIZE = 100  # Increased for more impactful position building
