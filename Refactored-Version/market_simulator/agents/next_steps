@@ -1,0 +1,3 @@
+3. add a state memory which is modified by random events and news, add analysts
+who anticipate where state memory will go 
+4. see if there's any way to improve the data struc for the sorted dict

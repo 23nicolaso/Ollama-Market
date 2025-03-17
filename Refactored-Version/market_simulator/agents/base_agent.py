@@ -5,9 +5,31 @@ class MarketAgent:
     def __init__(self, accountID, cash):
         self.account = Account(accountID, cash)
         accounts[accountID] = self.account
+        self.orders = []
         
     def placeOrder(self, orderBook, direction, price, quantity, orderType):
-        orderBook.addOrder(direction, price, quantity, orderType, self.account.accountID)
+        order_key = orderBook.addOrder(direction, price, quantity, orderType, self.account.accountID)
+        if order_key != 0:
+            self.orders.append(order_key)
+        return order_key
+
+    def cancelAllOrders(self, orderBook):
+        self.checkOrders(orderBook)
+        for order in self.orders:
+            orderBook.cancelOrder(order)
+            print(order)
+        orderBook.debugListBidsAsks()
+
+        self.orders.clear()
+
+    def cancelOrder(self, orderBook, order):
+        orderBook.cancelOrder(order)
+        self.orders.remove(order)
+
+    def checkOrders(self, orderBook):
+        for order in self.orders:
+            if orderBook.isOrderNone(order):
+                self.orders.remove(order)
 
     def displayAccount(self):
         print(f"Account {self.account.accountID} has {self.account.getCash()} cash and the following positions: {self.account.positions}") 

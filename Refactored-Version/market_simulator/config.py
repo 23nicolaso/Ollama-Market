@@ -161,7 +161,7 @@ TEXT_WIDGET_SIZE = (40, 40)
 TABLE_COLUMN_WIDTH = 150
 
 # Simulation configuration
-MAX_HISTORY_LENGTH = 1000
+MAX_HISTORY_LENGTH = 500
 TICK_RESET_THRESHOLD = 10
 CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
@@ -176,20 +176,22 @@ HFT_BASE_ORDER_SIZE = 10000
 
 # Market maker - provides liquidity
 MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 500  # Smaller base size for tighter spreads
-MM_MAX_VOLATILITY_MULT = 5  # Reduced to prevent extreme price moves
-MM_DEPTH = 5  # Increased for more liquidity levels
+MM_BASE_ORDER_SIZE = 100  
+MM_MAX_VOLATILITY_MULT = 5  
+MM_DEPTH = 5  
+MM_REQUIRED_LIQ = 1000
+NEARBY_RANGE = 0.05
 
 # Retail traders - many small trades
-RETAIL_MAX_ORDER_SIZE = 10  # Small individual trades
+RETAIL_MAX_ORDER_SIZE = 100  # Small individual trades
 RETAIL_POSITION_LIMIT = 50000  # Limited position size
 USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swings
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
-TA_POSITION_LIMIT = 500000  # Moderate position limit
-TA_MEGA_ORDER_SIZE = 100000  # Huge, infrequent trades
-TA_LARGE_ORDER_SIZE = 10000  # Larger trades for strong signals
+TA_POSITION_LIMIT = 100000  # Moderate position limit
+TA_MEGA_ORDER_SIZE = 10000  # Huge, infrequent trades
+TA_LARGE_ORDER_SIZE = 1000  # Larger trades for strong signals
 
 # Long-term investor - larger but infrequent trades
 LT_INVESTOR_MAX_ORDER_SIZE = 100  # Increased for more impactful position building

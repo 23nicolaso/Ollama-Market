@@ -40,14 +40,15 @@ class HedgeFund(ExecutionalTrader):
             self.macro_strategy()
 
     def mean_reversion_strategy(self):
-        for asset in assets:
-            if len(price_history[asset]) < 50:
-                continue
+        return
+        # for asset in assets:
+        #     if len(price_history[asset]) < 50:
+        #         continue
             
-            # Calculate mean and standard deviation
-            mean_price = sum(price_history[asset][-50:]) / 50
-            current_price = markets[asset].getLastPrice()
+        #     # Calculate mean and standard deviation
+        #     mean_price = sum(price_history[asset][-50:]) / 50
+        #     current_price = markets[asset].getLastPrice()
             
-            # If price is significantly above mean, sell; if below, buy
-            deviation = (current_price - mean_price) / mean_price
-            self.target_positions[asset] = -int(deviation * self.position_limits[asset])
+        #     # If price is significantly above mean, sell; if below, buy
+        #     deviation = (current_price - mean_price) / mean_price
+        #     self.target_positions[asset] = -int(deviation * self.position_limits[asset])

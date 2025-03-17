@@ -14,12 +14,12 @@ class ChartFrame(ttk.Frame):
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.pack(fill=tk.BOTH, expand=True)
 
-    def update_chart(self, asset, num_points=500):
+    def update_chart(self, asset, num_points=10):
         self.ax.clear()
         try:
-            self.ax.plot(price_history[asset][-num_points:])
+            self.ax.plot(price_history[asset].get()[:num_points])
         except:
-            self.ax.plot(price_history[asset][-200:])
+            self.ax.plot(price_history[asset].get())
         self.ax.set_title(f"{asset} Price History")
         self.ax.set_xlabel("Time")
         self.ax.set_ylabel("Price")

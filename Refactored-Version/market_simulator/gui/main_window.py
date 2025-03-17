@@ -27,7 +27,7 @@ class MainWindow:
         self.asset_selector.bind('<<ComboboxSelected>>', self.on_asset_change)
 
         # Add number selector
-        self.number_var = tk.StringVar(value="500")
+        self.number_var = tk.StringVar(value="10")
         self.number_selector = ttk.Entry(
             self.control_frame,
             textvariable=self.number_var,
@@ -57,7 +57,7 @@ class MainWindow:
         self.chart_length_label = ttk.Label(self.frame, text="Chart Length")
         self.chart_length_label.grid(row=0, column=1, rowspan=1, columnspan=1)
 
-        self.number_var = tk.IntVar(value=500)
+        self.number_var = tk.IntVar(value=10)
         self.number_spinbox = tk.Spinbox(self.frame, from_=1, to=1000, textvariable=self.number_var)
         self.number_spinbox.grid(row=0, column=2, rowspan=1, columnspan=1)
 

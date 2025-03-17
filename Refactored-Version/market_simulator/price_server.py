@@ -29,15 +29,16 @@ def emit_orderbook_update(asset):
     """Emit order book update through websocket"""
     if asset in markets:
         market = markets[asset]
-        bids = {str(price): level.getQuantity() for price, level in market.getBids().items()}
-        asks = {str(price): level.getQuantity() for price, level in market.getAsks().items()}
-        
-        socketio.emit('orderbook_update', {
-            'asset': asset,
-            'bids': bids,
-            'asks': asks,
-            'timestamp': time.time()
-        })
+        try:
+            bidsandasks = market.getBidAskPairs()
+            socketio.emit('orderbook_update', {
+                'asset': asset,
+                'bids': bidsandasks[0],
+                'asks': bidsandasks[1],
+                'timestamp': time.time()
+            })
+        except:
+            bidsandasks = {}
 
 def generate_periodic_news():
     """Generate news every 5 minutes"""
@@ -100,8 +101,8 @@ def emit_updates():
             if asset in price_history and price_history[asset]:
                 socketio.emit('price_update', {
                     'asset': asset,
-                    'price': price_history[asset][-1],
-                    'history': price_history[asset][-100:]  # Send last 100 prices
+                    'price': float(price_history[asset].getLastPrice()),
+                    'history': price_history[asset].get().tolist()
                 })
             
             # Emit order book updates

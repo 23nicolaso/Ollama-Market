@@ -16,7 +16,7 @@ from market_simulator.agents.hft_fund import HFTFund
 from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.agents.long_term_investor import LongTermInvestor
 from market_simulator.gui.main_window import MainWindow
-from market_simulator.utils.market_utils import makeMarkets, markets, price_history, simulation_age, update_price_history, spreads_by_market
+from market_simulator.utils.market_utils import makeMarkets, markets, price_history, update_price_history, spreads_by_market
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread, init_agents
 from market_simulator.price_server import start_server as start_api_server
 from market_simulator.web.server import run as run_web_server
@@ -37,16 +37,9 @@ def run_simulation(root, main_window):
     while True:
         for market in markets:
             retail_trader.trade(markets[market])
-
-        max_history_length = 500
-        for asset in price_history:
-            if len(price_history[asset]) > max_history_length:
-                price_history[asset] = price_history[asset][-max_history_length:]
+            market_maker.provideLiquidity(markets[market])
 
         retail_trader.shiftSentimentToMean()
-
-        for market in markets:
-            market_maker.provideLiquidity(markets[market])
 
         if tick > 10:        
             simulation_age += 1
@@ -70,9 +63,6 @@ def run_simulation(root, main_window):
                 ta_traders.checkConditionalOrders(market)
                 
                 ta_traders.updatePositioning(market)
-                markets[market].clearEmptyOrderlevels()
-                markets[market].cancelAllOldOrders()
-                markets[market].clearFarOrders()
 
                 if len(price_history[market]) < 100:
                     continue

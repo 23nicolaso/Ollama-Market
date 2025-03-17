@@ -7,6 +7,60 @@ from market_simulator.config import (
 from datetime import datetime, timedelta
 from market_simulator.utils.db_utils import get_price_history as get_db_price_history
 from market_simulator.utils.db_utils import db_manager as db
+import numpy as np
+
+class CircularBuffer:
+    # CIRCULAR BUFFER TO STORE PAST PRICES INSTEAD OF ARRAY FOR FAST SPEED
+    def __init__(self, size=500):
+        self.size = size
+        self.buffer = np.empty(size, dtype=np.float64)  # Preallocated buffer
+        self.index = 0  # Tracks the next write position
+        self.full = False  # Tracks if the buffer has filled
+        
+    def getLastPrice(self):
+        """Returns the most recent price in the buffer."""
+        if self.index == 0:
+            # If index is 0, the last item is at the end of the buffer (if full)
+            # or there are no items yet
+            return self.buffer[-1] if self.full else None
+        # Otherwise, the last item is at index-1
+        return self.buffer[self.index - 1]
+
+    def append(self, value):
+        """Adds a new float value to the buffer, overwriting the oldest one if full."""
+        self.buffer[self.index] = value
+        self.index = (self.index + 1) % self.size  # Circular increment
+        if self.index == 0:  # Marks buffer as full once it wraps
+            self.full = True
+
+    def get(self):
+        """Returns the buffer in correct order (newest last)."""
+        if not self.full:
+            return self.buffer[:self.index]  # Only valid data
+        return np.concatenate((self.buffer[self.index:], self.buffer[:self.index]))  # Reorder
+
+    def mean(self):
+        """Returns the mean price without reordering."""
+        if not self.full:
+            return np.mean(self.buffer[:self.index])
+        return np.mean(self.buffer)
+
+    def std(self):
+        """Returns the standard deviation without reordering."""
+        if not self.full:
+            return np.std(self.buffer[:self.index], ddof=0)  
+        return np.std(self.buffer, ddof=0)
+
+    def sum(self):
+        """Returns the sum without reordering."""
+        if not self.full:
+            return np.sum(self.buffer[:self.index])
+        return np.sum(self.buffer)
+
+    def __len__(self):
+        """Returns the number of elements currently in the buffer."""
+        return self.size if self.full else self.index
+
 
 # Add these to the global variables
 news_queue = queue.Queue()
@@ -27,13 +81,15 @@ recentHeadlines = []  # Stores list of recently generated headlines
 
 # Initialize last_prices and price_history from DB or defaults
 for asset in ASSETS:
+    price_history[asset] = CircularBuffer(MAX_HISTORY_LENGTH)
     db_prices = db.get_price_history(asset)
     if db_prices:
         last_prices[asset] = db_prices[-1][0]  # Get most recent price
-        price_history[asset] = [price for price, _ in db_prices]
+        for price, _ in db_prices[-MAX_HISTORY_LENGTH:]:
+            price_history[asset].append(price)
     else:
         last_prices[asset] = INITIAL_PRICES[asset]
-        price_history[asset] = [INITIAL_PRICES[asset]]
+        price_history[asset].append([INITIAL_PRICES[asset]])
 
 # Initialize LLM
 model = OllamaLLM(model=LLM_MODEL)
@@ -49,15 +105,14 @@ def update_price_history(asset, price):
         rounded_price = round(price, 2)
         price_history[asset].append(rounded_price)
         db.queue_price_update(asset, rounded_price)
-        if len(price_history[asset]) > MAX_HISTORY_LENGTH:
-            price_history[asset] = price_history[asset][-MAX_HISTORY_LENGTH:]
     else:
         rounded_price = round(price, 2)
-        price_history[asset] = [rounded_price]
+        price_history[asset] = CircularBuffer(MAX_HISTORY_LENGTH)
+        price_history[asset].append(rounded_price)
 
 def makeMarkets():
     """Creates OrderBook objects for all assets"""
-    from market_simulator.models.order_book import OrderBook
+    from market_simulator.models.reworked_order_book import OrderBook
     for asset in assets:
         markets[asset] = OrderBook(asset, last_prices[asset])
 
@@ -88,7 +143,8 @@ def get_price_history(asset, start_time=None, end_time=None):
     memory_prices = []
     if asset in price_history:
         time_step = timedelta(seconds=0.1)  # 100ms between price updates
-        for i, price in enumerate(reversed(price_history[asset])):
+        prices = price_history[asset].get()  # Get prices in correct order from CircularBuffer
+        for i, price in enumerate(reversed(prices)):
             timestamp = current_time - (i * time_step)
             memory_prices.append((price, timestamp))
         memory_prices.reverse()

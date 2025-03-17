@@ -272,7 +272,7 @@ if __name__ == "__main__":
     # Define all benchmark tests
     benchmark_tests = {
         "Add Limit Orders": {
-            "num_ops": 10000,
+            "num_ops": 50000,
             "operations": lambda ob: ob.addOrder(
                 "buy" if random.random() < 0.5 else "sell",
                 random.uniform(95.0, 105.0),
@@ -282,7 +282,7 @@ if __name__ == "__main__":
             )
         },
         "Add Market Orders": {
-            "num_ops": 1000,
+            "num_ops": 50000,
             "operations": lambda ob: ob.addOrder(
                 "buy" if random.random() < 0.5 else "sell",
                 100.0,
@@ -292,7 +292,7 @@ if __name__ == "__main__":
             )
         },
         "Matching Orders": {
-            "num_ops": 1000,
+            "num_ops": 100000,
             "operations": lambda ob: ob.addOrder(
                 "buy" if random.random() < 0.5 else "sell",
                 100.0,  # Ensure price crosses the book
@@ -318,7 +318,7 @@ if __name__ == "__main__":
             ]
         },
         "Cancel Orders": {
-            "num_ops": 1000,
+            "num_ops": 10000,
             "operations": lambda ob: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
             "setup": lambda ob: [
                 ob.addOrder(
@@ -331,7 +331,7 @@ if __name__ == "__main__":
             ]
         },
         "Mixed Workload": {
-            "num_ops": 5000,
+            "num_ops": 10000,
             "operations": lambda ob: random.choice([
                 # 60% add orders
                 lambda: ob.addOrder(
@@ -348,7 +348,7 @@ if __name__ == "__main__":
             ])()
         },
         "High-Frequency Trading": {
-            "num_ops": 10000,
+            "num_ops": 1000,
             "operations": lambda ob: (
                 # Add small order
                 ob.addOrder(
