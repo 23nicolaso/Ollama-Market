@@ -1,3 +1,7 @@
+"""
+A series of tests to ensure that @reworked_order_book is working effectively
+"""
+
 from market_simulator.models.reworked_order_book import OrderBook
 from market_simulator.models.account import Account
 from market_simulator.utils.market_utils import accounts
@@ -14,7 +18,7 @@ def remake():
 
 def displayTraders():
     print("TRADER A: ", account1.getPosition("SPY"), account1.getPosition("CASH"), " TRADER B: ", account2.getPosition("SPY"), account2.getPosition("CASH"))
-# bid 500 ask 500 clear @ 500
+# # bid 500 ask 500 clear @ 500
 # print("\n BUY 500, SELL 500. FULL FILL @ 500")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")
@@ -24,6 +28,17 @@ def displayTraders():
 # ob.addOrder("sell", 500, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
+
+# print("\n SELL 500, BUY 500. FULL FILL @ 500")
+# ob, account1, account2 = remake()
+# ob.addOrder("sell", 500, 100, "limit", "john")
+# ob.display()
+# displayTraders()
+
+# ob.addOrder("buy", 500, 100, "limit", "bob")
+# ob.display()
+# displayTraders()
+
 
 # # buy 450 sell 550, no fill
 # print("\n BUY 450, SELL 550. NO FILL")
@@ -120,13 +135,13 @@ def displayTraders():
 # ob.display()
 # displayTraders()
 
-# # market buy and then limit sell
+# market buy and then limit sell
 # print("\n MARKET BUY & LIMIT SELL")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 0, 100, "market", "john")
 # ob.display()
 # displayTraders()
-# ob.addOrder("sell", 0, 100, "limit", "bob")
+# ob.addOrder("sell", 500, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
 
@@ -149,8 +164,12 @@ from market_simulator.agents.market_maker import MarketMaker
 from market_simulator.config import SPREADS
 ob,acc1,acc2 = remake()
 mm = MarketMaker("testacc", 100000000, SPREADS)
-# mm.makeMarket(ob)
-# ob.addOrder("buy", 600, 100000, "market", "john")
-# mm.provideLiquidity(ob)
 mm.makeMarket(ob)
+ob.display()
+ob.addOrder("buy", 600, 100000, "market", "john")
+ob.display()
+mm.provideLiquidity(ob)
+ob.display()
+mm.makeMarket(ob)
+ob.display()
 print(ob.getNearbyDepth(0.1))

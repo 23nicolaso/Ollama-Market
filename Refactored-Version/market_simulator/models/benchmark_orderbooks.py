@@ -271,16 +271,16 @@ if __name__ == "__main__":
     
     # Define all benchmark tests
     benchmark_tests = {
-        "Add Limit Orders": {
-            "num_ops": 50000,
-            "operations": lambda ob: ob.addOrder(
-                "buy" if random.random() < 0.5 else "sell",
-                random.uniform(95.0, 105.0),
-                random.randint(1, 100),
-                "limit",
-                f"TEST_ACCOUNT_{random.randint(1, 100)}"
-            )
-        },
+        # "Add Limit Orders": {
+        #     "num_ops": 50000,
+        #     "operations": lambda ob: ob.addOrder(
+        #         "buy" if random.random() < 0.5 else "sell",
+        #         random.uniform(95.0, 105.0),
+        #         random.randint(1, 100),
+        #         "limit",
+        #         f"TEST_ACCOUNT_{random.randint(1, 100)}"
+        #     )
+        # },
         "Add Market Orders": {
             "num_ops": 50000,
             "operations": lambda ob: ob.addOrder(
@@ -293,13 +293,45 @@ if __name__ == "__main__":
         },
         "Matching Orders": {
             "num_ops": 100000,
-            "operations": lambda ob: ob.addOrder(
-                "buy" if random.random() < 0.5 else "sell",
-                100.0,  # Ensure price crosses the book
-                random.randint(1, 10),
-                "limit",
-                f"TEST_ACCOUNT_{random.randint(1, 100)}"
-            ),
+            "operations": lambda ob: (
+                ob.addOrder(
+                    "buy" if random.random() < 0.5 else "sell",
+                    100.0,  # Ensure price crosses the book
+                    random.randint(1, 10),
+                    "limit",
+                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
+                ),
+                ob.matchBooks()  # Explicitly call matchBooks
+            )[0],  # Return the result of addOrder to maintain the same return type
+            "setup": lambda ob: [
+                ob.addOrder(
+                    "buy", 
+                    99.5, 
+                    1000, 
+                    "limit", 
+                    "MARKET MAKER"
+                ),
+                ob.addOrder(
+                    "sell", 
+                    100.5, 
+                    1000, 
+                    "limit", 
+                    "MARKET MAKER"
+                )
+            ]
+        },
+        "Matching Market Orders": {
+            "num_ops": 100000,
+            "operations": lambda ob: (
+                ob.addOrder(
+                    "buy" if random.random() < 0.5 else "sell",
+                    100.0,  # Ensure price crosses the book
+                    random.randint(1, 10),
+                    "market",
+                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
+                ),
+                ob.matchBooks()  # Explicitly call matchBooks
+            )[0],  # Return the result of addOrder to maintain the same return type
             "setup": lambda ob: [
                 ob.addOrder(
                     "buy", 

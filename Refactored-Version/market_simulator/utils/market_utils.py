@@ -28,6 +28,12 @@ class CircularBuffer:
 
     def append(self, value):
         """Adds a new float value to the buffer, overwriting the oldest one if full."""
+            # Convert value to float if it's a sequence with one element
+        if hasattr(value, '__len__'):
+            value = float(value[0])
+        else:
+            value = float(value)
+            
         self.buffer[self.index] = value
         self.index = (self.index + 1) % self.size  # Circular increment
         if self.index == 0:  # Marks buffer as full once it wraps

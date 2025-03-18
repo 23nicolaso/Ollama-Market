@@ -1,4 +1,6 @@
 '''
+I asked claude-3.7-sonnet to optimize reworked_order_book and this is what I got
+
 This is a highly optimized version of the order book that:
 1. Eliminates Order class instances to reduce object creation/destruction overhead
 2. Uses primitive data structures (arrays/lists) for order storage

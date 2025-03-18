@@ -1,17 +1,8 @@
-'''
-This is a reworked version of the order book that uses a sorted dictionary to store orders.
-While it was designed to have far more efficient runtimes asymptotically, it is actually slower in practice.
-This is due to the overhead caused by having a sorted dictionary with custom key functions, 
-and because the original order book took advantage of efficient batching, whereas this model
-uses too many individual operations, which is less efficient.
-'''
-
 from market_simulator.utils.market_utils import last_prices, accounts
 from market_simulator.price_server import emit_trade_update
-from market_simulator.portfolio_utils import calculate_portfolio_status, emit_portfolio_update
 from sortedcontainers import SortedDict
 from collections import deque
-from time import time
+import math
 
 class Order:
     def __init__(self, counter, direction, price, quantity, orderType, accountID):
@@ -36,11 +27,10 @@ class OrderBook:
         self.asset = asset
         self.counter = 0 # used for orderIDs
 
-        # sorted dictionaries of orders, sorted by price time priority
-        # NOTE IN ORDER OF (orderType, price, time, orderID)
-
+        # sorted dictionaries of orders, maintaining price time priority
         # bids use custom key function to sort in prices descending order 
-        self.bids = SortedDict(lambda k: (-k[1], k[2], k[3]))
+        # NOTE: do not need to sort based on time for time priority, as insertion order is maintained
+        self.bids = SortedDict(lambda k: -k[0])
         # asks use default key function
         self.asks = SortedDict()
         self.urgentBuys = deque()
@@ -61,7 +51,7 @@ class OrderBook:
         # Process bids - group by price and sum quantities
         bid_dict = {}
         for key, order in self.bids.items():
-            price = key[1]  # Price is the second element in the composite key
+            price = key[0]  # Price is the first element in the composite key
             if price not in bid_dict:
                 bid_dict[price] = 0
             bid_dict[price] += order.quantity
@@ -69,7 +59,7 @@ class OrderBook:
         # Process asks - group by price and sum quantities
         ask_dict = {}
         for key, order in self.asks.items():
-            price = key[1]  # Price is the second element in the composite key
+            price = key[0]  # Price is the first element in the composite key
             if price not in ask_dict:
                 ask_dict[price] = 0
             ask_dict[price] += order.quantity
@@ -80,6 +70,9 @@ class OrderBook:
         
         return bid_pairs, ask_pairs
     
+    def matchBooks(self):
+        return # DOES NOTHING, HERE JUST SO THE BENCHMARK SCRIPT WORKS 
+
     def getNearbyDepth(self, depth):
         # returns how big bid,ask are in +/- depth of last price
         bid_rng = self.getLastPrice()-depth
@@ -142,120 +135,195 @@ class OrderBook:
         """
         remaining_quantity = quantity
         total_fill_price = 0
-        filled_keys = []  # Track keys to remove after iteration
+        filled_keys = deque()  # Deque to track keys to remove after iteration
         side = "buy" if direction == 1 else "sell"
         oppSide = "sell" if side == "buy" else "buy"
         
         if direction == "buy":
             book = self.asks
             urgentBook = self.urgentSells
+            urgentQuantity = self.urgentSellQuantity
             bookSize = self.askSize
         else:
             book = self.bids
             urgentBook = self.urgentBuys
+            urgentQuantity = self.urgentBuyQuantity
             bookSize = self.bidSize
 
-        # Clear against urgent orders first
-        while len(urgentBook) > 0:
-            if remaining_quantity <= 0:
-                break
-            
-            urgentOrder = urgentBook.popleft() 
-            if urgentOrder.quantity <= 0: # empty order, skip to next iteration
-                continue
+        if orderType == "limit":
+            fillPrice = price
+        else:
+            fillPrice = self.getLastPrice()
 
-            if orderType == "market":
-                fillPrice = last_prices[self.asset]
-            else:
-                fillPrice = price
+        # If urgent book quantity < quantity, fill all urgent book and reduce remaining_qty accordingly
+        if urgentQuantity < remaining_quantity:  
+            # fill all urgent orders at once (for efficient batching)
+            for order in urgentBook:
+                order.fillEntireOrder(self.asset, fillPrice)
+                emit_trade_update(order.accountID, self.asset, oppSide, order.quantity, fillPrice)
+                emit_trade_update(accountID, self.asset, side, order.quantity, fillPrice)
 
-            if urgentOrder.quantity >= remaining_quantity: # case where current urgent order is larger than or equal to remaining quantity
-                fill_qty = remaining_quantity
-                urgentOrder.fillQuantity(self.asset, fill_qty, fillPrice) # reduce urgent order quantity by remaining quantity
-                if direction == "buy":
-                    self.urgentSellQuantity -= fill_qty
-                else:
-                    self.urgentBuyQuantity -= fill_qty
-                total_fill_price += fillPrice * fill_qty
-                remaining_quantity = 0
+            urgentBook.clear() # O(1) operation
+            remaining_quantity -= urgentQuantity
+            total_fill_price += fillPrice*urgentQuantity
+            urgentQuantity = 0
 
-                emit_trade_update(urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice)
-                emit_trade_update(accountID, self.asset, side, fill_qty, fillPrice)
-                emit_portfolio_update(urgentOrder.accountID, calculate_portfolio_status(accounts[urgentOrder.accountID]))
-                emit_portfolio_update(accountID, calculate_portfolio_status(accounts[accountID]))
+        else: # urgent book quantity > quantity, so order will be fully filled
+            urgentQuantity -= remaining_quantity
+            # fill until remaining_quantity reached or urgent book is empty
+            while remaining_quantity > 0:
+                if len(urgentBook)==0:
+                    break
+                urgentOrder = urgentBook.popleft() 
+                if urgentOrder.quantity <= 0: # empty order, skip to next iteration
+                    continue
 
-                if urgentOrder.quantity > 0:
-                    urgentBook.appendleft(urgentOrder) # put partially filled urgent order back into front of queue
-                break
-            
-            elif urgentOrder.quantity < remaining_quantity: # case where urgent order is smaller than remaining quantity
-                fill_qty = urgentOrder.quantity
-                urgentOrder.fillEntireOrder(self.asset, fillPrice)
-                if direction == "buy":
-                    self.urgentSellQuantity -= fill_qty
-                else:
-                    self.urgentBuyQuantity -= fill_qty
-                remaining_quantity -= fill_qty
-                total_fill_price += fillPrice * fill_qty
+                if urgentOrder.quantity >= remaining_quantity: # case where current urgent order is larger than or equal to remaining quantity
+                    fill_qty = remaining_quantity
+                    urgentOrder.fillQuantity(self.asset, fill_qty, fillPrice) # reduce urgent order quantity by remaining quantity
+                    
+                    # update urgent sell/buy quantity accordingly
+                    if direction == "buy":
+                        self.urgentSellQuantity -= fill_qty
+                    else:
+                        self.urgentBuyQuantity -= fill_qty
 
-                emit_trade_update(urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice)
-                emit_trade_update(accountID, self.asset, side, fill_qty, fillPrice)
-                emit_portfolio_update(urgentOrder.accountID, calculate_portfolio_status(accounts[urgentOrder.accountID]))
-                emit_portfolio_update(accountID, calculate_portfolio_status(accounts[accountID]))
+                    total_fill_price += fillPrice * fill_qty
+                    remaining_quantity = 0
+
+                    # replace with queuing, to batch this heavy operation
+                    emit_trade_update(urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice)
+                    emit_trade_update(accountID, self.asset, side, fill_qty, fillPrice)
+
+                    if urgentOrder.quantity > 0:
+                        urgentBook.appendleft(urgentOrder) # put partially filled urgent order back into front of queue
+                    return quantity, total_fill_price
+                
+                else: # case where urgent order is smaller than remaining quantity
+                    fill_qty = urgentOrder.quantity
+                    urgentOrder.fillEntireOrder(self.asset, fillPrice)
+
+                    # adjust quantities accordingly
+                    if direction == "buy":
+                        self.urgentSellQuantity -= fill_qty
+                    else:
+                        self.urgentBuyQuantity -= fill_qty
+
+                    remaining_quantity -= fill_qty
+                    total_fill_price += fillPrice * fill_qty
+
+                    # replace with queuing of this to batch the heavy operation
+                    emit_trade_update(urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice)
+                    emit_trade_update(accountID, self.asset, side, fill_qty, fillPrice)
 
         # Iterate through book in ascending price order (best prices first)
-        for key, order in book.items():
-            if remaining_quantity <= 0:
-                break
+        # iterate with irange on dictionary so only orders meeting price condition are used
+        if orderType == "limit":
+            if direction == "buy": # filling against asks
+                it = book.irange(maximum=(price, float('inf'))) 
+            else: # filling against bids
+                it = book.irange(maximum=(price, float('inf')))
+        else:
+            it = book.irange()
+        
+        # if book size < size of the order, then fully fill as much of book as possible
+        if remaining_quantity > bookSize:
+            if bookSize == 0:
+                return quantity - remaining_quantity, total_fill_price
+
+            orders = [book[key] for key in it] # Create list of all orders to fill in O(k)
             
-            if order.quantity == 0:
-                filled_keys.append(key)
-                continue # order is empty, skip and remove
-            
-            # Break if order no orders match price condition
-            if orderType == "limit": 
-                if direction == "buy" and order.price > price:
-                    break
-                elif direction == "sell" and order.price < price:
-                    break
-                
-            # Calculate how much we can fill from this order
-            fill_amount = min(remaining_quantity, order.quantity)
+            if orderType == "market":
+                book.clear() # O(1)
+            else:
+                # automate decision of removal method based on k/n
+                # check which is more efficient with O(k + log(n))
+                # then use either delete iteratively: O(k log n) or bisect right: O(n)
+                n = len(book) # O(1) 
+                keys_to_remove = list(it) # O(k + log(n))
+                k = len(keys_to_remove) # O(k)
+                try:
+                    cond = k < n / math.log(n)
+                except: # n is 0 or 1, use basic batch delete
+                    cond = True
 
-            # Always fills at other order's limit price
-            fill_price = order.price
+                if cond:  # Optimal threshold
+                    # Use batch delete
+                    for key in it:
+                        del book[key]
+                else:
+                    # Use reassign with slicing
+                    if direction == "buy":
+                        index = book.bisect_right((price, float('inf')))
+                        self.asks = SortedDict(self.asks.islice(index, None))  # O(n)
+                    else:
+                        index = book.bisect_right((price, float('inf')))
+                        self.bids = SortedDict(self.bids.islice(index, None))  # O(n)
 
-            # Update running totals
-            remaining_quantity -= fill_amount
-            bookSize -= fill_amount
-            total_fill_price += fill_price * fill_amount
 
+            fill_qty = 0
+            fill_price = 0 
+            for order in orders: # batch fill all orders O(k)
+                emit_trade_update(order.accountID, self.asset, oppSide, order.quantity, order.price)
+                fill_qty += order.quantity
+                fill_price += order.price
+                order.fillEntireOrder(self.asset, order.price)
+
+            emit_trade_update(accountID, self.asset, side, fill_qty, fill_price*fill_qty)
+            total_fill_price += fill_price * fill_qty
+            remaining_quantity -= fill_qty
+
+            # reset size counter
             if direction == "buy":
-                self.askSize = bookSize
+                self.askSize = 0
             else:
-                self.bidSize = bookSize
-            
-            # Update the order quantity or mark for removal
-            if fill_amount == order.quantity:
-                filled_keys.append(key)  # Order completely filled, mark for removal
-                order.fillEntireOrder(self.asset, fill_price)
-            else:
-                order.fillQuantity(self.asset, fill_amount, fill_price) # Partially filled, update quantity
-                # Update last price for the asset
-            last_prices[self.asset] = order.price
-            
-            # Emit trade update
-            emit_trade_update(order.accountID, self.asset, oppSide, fill_amount, order.price)
-            emit_trade_update(accountID, self.asset, side, fill_amount, order.price)
-            emit_portfolio_update(order.accountID, calculate_portfolio_status(accounts[order.accountID]))
-            emit_portfolio_update(accountID, calculate_portfolio_status(accounts[accountID]))
+                self.bidSize = 0
+
+        else: # book size > size of order and market type
+            for key in it:
+                if remaining_quantity <= 0:
+                    break
+
+                order = book[key]
+                
+                if order.quantity == 0:
+                    filled_keys.append(key)
+                    continue # order is empty, skip and remove
+                    
+                # Calculate how much we can fill from this order
+                fill_amount = min(remaining_quantity, order.quantity)
+
+                # Always fills at other order's limit price
+                fill_price = order.price
+
+                # Update running totals
+                remaining_quantity -= fill_amount
+                bookSize -= fill_amount
+                total_fill_price += fill_price * fill_amount
+
+                if direction == "buy":
+                    self.askSize -= fill_amount
+                else:
+                    self.bidSize -= fill_amount
+                
+                # Update the order quantity or mark for removal
+                if fill_amount == order.quantity:
+                    filled_keys.append(key)  # Order completely filled, mark for removal
+                    order.fillEntireOrder(self.asset, fill_price)
+                else:
+                    order.fillQuantity(self.asset, fill_amount, fill_price) # Partially filled, update quantity
+                    # Update last price for the asset
+                last_prices[self.asset] = order.price
+                
+                # Emit trade update
+                emit_trade_update(order.accountID, self.asset, oppSide, fill_amount, order.price)
+                emit_trade_update(accountID, self.asset, side, fill_amount, order.price)
         
-        # Remove filled orders after iteration
-        for key in filled_keys:
-            book.pop(key)
-        
-        quantity_filled = quantity - remaining_quantity
-        return quantity_filled, total_fill_price
+            # Remove by bisecting dictionary to right of last accessed node 
+            for key in filled_keys:
+                book.pop(key)
+    
+        return quantity - remaining_quantity, total_fill_price
 
     def addOrder(self, direction, price, quantity, orderType, accountID):
         # Handle incorrectly formatted orders
@@ -309,8 +377,8 @@ class OrderBook:
 
         # Add order to appropriate order book
         if orderType == "limit":
-            # Create composite key from price, timestamp and order ID for strict ordering
-            composite_key = (orderType, price, time(), order.orderID)
+            # Create composite key from price and order ID for strict ordering
+            composite_key = (price, order.orderID)
             if direction == "buy":
                 self.bids[composite_key] = order
             else:
@@ -416,4 +484,4 @@ class OrderBook:
         return # Doesn't do anything since orders are auto-matched
 
     def getLastPrice(self):
-        return last_prices.get(self.asset, None) 
+        return last_prices[self.asset] 
