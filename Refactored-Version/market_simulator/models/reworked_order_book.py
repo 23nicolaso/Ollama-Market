@@ -136,6 +136,7 @@ class OrderBook:
         remaining_quantity = quantity
         total_fill_price = 0
         filled_keys = deque()  # Deque to track keys to remove after iteration
+        update_queue = deque() # Add update queue to batch trade updates
         side = "buy" if direction == 1 else "sell"
         oppSide = "sell" if side == "buy" else "buy"
         
@@ -160,8 +161,8 @@ class OrderBook:
             # fill all urgent orders at once (for efficient batching)
             for order in urgentBook:
                 order.fillEntireOrder(self.asset, fillPrice)
-                emit_trade_update(order.accountID, self.asset, oppSide, order.quantity, fillPrice)
-                emit_trade_update(accountID, self.asset, side, order.quantity, fillPrice)
+                update_queue.append((order.accountID, self.asset, oppSide, order.quantity, fillPrice))
+                update_queue.append((accountID, self.asset, side, order.quantity, fillPrice))
 
             urgentBook.clear() # O(1) operation
             remaining_quantity -= urgentQuantity
@@ -191,9 +192,9 @@ class OrderBook:
                     total_fill_price += fillPrice * fill_qty
                     remaining_quantity = 0
 
-                    # replace with queuing, to batch this heavy operation
-                    emit_trade_update(urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice)
-                    emit_trade_update(accountID, self.asset, side, fill_qty, fillPrice)
+                    # queue to batch this heavy operation
+                    update_queue.append((urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice))
+                    update_queue.append((accountID, self.asset, side, fill_qty, fillPrice))
 
                     if urgentOrder.quantity > 0:
                         urgentBook.appendleft(urgentOrder) # put partially filled urgent order back into front of queue
@@ -213,8 +214,8 @@ class OrderBook:
                     total_fill_price += fillPrice * fill_qty
 
                     # replace with queuing of this to batch the heavy operation
-                    emit_trade_update(urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice)
-                    emit_trade_update(accountID, self.asset, side, fill_qty, fillPrice)
+                    update_queue.append((urgentOrder.accountID, self.asset, oppSide, fill_qty, fillPrice))
+                    update_queue.append((accountID, self.asset, side, fill_qty, fillPrice))
 
         # Iterate through book in ascending price order (best prices first)
         # iterate with irange on dictionary so only orders meeting price condition are used
@@ -229,6 +230,11 @@ class OrderBook:
         # if book size < size of the order, then fully fill as much of book as possible
         if remaining_quantity > bookSize:
             if bookSize == 0:
+                # Process all queued updates before returning
+                while update_queue:
+                    acc_id, asset, side, qty, price = update_queue.popleft()
+                    emit_trade_update(acc_id, asset, side, qty, price)
+
                 return quantity - remaining_quantity, total_fill_price
 
             orders = [book[key] for key in it] # Create list of all orders to fill in O(k)
@@ -264,12 +270,12 @@ class OrderBook:
             fill_qty = 0
             fill_price = 0 
             for order in orders: # batch fill all orders O(k)
-                emit_trade_update(order.accountID, self.asset, oppSide, order.quantity, order.price)
+                update_queue.append((order.accountID, self.asset, oppSide, order.quantity, order.price))
                 fill_qty += order.quantity
                 fill_price += order.price
                 order.fillEntireOrder(self.asset, order.price)
 
-            emit_trade_update(accountID, self.asset, side, fill_qty, fill_price*fill_qty)
+            update_queue.append((accountID, self.asset, side, fill_qty, fill_price*fill_qty))
             total_fill_price += fill_price * fill_qty
             remaining_quantity -= fill_qty
 
@@ -316,13 +322,18 @@ class OrderBook:
                 last_prices[self.asset] = order.price
                 
                 # Emit trade update
-                emit_trade_update(order.accountID, self.asset, oppSide, fill_amount, order.price)
-                emit_trade_update(accountID, self.asset, side, fill_amount, order.price)
+                update_queue.append((order.accountID, self.asset, oppSide, fill_amount, order.price))
+                update_queue.append((accountID, self.asset, side, fill_amount, order.price))
         
             # Remove by bisecting dictionary to right of last accessed node 
             for key in filled_keys:
                 book.pop(key)
-    
+                
+        # Process all queued updates before returning
+        while update_queue:
+            acc_id, asset, side, qty, price = update_queue.popleft()
+            emit_trade_update(acc_id, asset, side, qty, price)
+
         return quantity - remaining_quantity, total_fill_price
 
     def addOrder(self, direction, price, quantity, orderType, accountID):
