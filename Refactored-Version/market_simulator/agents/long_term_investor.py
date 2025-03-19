@@ -16,10 +16,10 @@ class LongTermInvestor(ExecutionalTrader):
         if random.random() < 0.025:
             # Buy random amount on random intervals
             quantity = random.randint(1, LT_INVESTOR_MAX_ORDER_SIZE)
-            self.placeOrder(market, "buy", market.getLastPrice(), quantity, "market")
+            self.placeOrder(market, "buy", market.lastPrice, quantity, "market")
     
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.2 and importance > 8:
             position = self.account.getPosition(ticker)
             proportion = 0.005*max(1, importance)
-            self.executeTradeInLegs(markets[ticker], "sell", markets[ticker].getLastPrice(), int(proportion*position))
+            self.executeTradeInLegs(markets[ticker], "sell", markets[ticker].lastPrice, int(proportion*position))

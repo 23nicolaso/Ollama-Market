@@ -12,7 +12,8 @@ class MarketMaker(MarketAgent):
 
     def makeMarket(self, orderBook):
         # Get current market state
-        midPrice = orderBook.getLastPrice()
+        midPrice = orderBook.lastPrice
+        self.wipeAllOrders(orderBook)
 
         # Calculate base spread
         baseSpread = self.spreads[orderBook.asset]
@@ -34,7 +35,6 @@ class MarketMaker(MarketAgent):
         bidPrice = round(midPrice - (baseSpread/2 * (1 + skew)), 2)
         askPrice = round(midPrice + (baseSpread/2 * (1 - skew)), 2)
         bq, aq = orderBook.getNearbyDepth(NEARBY_RANGE)
-
         # Layer orders at different sizes and prices
         # if order book is illiquid not matching liquidity requirements in one direction, quote orders
         for i in range(MM_DEPTH):
@@ -54,9 +54,9 @@ class MarketMaker(MarketAgent):
         if remaining_urgent_buys > 0:
             # print("SELLING liquidity to the market")
             price_change = self.spreads[orderBook.asset] * remaining_urgent_buys / (MM_DEPTH*MM_BASE_ORDER_SIZE) # Adjust the divisor as needed
-            self.placeOrder(orderBook, "sell", orderBook.getLastPrice() + round(price_change, 2), remaining_urgent_buys, "limit")
+            self.placeOrder(orderBook, "sell", orderBook.lastPrice + round(price_change, 2), remaining_urgent_buys, "limit")
 
         if remaining_urgent_sells > 0:
             # print("BUYING liquidity from the market")
             price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE) # Adjust the divisor as needed
-            self.placeOrder(orderBook, "buy", orderBook.getLastPrice() - round(price_change, 2), remaining_urgent_sells, "limit")
+            self.placeOrder(orderBook, "buy", orderBook.lastPrice - round(price_change, 2), remaining_urgent_sells, "limit")

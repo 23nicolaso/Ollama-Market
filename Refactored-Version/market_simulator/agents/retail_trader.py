@@ -54,11 +54,11 @@ class RetailTrader(MarketAgent):
             final_sentiment = 0.5
 
         try:
-            bid = orderBook.getBestBid().price
-            ask = orderBook.getBestAsk().price
+            bid = orderBook.bestBid.price
+            ask = orderBook.bestAsk.price
         except:
-            bid = orderBook.getLastPrice()
-            ask = orderBook.getLastPrice()
+            bid = orderBook.lastPrice
+            ask = orderBook.lastPrice
 
         sentiment_diff = abs(final_sentiment - 0.5)  # How far sentiment is from neutral
         base_quantity = random.randint(1, RETAIL_MAX_ORDER_SIZE)

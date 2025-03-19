@@ -14,7 +14,7 @@ class SpyArbFund(ExecutionalTrader):
     def _calculate_market_caps(self):
         """Calculate market cap for each constituent stock"""
         for asset in SPY_INCLUDED_ASSETS:
-            price = markets[asset].getLastPrice()
+            price = markets[asset].lastPrice
             shares = NUM_SHARES[asset]
             self.market_caps[asset] = price * shares
 
@@ -27,7 +27,7 @@ class SpyArbFund(ExecutionalTrader):
         """Calculate the number of shares of each constituent per SPY share"""
         
         for asset in SPY_INCLUDED_ASSETS:
-            weight = ( self.market_caps[asset] / 4000000000 ) / markets[asset].getLastPrice()
+            weight = ( self.market_caps[asset] / 4000000000 ) / markets[asset].lastPrice
             self.spy_composition[asset] = weight * ARB_QUANTITY
 
     def update_calculations(self):
@@ -41,7 +41,7 @@ class SpyArbFund(ExecutionalTrader):
         # Update calculations
         self.update_calculations()
         
-        spy_price = markets["SPY"].getLastPrice()
+        spy_price = markets["SPY"].lastPrice
         
         # If basket is cheaper than SPY by more than arbitrage threshold, buy basket and sell SPY
         if self.navps < spy_price - ARBITRAGE_THRESHOLD:
@@ -49,7 +49,7 @@ class SpyArbFund(ExecutionalTrader):
             self.placeOrder(
                 markets["SPY"],
                 "sell",
-                markets["SPY"].getLastPrice(),
+                markets["SPY"].lastPrice,
                 ARB_QUANTITY,
                 "market"
             )
@@ -59,7 +59,7 @@ class SpyArbFund(ExecutionalTrader):
                 self.placeOrder(
                     markets[asset],
                     "buy",
-                    markets[asset].getLastPrice(),
+                    markets[asset].lastPrice,
                     int(self.spy_composition[asset]),
                     "market"
                 )
@@ -70,7 +70,7 @@ class SpyArbFund(ExecutionalTrader):
             self.placeOrder(
                 markets["SPY"],
                 "buy",
-                markets["SPY"].getLastPrice(),
+                markets["SPY"].lastPrice,
                 ARB_QUANTITY,
                 "market"
             )
@@ -80,7 +80,7 @@ class SpyArbFund(ExecutionalTrader):
                 self.placeOrder(
                     markets[asset],
                     "sell",
-                    markets[asset].getLastPrice(),
+                    markets[asset].lastPrice,
                     int(self.spy_composition[asset]),
                     "market"
                 )

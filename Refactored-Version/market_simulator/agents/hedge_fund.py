@@ -17,18 +17,18 @@ class HedgeFund(ExecutionalTrader):
         if current_position < target_position:
             if current_position - target_position < 10000:
                 quantity = max(1, target_position - current_position)
-                self.placeOrder(markets[market], "buy", markets[market].getLastPrice(), quantity, "market")
+                self.placeOrder(markets[market], "buy", markets[market].lastPrice, quantity, "market")
             else:
                 quantity = max(1, target_position - current_position)
-                self.executeTradeInLegs(markets[market], "buy", markets[market].getLastPrice(), quantity)
+                self.executeTradeInLegs(markets[market], "buy", markets[market].lastPrice, quantity)
         elif current_position > target_position:
             # Need to sell
             if current_position - target_position < 10000:
                 quantity = max(1, current_position - target_position)
-                self.placeOrder(markets[market], "sell", markets[market].getLastPrice(), quantity, "market")
+                self.placeOrder(markets[market], "sell", markets[market].lastPrice, quantity, "market")
             else:
                 quantity = max(1, current_position - target_position)
-                self.executeTradeInLegs(markets[market], "sell", markets[market].getLastPrice(), quantity)
+                self.executeTradeInLegs(markets[market], "sell", markets[market].lastPrice, quantity)
         
         self.updateOrdersInLegs(markets[market])
         self.partialExecuteMarket(markets[market])
@@ -47,7 +47,7 @@ class HedgeFund(ExecutionalTrader):
             
         #     # Calculate mean and standard deviation
         #     mean_price = sum(price_history[asset][-50:]) / 50
-        #     current_price = markets[asset].getLastPrice()
+        #     current_price = markets[asset].lastPrice
             
         #     # If price is significantly above mean, sell; if below, buy
         #     deviation = (current_price - mean_price) / mean_price

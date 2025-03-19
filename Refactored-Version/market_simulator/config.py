@@ -176,7 +176,7 @@ HFT_BASE_ORDER_SIZE = 10000
 
 # Market maker - provides liquidity
 MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 100  
+MM_BASE_ORDER_SIZE = 1000  
 MM_MAX_VOLATILITY_MULT = 5  
 MM_DEPTH = 5  
 MM_REQUIRED_LIQ = 1000

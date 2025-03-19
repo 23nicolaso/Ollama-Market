@@ -18,7 +18,36 @@ def remake():
 
 def displayTraders():
     print("TRADER A: ", account1.getPosition("SPY"), account1.getPosition("CASH"), " TRADER B: ", account2.getPosition("SPY"), account2.getPosition("CASH"))
-# # bid 500 ask 500 clear @ 500
+
+# buy 500, buy 510, buy 515, sell 0.5 lots at 515, sell 510, sell 530
+# Expected 515*100+510*50=$77000 cash change, 100-500,50-510, sell 100-530
+
+ob, account1, account2 = remake()
+ob.addOrder("buy", 500, 100, "limit", "john")
+ob.addOrder("buy", 510, 100, "limit", "john")
+ob.addOrder("buy", 515, 100, "limit", "john")
+ob.display()
+displayTraders()
+
+ob.addOrder("sell", 515, 50, "limit", "bob")
+ob.display()
+displayTraders()
+ob.addOrder("sell", 510, 100, "limit", "bob")
+ob.display()
+displayTraders()
+ob.addOrder("sell", 530, 100, "limit", "bob")
+ob.addOrder("sell", 540, 100, "limit", "bob")
+ob.display()
+displayTraders()
+
+ob.addOrder("buy", 510, 1, "market", "bob")
+ob.display()
+displayTraders()
+ob.addOrder("sell", 530, 1, "market", "bob")
+ob.display()
+displayTraders()
+
+# bid 500 ask 500 clear @ 500
 # print("\n BUY 500, SELL 500. FULL FILL @ 500")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")
@@ -135,7 +164,7 @@ def displayTraders():
 # ob.display()
 # displayTraders()
 
-# market buy and then limit sell
+# # market buy and then limit sell
 # print("\n MARKET BUY & LIMIT SELL")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 0, 100, "market", "john")
@@ -145,13 +174,13 @@ def displayTraders():
 # ob.display()
 # displayTraders()
 
-# # market sell and then limit buy
+# market sell and then limit buy
 # print("\n MARKET SELL & LIMIT BUY")
 # ob, account1, account2 = remake()
 # ob.addOrder("sell", 0, 100, "market", "john")
 # ob.display()
 # displayTraders()
-# ob.addOrder("buy", 0, 100, "limit", "bob")
+# ob.addOrder("buy", 500, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
 
@@ -160,16 +189,16 @@ def displayTraders():
 # status = ob.cancelOrder(ord)
 # print(status)
 
-from market_simulator.agents.market_maker import MarketMaker
-from market_simulator.config import SPREADS
-ob,acc1,acc2 = remake()
-mm = MarketMaker("testacc", 100000000, SPREADS)
-mm.makeMarket(ob)
-ob.display()
-ob.addOrder("buy", 600, 100000, "market", "john")
-ob.display()
-mm.provideLiquidity(ob)
-ob.display()
-mm.makeMarket(ob)
-ob.display()
-print(ob.getNearbyDepth(0.1))
+# from market_simulator.agents.market_maker import MarketMaker
+# from market_simulator.config import SPREADS
+# ob,acc1,acc2 = remake()
+# mm = MarketMaker("testacc", 100000000, SPREADS)
+# mm.makeMarket(ob)
+# ob.display()
+# ob.addOrder("buy", 600, 100000, "market", "john")
+# ob.display()
+# mm.provideLiquidity(ob)
+# ob.display()
+# mm.makeMarket(ob)
+# ob.display()
+# print(ob.getNearbyDepth(0.1))

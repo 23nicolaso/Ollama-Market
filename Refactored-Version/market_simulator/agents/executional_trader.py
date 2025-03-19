@@ -46,7 +46,7 @@ class ExecutionalTrader(MarketAgent):
                     quantity_to_fill = max(1, int(random.uniform(0.01, 0.05) * order["quantity"]))
             
                     # Place the order
-                    self.placeOrder(orderBook, order["direction"], orderBook.getLastPrice(), quantity_to_fill, "market")
+                    self.placeOrder(orderBook, order["direction"], orderBook.lastPrice, quantity_to_fill, "market")
 
                     # Update the remaining quantity
                     order["quantity"] -= quantity_to_fill
@@ -56,15 +56,15 @@ class ExecutionalTrader(MarketAgent):
                         del self.intendedOrders[orderBook]
 
     def updateOrdersInLegs(self, orderBook):
-        if orderBook.getBestBid() is None or orderBook.getBestAsk() is None:
+        if orderBook.bestBid is None or orderBook.bestAsk is None:
             return
         try:
-            if self.intendedOrders[orderBook]["direction"] == "buy" and self.intendedOrders[orderBook]["price"] >= orderBook.getBestAsk().getPrice():
-                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],orderBook.getBestAsk().getQuantity())
+            if self.intendedOrders[orderBook]["direction"] == "buy" and self.intendedOrders[orderBook]["price"] >= orderBook.bestAsk.getPrice():
+                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],orderBook.bestAsk.getQuantity())
                 self.placeOrder(orderBook, "buy", 0, quantityToFill, "market")
                 self.intendedOrders[orderBook]["quantity"] -= quantityToFill
-            elif self.intendedOrders[orderBook]["direction"] == "sell" and self.intendedOrders[orderBook]["price"] <= orderBook.getBestBid().getPrice():
-                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],orderBook.getBestBid().getQuantity())
+            elif self.intendedOrders[orderBook]["direction"] == "sell" and self.intendedOrders[orderBook]["price"] <= orderBook.bestBid.getPrice():
+                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],orderBook.bestBid.getQuantity())
                 self.placeOrder(orderBook, "sell", 0, quantityToFill, "market")
                 self.intendedOrders[orderBook]["quantity"] -= quantityToFill
         except:

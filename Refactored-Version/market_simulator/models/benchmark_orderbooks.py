@@ -281,16 +281,16 @@ if __name__ == "__main__":
         #         f"TEST_ACCOUNT_{random.randint(1, 100)}"
         #     )
         # },
-        "Add Market Orders": {
-            "num_ops": 50000,
-            "operations": lambda ob: ob.addOrder(
-                "buy" if random.random() < 0.5 else "sell",
-                100.0,
-                random.randint(1, 100),
-                "market",
-                f"TEST_ACCOUNT_{random.randint(1, 100)}"
-            )
-        },
+        # "Add Market Orders": {
+        #     "num_ops": 50000,
+        #     "operations": lambda ob: ob.addOrder(
+        #         "buy" if random.random() < 0.5 else "sell",
+        #         100.0,
+        #         random.randint(1, 100),
+        #         "market",
+        #         f"TEST_ACCOUNT_{random.randint(1, 100)}"
+        #     )
+        # },
         "Matching Orders": {
             "num_ops": 100000,
             "operations": lambda ob: (
@@ -319,81 +319,81 @@ if __name__ == "__main__":
                     "MARKET MAKER"
                 )
             ]
-        },
-        "Matching Market Orders": {
-            "num_ops": 100000,
-            "operations": lambda ob: (
-                ob.addOrder(
-                    "buy" if random.random() < 0.5 else "sell",
-                    100.0,  # Ensure price crosses the book
-                    random.randint(1, 10),
-                    "market",
-                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
-                ),
-                ob.matchBooks()  # Explicitly call matchBooks
-            )[0],  # Return the result of addOrder to maintain the same return type
-            "setup": lambda ob: [
-                ob.addOrder(
-                    "buy", 
-                    99.5, 
-                    1000, 
-                    "limit", 
-                    "MARKET MAKER"
-                ),
-                ob.addOrder(
-                    "sell", 
-                    100.5, 
-                    1000, 
-                    "limit", 
-                    "MARKET MAKER"
-                )
-            ]
-        },
-        "Cancel Orders": {
-            "num_ops": 10000,
-            "operations": lambda ob: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
-            "setup": lambda ob: [
-                ob.addOrder(
-                    "buy" if random.random() < 0.5 else "sell",
-                    random.uniform(95.0, 105.0),
-                    random.randint(1, 100),
-                    "limit",
-                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
-                ) for _ in range(5000)
-            ]
-        },
-        "Mixed Workload": {
-            "num_ops": 10000,
-            "operations": lambda ob: random.choice([
-                # 60% add orders
-                lambda: ob.addOrder(
-                    "buy" if random.random() < 0.5 else "sell",
-                    random.uniform(95.0, 105.0),
-                    random.randint(1, 100),
-                    random.choice(["limit", "limit", "limit", "market"]),  # 75% limit, 25% market
-                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
-                ),
-                # 20% cancel orders
-                lambda: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
-                # 20% get book info
-                lambda: (ob.getBestBid(), ob.getBestAsk(), ob.getBidSize(), ob.getAskSize())
-            ])()
-        },
-        "High-Frequency Trading": {
-            "num_ops": 1000,
-            "operations": lambda ob: (
-                # Add small order
-                ob.addOrder(
-                    "buy" if random.random() < 0.5 else "sell",
-                    random.uniform(99.90, 100.10),
-                    random.randint(1, 5),
-                    "limit",
-                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
-                ),
-                # Cancel an order
-                ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 10)}")
-            )[0]  # Return first result from tuple to avoid error on None return from cancelOrdersByAccount
         }
+        # "Matching Market Orders": {
+        #     "num_ops": 100000,
+        #     "operations": lambda ob: (
+        #         ob.addOrder(
+        #             "buy" if random.random() < 0.5 else "sell",
+        #             100.0,  # Ensure price crosses the book
+        #             random.randint(1, 10),
+        #             "market",
+        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
+        #         ),
+        #         ob.matchBooks()  # Explicitly call matchBooks
+        #     )[0],  # Return the result of addOrder to maintain the same return type
+        #     "setup": lambda ob: [
+        #         ob.addOrder(
+        #             "buy", 
+        #             99.5, 
+        #             1000, 
+        #             "limit", 
+        #             "MARKET MAKER"
+        #         ),
+        #         ob.addOrder(
+        #             "sell", 
+        #             100.5, 
+        #             1000, 
+        #             "limit", 
+        #             "MARKET MAKER"
+        #         )
+        #     ]
+        # },
+        # "Cancel Orders": {
+        #     "num_ops": 10000,
+        #     "operations": lambda ob: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
+        #     "setup": lambda ob: [
+        #         ob.addOrder(
+        #             "buy" if random.random() < 0.5 else "sell",
+        #             random.uniform(95.0, 105.0),
+        #             random.randint(1, 100),
+        #             "limit",
+        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
+        #         ) for _ in range(5000)
+        #     ]
+        # },
+        # "Mixed Workload": {
+        #     "num_ops": 10000,
+        #     "operations": lambda ob: random.choice([
+        #         # 60% add orders
+        #         lambda: ob.addOrder(
+        #             "buy" if random.random() < 0.5 else "sell",
+        #             random.uniform(95.0, 105.0),
+        #             random.randint(1, 100),
+        #             random.choice(["limit", "limit", "limit", "market"]),  # 75% limit, 25% market
+        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
+        #         ),
+        #         # 20% cancel orders
+        #         lambda: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
+        #         # 20% get book info
+        #         lambda: (ob.bestBid, ob.bestAsk, ob.getBidSize(), ob.getAskSize())
+        #     ])()
+        # },
+        # "High-Frequency Trading": {
+        #     "num_ops": 1000,
+        #     "operations": lambda ob: (
+        #         # Add small order
+        #         ob.addOrder(
+        #             "buy" if random.random() < 0.5 else "sell",
+        #             random.uniform(99.90, 100.10),
+        #             random.randint(1, 5),
+        #             "limit",
+        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
+        #         ),
+        #         # Cancel an order
+        #         ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 10)}")
+        #     )[0]  # Return first result from tuple to avoid error on None return from cancelOrdersByAccount
+        # }
     }
     
     # Run all benchmarks

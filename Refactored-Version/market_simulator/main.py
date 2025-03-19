@@ -58,11 +58,11 @@ def run_simulation(root, main_window):
 
                 user_account.updatePositioning(market)
 
-                update_price_history(market, markets[market].getLastPrice())
+                update_price_history(market, markets[market].lastPrice)
                 ta_traders.manageTATrades(market)
-                ta_traders.checkConditionalOrders(market)
+                # ta_traders.checkConditionalOrders(market)
                 
-                ta_traders.updatePositioning(market)
+                # ta_traders.updatePositioning(market)
 
                 if len(price_history[market]) < 100:
                     continue

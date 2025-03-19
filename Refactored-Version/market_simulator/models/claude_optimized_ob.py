@@ -373,7 +373,7 @@ class OrderBook:
     
     def displayPrice(self):
         """Display last price - compatible with original"""
-        print(f"{self.asset} price: {round(self.getLastPrice(), 2)}")
+        print(f"{self.asset} price: {round(self.lastPrice, 2)}")
     
     def getBidSize(self):
         """Get bid size - compatible with original"""
@@ -383,14 +383,14 @@ class OrderBook:
         """Get ask size - compatible with original"""
         return self.get_ask_size()
     
-    def getBestBid(self):
+    def get.bestBid(self):
         """Get best bid - compatible with original"""
         if not self.bids:
             return None
         price = max(self.bids.keys())
         return self.bids[price]
     
-    def getBestAsk(self):
+    def get.bestAsk(self):
         """Get best ask - compatible with original"""
         if not self.asks:
             return None
@@ -734,7 +734,7 @@ class OrderBook:
         print(f"{self.asset} Orderbook")
         print(f"Total Buy Orders: {len(self.bids)}")
         print(f"Total Sell Orders: {len(self.asks)}")
-        print(f"Last Price: {self.getLastPrice()}")
+        print(f"Last Price: {self.lastPrice}")
         
         # Display bids
         bid_display = []

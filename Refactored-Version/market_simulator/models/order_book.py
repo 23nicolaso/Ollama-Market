@@ -21,7 +21,7 @@ class OrderBook:
     def getMidPrice(self):
         if not self.bids or not self.asks:
             return None
-        return (self.getBestBid().getPrice() + self.getBestAsk().getPrice()) / 2
+        return (self.bestBid.getPrice() + self.bestAsk.getPrice()) / 2
 
     def getUrgentOrders(self):
         return self.urgentBuys, self.urgentSells
@@ -43,14 +43,14 @@ class OrderBook:
         print(f"{self.asset} Orderbook")
         print(f"Total Buy Orders: {len(self.bids)}")
         print(f"Total Sell Orders: {len(self.asks)}")
-        print(f"Last Price: {self.getLastPrice()}")
+        print(f"Last Price: {self.lastPrice}")
         print(f"Bids: {[str(value.netQuantity) + ' at '  + str(value.price) for value in sorted(self.bids.values(), key=lambda x: x.price, reverse=True)]}")
         print(f"Asks: {[str(value.netQuantity) + ' at ' + str(value.price) for value in sorted(self.asks.values(), key=lambda x: x.price)]}")
         print(f"Bid Size: {self.getBidSize()}")
         print(f"Ask Size: {self.getAskSize()}")
 
     def displayPrice(self):
-        print(f"{self.asset} price: {round(self.getLastPrice(), 2)}")
+        print(f"{self.asset} price: {round(self.lastPrice, 2)}")
 
     def getBidSize(self):
         return sum([bid.netQuantity for bid in self.bids.values()])
@@ -93,13 +93,13 @@ class OrderBook:
 
             self.fillUrgentOrders()
 
-    def getBestBid(self):
+    def get.bestBid(self):
         if self.bids:
             return self.bids[max(self.bids.keys())]
         else:
             return None
 
-    def getBestAsk(self):
+    def get.bestAsk(self):
         if self.asks:
             return self.asks[min(self.asks.keys())]
         else:
@@ -107,33 +107,33 @@ class OrderBook:
 
     def matchBooks(self):
         while True:
-            bestBid = self.getBestBid()
-            bestAsk = self.getBestAsk()
-            if not bestBid or not bestAsk or bestBid.getPrice() < bestAsk.getPrice():
+            .bestBid = self.bestBid
+            .bestAsk = self.bestAsk
+            if not .bestBid or not .bestAsk or .bestBid.getPrice() < .bestAsk.getPrice():
                 break
             
-            quantityToFill = min(bestBid.getQuantity(), bestAsk.getQuantity())
+            quantityToFill = min(.bestBid.getQuantity(), .bestAsk.getQuantity())
             
             # Get the account IDs from the orders
-            buyAccountID = bestBid.getAccountID()
-            sellAccountID = bestAsk.getAccountID()
+            buyAccountID = .bestBid.getAccountID()
+            sellAccountID = .bestAsk.getAccountID()
 
             if not buyAccountID or not sellAccountID:
                 break # invalid book matching, no buy/sell accounts. 
             
             # Execute the trade
-            bestBid.fulfillQuantity(quantityToFill)
-            bestAsk.fulfillQuantity(quantityToFill)
+            .bestBid.fulfillQuantity(quantityToFill)
+            .bestAsk.fulfillQuantity(quantityToFill)
             
             # Emit trade updates
-            tradePrice = bestBid.getPrice()  # Could also use bestAsk.getPrice() as they're equal
+            tradePrice = .bestBid.getPrice()  # Could also use .bestAsk.getPrice() as they're equal
             emit_trade_update(buyAccountID, self.asset, "buy", quantityToFill, tradePrice)
             emit_trade_update(sellAccountID, self.asset, "sell", quantityToFill, tradePrice)
 
-            if bestBid.getQuantity() == 0:
-                self.bids.pop(bestBid.getPrice())
-            if bestAsk.getQuantity() == 0:
-                self.asks.pop(bestAsk.getPrice())
+            if .bestBid.getQuantity() == 0:
+                self.bids.pop(.bestBid.getPrice())
+            if .bestAsk.getQuantity() == 0:
+                self.asks.pop(.bestAsk.getPrice())
 
     def getUnfilledUrgentOrders(self):
         return self.urgentBuys, self.urgentSells
@@ -156,10 +156,10 @@ class OrderBook:
             quantityFilled = min(self.urgentBuys[0][0], self.urgentSells[0][0])  
             filledOrders += quantityFilled
             
-            if self.getBestBid() and self.getBestAsk():
-                midPrice = (self.getBestBid().getPrice() + self.getBestAsk().getPrice()) / 2
+            if self.bestBid and self.bestAsk:
+                midPrice = (self.bestBid.getPrice() + self.bestAsk.getPrice()) / 2
             else:
-                midPrice = self.getLastPrice()
+                midPrice = self.lastPrice
             
             accounts[buyAccountID].addPosition(self.asset, quantityFilled)
             accounts[buyAccountID].addPosition("CASH", -midPrice*quantityFilled)
@@ -198,19 +198,19 @@ class OrderBook:
                 self.urgentBuys.pop(0)
             else:    
                 buyAccountID = self.urgentBuys[0][1]
-                if self.getBestAsk():
-                    if self.getBestAsk().getQuantity() == 0:
-                        self.asks.pop(self.getBestAsk().getPrice())
+                if self.bestAsk:
+                    if self.bestAsk.getQuantity() == 0:
+                        self.asks.pop(self.bestAsk.getPrice())
                     else:
-                        quantityFilled = min(self.urgentBuys[0][0], self.getBestAsk().getQuantity())
-                        self.getBestAsk().fulfillQuantity(quantityFilled)
+                        quantityFilled = min(self.urgentBuys[0][0], self.bestAsk.getQuantity())
+                        self.bestAsk.fulfillQuantity(quantityFilled)
                         self.urgentBuys[0] = (self.urgentBuys[0][0] - quantityFilled, buyAccountID)
                         accounts[buyAccountID].addPosition(self.asset, quantityFilled)
-                        accounts[buyAccountID].addPosition("CASH", -self.getBestAsk().getPrice()*quantityFilled)
-                        last_prices[self.asset] = self.getBestAsk().getPrice()
+                        accounts[buyAccountID].addPosition("CASH", -self.bestAsk.getPrice()*quantityFilled)
+                        last_prices[self.asset] = self.bestAsk.getPrice()
                         
                         # Emit trade update
-                        emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled, self.getBestAsk().getPrice())
+                        emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled, self.bestAsk.getPrice())
                 else:
                     break
 
@@ -223,19 +223,19 @@ class OrderBook:
                 self.urgentSells.pop(0)
             else:
                 sellAccountID = self.urgentSells[0][1]
-                if self.getBestBid():
-                    if self.getBestBid().getQuantity() == 0:
-                        self.bids.pop(self.getBestBid().getPrice())
+                if self.bestBid:
+                    if self.bestBid.getQuantity() == 0:
+                        self.bids.pop(self.bestBid.getPrice())
                     else:
-                        quantityFilled = min(self.urgentSells[0][0], self.getBestBid().getQuantity())
-                        self.getBestBid().fulfillQuantity(quantityFilled)
+                        quantityFilled = min(self.urgentSells[0][0], self.bestBid.getQuantity())
+                        self.bestBid.fulfillQuantity(quantityFilled)
                         self.urgentSells[0] = (self.urgentSells[0][0] - quantityFilled, sellAccountID)
                         accounts[sellAccountID].addPosition(self.asset, -quantityFilled)
-                        accounts[sellAccountID].addPosition("CASH", self.getBestBid().getPrice()*quantityFilled)
-                        last_prices[self.asset] = self.getBestBid().getPrice()
+                        accounts[sellAccountID].addPosition("CASH", self.bestBid.getPrice()*quantityFilled)
+                        last_prices[self.asset] = self.bestBid.getPrice()
                         
                         # Emit trade update
-                        emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled, self.getBestBid().getPrice())
+                        emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled, self.bestBid.getPrice())
                 else:
                     break
         

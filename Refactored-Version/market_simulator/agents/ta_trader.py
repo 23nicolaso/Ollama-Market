@@ -14,7 +14,7 @@ class TATrader(ExecutionalTrader):
         # Calculate mean and standard deviation of price history
         mean_price = price_history[market].mean()
         std_dev = price_history[market].std()
-        current_price = markets[market].getLastPrice()
+        current_price = markets[market].lastPrice
         
         # Check current position against position limit
         current_position = self.account.getPosition(market)
@@ -31,22 +31,8 @@ class TATrader(ExecutionalTrader):
             if current_position + order_size <= position_limit:
                 self.placeOrder(markets[market], "buy", mean_price - std_dev*2, order_size, "market")
 
-        # # if price changed by over 0.5 in 100 ticks, mean revert by fading the trade
-        # if len(price_list) >= 100:
-        #     price_change = price_list[-1] - price_list[-100]
-        #     order_size = ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE)
-        #     if price_change > 0.5:
-        #         direction = "sell" if self.account.getPosition(market) > 0 else "buy"
-        #         # Check position limits before placing order
-        #         if (direction == "sell" and current_position - order_size >= -position_limit) or \
-        #            (direction == "buy" and current_position + order_size <= position_limit):
-        #             self.placeOrder(markets[market], direction, current_price, order_size, "market")
-        #     elif price_change < -0.5:
-        #         direction = "buy" if self.account.getPosition(market) > 0 else "sell"
-        #         # Check position limits before placing order
-        #         if (direction == "sell" and current_position - order_size >= -position_limit) or \
-        #            (direction == "buy" and current_position + order_size <= position_limit):
-        #             self.placeOrder(markets[market], direction, current_price, order_size, "market")
+        # if price changed by over 0.5 in 100 ticks, mean revert by fading the trade
+        
 
         # # trade on cross of close and moving average of 500 ticks
         # if len(price_list) >= 500:
@@ -99,8 +85,3 @@ class TATrader(ExecutionalTrader):
         #             self.executeTradeInLegs(markets[market], "sell", current_price, order_size)
                 
         # Limit the number of limitorders placed to save on compute
-        max_orders = 200
-        if len(markets[market].bids) + len(markets[market].asks) > max_orders:
-            # Cancel all TA orders
-            markets[market].cancelOrdersByAccount(self.account.accountID)
-            return

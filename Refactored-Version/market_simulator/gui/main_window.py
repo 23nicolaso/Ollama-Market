@@ -150,7 +150,7 @@ class MainWindow:
             
             # Reset price history and last prices to initial values
             for asset in price_history:
-                price_history[asset] = [initial_prices[asset]]
+                price_history[asset].clear()
                 last_prices[asset] = initial_prices[asset]
             
             messagebox.showinfo("Success", "Database has been wiped and markets reset") 

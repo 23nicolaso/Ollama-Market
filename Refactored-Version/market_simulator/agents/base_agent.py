@@ -14,13 +14,7 @@ class MarketAgent:
         return order_key
 
     def cancelAllOrders(self, orderBook):
-        self.checkOrders(orderBook)
-        for order in self.orders:
-            orderBook.cancelOrder(order)
-            print(order)
-        orderBook.debugListBidsAsks()
-
-        self.orders.clear()
+        orderBook.cancelOrdersByAccount(self.account.accountID)
 
     def cancelOrder(self, orderBook, order):
         orderBook.cancelOrder(order)

@@ -30,7 +30,7 @@ def emit_orderbook_update(asset):
     if asset in markets:
         market = markets[asset]
         try:
-            bidsandasks = market.getBidAskPairs()
+            bidsandasks = market.bidAskPairs
             socketio.emit('orderbook_update', {
                 'asset': asset,
                 'bids': bidsandasks[0],

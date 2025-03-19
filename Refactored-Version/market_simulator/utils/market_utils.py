@@ -38,6 +38,12 @@ class CircularBuffer:
         self.index = (self.index + 1) % self.size  # Circular increment
         if self.index == 0:  # Marks buffer as full once it wraps
             self.full = True
+    
+    def clear(self):
+        """Clears the contents of the circular buffer."""
+        self.index = 0
+        self.full = False
+        self.buffer = np.empty(self.size, dtype=np.float64)  # Reset the buffer with empty values
 
     def get(self):
         """Returns the buffer in correct order (newest last)."""
@@ -184,7 +190,6 @@ def reset_markets():
         market.asks.clear()
         market.urgentBuys.clear()
         market.urgentSells.clear()
-        market.lastPrice = initial_prices[market.asset]
     
     # Clear all executional trader intended trades
     for account in accounts.values():
