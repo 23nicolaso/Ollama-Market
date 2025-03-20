@@ -37,9 +37,10 @@ market_simulator.portfolio_utils.emit_portfolio_update = MagicMock(return_value=
 market_simulator.price_server.emit_trade_update = MagicMock(return_value=None)
 
 # Now it's safe to import the OrderBook implementations
-from market_simulator.models.order_book import OrderBook as OriginalOrderBook
+# from market_simulator.models.order_book import OrderBook as OriginalOrderBook
 from market_simulator.models.reworked_order_book import OrderBook as ReworkedOrderBook
-from market_simulator.models.claude_optimized_ob import OrderBook as OptimizedOrderBook
+from market_simulator.models.claude_optimized_ob import OrderBook as claudeob
+from market_simulator.models.order_book import OrderBook as ob
 
 # Setup mock accounts for testing
 from market_simulator.utils.market_utils import accounts
@@ -82,7 +83,7 @@ class BenchmarkResults:
         self.results = {
             "Original": {},
             "Reworked": {},
-            "Claude Optimized": {}
+            "Claude": {}
         }
     
     def add_result(self, impl, test_name, duration, ops_per_sec):
@@ -103,7 +104,7 @@ class BenchmarkResults:
         data = []
         for test in sorted(all_tests):
             row = {"Test": test}
-            for impl in ["Original", "Reworked", "Claude Optimized"]:
+            for impl in ["Original", "Reworked", "Claude"]:
                 if test in self.results[impl]:
                     row[f"{impl} (ops/sec)"] = f"{self.results[impl][test]['ops_per_sec']:.2f}"
                     row[f"{impl} (time)"] = f"{self.results[impl][test]['duration']:.6f}s"
@@ -124,7 +125,7 @@ class BenchmarkResults:
             base_impl = None
             
             # Find the fastest implementation to use as baseline
-            for impl in ["Original", "Reworked", "Claude Optimized"]:
+            for impl in ["Original", "Reworked", "Claude"]:
                 if test in self.results[impl]:
                     if base_time is None or self.results[impl][test]['duration'] < base_time:
                         base_time = self.results[impl][test]['duration']
@@ -133,7 +134,7 @@ class BenchmarkResults:
             if base_impl:
                 print(f"  Fastest: {base_impl} ({base_time:.6f}s)")
                 
-                for impl in ["Original", "Reworked", "Claude Optimized"]:
+                for impl in ["Original", "Reworked", "Claude"]:
                     if impl != base_impl and test in self.results[impl]:
                         relative = self.results[impl][test]['duration'] / base_time
                         print(f"  {impl}: {relative:.2f}x slower")
@@ -149,7 +150,7 @@ class BenchmarkResults:
         all_tests = sorted(all_tests)
         
         # Prepare data for plotting
-        implementations = ["Original", "Reworked", "Claude Optimized"]
+        implementations = ["Original", "Reworked", "Claude"]
         ops_per_sec = np.zeros((len(implementations), len(all_tests)))
         
         for i, impl in enumerate(implementations):
@@ -237,9 +238,9 @@ def benchmark_all_implementations(test_configs):
     results = BenchmarkResults()
     
     implementations = {
-        "Original": OriginalOrderBook,
+        "Original": ob,
         "Reworked": ReworkedOrderBook,
-        "Claude Optimized": OptimizedOrderBook
+        "Claude": claudeob
     }
     
     for test_name, config in test_configs.items():
@@ -271,26 +272,26 @@ if __name__ == "__main__":
     
     # Define all benchmark tests
     benchmark_tests = {
-        # "Add Limit Orders": {
-        #     "num_ops": 50000,
-        #     "operations": lambda ob: ob.addOrder(
-        #         "buy" if random.random() < 0.5 else "sell",
-        #         random.uniform(95.0, 105.0),
-        #         random.randint(1, 100),
-        #         "limit",
-        #         f"TEST_ACCOUNT_{random.randint(1, 100)}"
-        #     )
-        # },
-        # "Add Market Orders": {
-        #     "num_ops": 50000,
-        #     "operations": lambda ob: ob.addOrder(
-        #         "buy" if random.random() < 0.5 else "sell",
-        #         100.0,
-        #         random.randint(1, 100),
-        #         "market",
-        #         f"TEST_ACCOUNT_{random.randint(1, 100)}"
-        #     )
-        # },
+        "Add Limit Orders": {
+            "num_ops": 50000,
+            "operations": lambda ob: ob.addOrder(
+                "buy" if random.random() < 0.5 else "sell",
+                random.uniform(95.0, 105.0),
+                random.randint(1, 100),
+                "limit",
+                f"TEST_ACCOUNT_{random.randint(1, 100)}"
+            )
+        },
+        "Add Market Orders": {
+            "num_ops": 50000,
+            "operations": lambda ob: ob.addOrder(
+                "buy" if random.random() < 0.5 else "sell",
+                100.0,
+                random.randint(1, 100),
+                "market",
+                f"TEST_ACCOUNT_{random.randint(1, 100)}"
+            )
+        },
         "Matching Orders": {
             "num_ops": 100000,
             "operations": lambda ob: (
@@ -319,81 +320,81 @@ if __name__ == "__main__":
                     "MARKET MAKER"
                 )
             ]
+        },
+        "Matching Market Orders": {
+            "num_ops": 100000,
+            "operations": lambda ob: (
+                ob.addOrder(
+                    "buy" if random.random() < 0.5 else "sell",
+                    100.0,  # Ensure price crosses the book
+                    random.randint(1, 10),
+                    "market",
+                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
+                ),
+                ob.matchBooks()  # Explicitly call matchBooks
+            )[0],  # Return the result of addOrder to maintain the same return type
+            "setup": lambda ob: [
+                ob.addOrder(
+                    "buy", 
+                    99.5, 
+                    1000, 
+                    "limit", 
+                    "MARKET MAKER"
+                ),
+                ob.addOrder(
+                    "sell", 
+                    100.5, 
+                    1000, 
+                    "limit", 
+                    "MARKET MAKER"
+                )
+            ]
+        },
+        "Cancel Orders": {
+            "num_ops": 10000,
+            "operations": lambda ob: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
+            "setup": lambda ob: [
+                ob.addOrder(
+                    "buy" if random.random() < 0.5 else "sell",
+                    random.uniform(95.0, 105.0),
+                    random.randint(1, 100),
+                    "limit",
+                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
+                ) for _ in range(5000)
+            ]
+        },
+        "Mixed Workload": {
+            "num_ops": 10000,
+            "operations": lambda ob: random.choice([
+                # 60% add orders
+                lambda: ob.addOrder(
+                    "buy" if random.random() < 0.5 else "sell",
+                    random.uniform(95.0, 105.0),
+                    random.randint(1, 100),
+                    random.choice(["limit", "limit", "limit", "market"]),  # 75% limit, 25% market
+                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
+                ),
+                # 20% cancel orders
+                lambda: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
+                # 20% get book info
+                lambda: (ob.bestBid, ob.bestAsk, ob.getBidSize(), ob.getAskSize())
+            ])()
+        },
+        "High-Frequency Trading": {
+            "num_ops": 1000,
+            "operations": lambda ob: (
+                # Add small order
+                ob.addOrder(
+                    "buy" if random.random() < 0.5 else "sell",
+                    random.uniform(99.90, 100.10),
+                    random.randint(1, 5),
+                    "limit",
+                    f"TEST_ACCOUNT_{random.randint(1, 100)}"
+                ),
+                # Cancel an order
+                ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 10)}")
+            )[0]  # Return first result from tuple to avoid error on None return from cancelOrdersByAccount
         }
-        # "Matching Market Orders": {
-        #     "num_ops": 100000,
-        #     "operations": lambda ob: (
-        #         ob.addOrder(
-        #             "buy" if random.random() < 0.5 else "sell",
-        #             100.0,  # Ensure price crosses the book
-        #             random.randint(1, 10),
-        #             "market",
-        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
-        #         ),
-        #         ob.matchBooks()  # Explicitly call matchBooks
-        #     )[0],  # Return the result of addOrder to maintain the same return type
-        #     "setup": lambda ob: [
-        #         ob.addOrder(
-        #             "buy", 
-        #             99.5, 
-        #             1000, 
-        #             "limit", 
-        #             "MARKET MAKER"
-        #         ),
-        #         ob.addOrder(
-        #             "sell", 
-        #             100.5, 
-        #             1000, 
-        #             "limit", 
-        #             "MARKET MAKER"
-        #         )
-        #     ]
-        # },
-        # "Cancel Orders": {
-        #     "num_ops": 10000,
-        #     "operations": lambda ob: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
-        #     "setup": lambda ob: [
-        #         ob.addOrder(
-        #             "buy" if random.random() < 0.5 else "sell",
-        #             random.uniform(95.0, 105.0),
-        #             random.randint(1, 100),
-        #             "limit",
-        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
-        #         ) for _ in range(5000)
-        #     ]
-        # },
-        # "Mixed Workload": {
-        #     "num_ops": 10000,
-        #     "operations": lambda ob: random.choice([
-        #         # 60% add orders
-        #         lambda: ob.addOrder(
-        #             "buy" if random.random() < 0.5 else "sell",
-        #             random.uniform(95.0, 105.0),
-        #             random.randint(1, 100),
-        #             random.choice(["limit", "limit", "limit", "market"]),  # 75% limit, 25% market
-        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
-        #         ),
-        #         # 20% cancel orders
-        #         lambda: ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 100)}"),
-        #         # 20% get book info
-        #         lambda: (ob.bestBid, ob.bestAsk, ob.getBidSize(), ob.getAskSize())
-        #     ])()
-        # },
-        # "High-Frequency Trading": {
-        #     "num_ops": 1000,
-        #     "operations": lambda ob: (
-        #         # Add small order
-        #         ob.addOrder(
-        #             "buy" if random.random() < 0.5 else "sell",
-        #             random.uniform(99.90, 100.10),
-        #             random.randint(1, 5),
-        #             "limit",
-        #             f"TEST_ACCOUNT_{random.randint(1, 100)}"
-        #         ),
-        #         # Cancel an order
-        #         ob.cancelOrdersByAccount(f"TEST_ACCOUNT_{random.randint(1, 10)}")
-        #     )[0]  # Return first result from tuple to avoid error on None return from cancelOrdersByAccount
-        # }
     }
     
     # Run all benchmarks

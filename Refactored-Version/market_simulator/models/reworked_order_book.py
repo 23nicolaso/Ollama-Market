@@ -282,7 +282,7 @@ class OrderBook:
                 # Process all queued updates before returning
                 while update_queue:
                     acc_id, asset, side, qty, price = update_queue.popleft()
-                    emit_trade_update(acc_id, asset, side, qty, price)
+                    emit_trade_update(acc_id, asset, side, qty)
                 return quantity - remaining_quantity, total_fill_price
             orders = [book[key] for key in it] # Create list of all orders to fill in O(k)
             
@@ -407,7 +407,7 @@ class OrderBook:
         # Process all queued updates before returning
         while update_queue:
             acc_id, asset, side, qty, price = update_queue.popleft()
-            emit_trade_update(acc_id, asset, side, qty, price)
+            emit_trade_update(acc_id, asset, side, qty)
 
         return quantity - remaining_quantity, total_fill_price
 
@@ -491,25 +491,6 @@ class OrderBook:
             self._askSize -= order.quantity
             return True
         return False
-
-    def getBids(self):
-        if not self.bids:
-            return None
-        return self.bids
-
-    def getAsks(self):
-        if not self.asks:
-            return None
-        return self.asks
-    
-    @property
-    def mid_price(self):
-        """Cached property for mid price"""
-        if not self.bids or not self.asks:
-            return last_prices[self.asset]
-        if self._mid_price is None:
-            self._mid_price = (self.best_bid + self.best_ask) / 2
-        return self._mid_price
 
     def getUrgentQuantity(self):
         # returns sum of quantities of urgent orders

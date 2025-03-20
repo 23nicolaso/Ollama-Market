@@ -567,7 +567,7 @@
         const agentTrades = new Map(); // Store trades by agent
 
         function updateTradeLog(trade) {
-            const { agent, asset, side, quantity, price, timestamp } = trade;
+            const { agent, asset, side, quantity } = trade;
             
             // Initialize agent's trade data if not exists
             if (!agentTrades.has(agent)) {

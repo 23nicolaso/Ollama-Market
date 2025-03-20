@@ -22,32 +22,32 @@ def displayTraders():
 # buy 500, buy 510, buy 515, sell 0.5 lots at 515, sell 510, sell 530
 # Expected 515*100+510*50=$77000 cash change, 100-500,50-510, sell 100-530
 
-ob, account1, account2 = remake()
-ob.addOrder("buy", 500, 100, "limit", "john")
-ob.addOrder("buy", 510, 100, "limit", "john")
-ob.addOrder("buy", 515, 100, "limit", "john")
-ob.display()
-displayTraders()
+# ob, account1, account2 = remake()
+# ob.addOrder("buy", 500, 100, "limit", "john")
+# ob.addOrder("buy", 510, 100, "limit", "john")
+# ob.addOrder("buy", 515, 100, "limit", "john")
+# ob.display()
+# displayTraders()
 
-ob.addOrder("sell", 515, 50, "limit", "bob")
-ob.display()
-displayTraders()
-ob.addOrder("sell", 510, 100, "limit", "bob")
-ob.display()
-displayTraders()
-ob.addOrder("sell", 530, 100, "limit", "bob")
-ob.addOrder("sell", 540, 100, "limit", "bob")
-ob.display()
-displayTraders()
+# ob.addOrder("sell", 515, 50, "limit", "bob")
+# ob.display()
+# displayTraders()
+# ob.addOrder("sell", 510, 100, "limit", "bob")
+# ob.display()
+# displayTraders()
+# ob.addOrder("sell", 530, 100, "limit", "bob")
+# ob.addOrder("sell", 540, 100, "limit", "bob")
+# ob.display()
+# displayTraders()
 
-ob.addOrder("buy", 510, 1, "market", "bob")
-ob.display()
-displayTraders()
-ob.addOrder("sell", 530, 1, "market", "bob")
-ob.display()
-displayTraders()
+# ob.addOrder("buy", 510, 1, "market", "bob")
+# ob.display()
+# displayTraders()
+# ob.addOrder("sell", 530, 1, "market", "bob")
+# ob.display()
+# displayTraders()
 
-# bid 500 ask 500 clear @ 500
+# # bid 500 ask 500 clear @ 500
 # print("\n BUY 500, SELL 500. FULL FILL @ 500")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")
@@ -69,7 +69,7 @@ displayTraders()
 # displayTraders()
 
 
-# # buy 450 sell 550, no fill
+# buy 450 sell 550, no fill
 # print("\n BUY 450, SELL 550. NO FILL")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 450, 100, "limit", "john")
@@ -80,7 +80,7 @@ displayTraders()
 # ob.display()
 # displayTraders()
 
-# # buy 500 sell 450, full fill 
+# buy 500 sell 450, full fill 
 # print("\n BUY 500, SELL 450. FULL FILL")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")
@@ -101,18 +101,38 @@ displayTraders()
 # ob.display()
 # displayTraders()
 
-# # buy 450 and buy 400, sell 500 and sell 450, fill 450 level, others remain
-# print("\n BUY 450 & BUY 400, SELL 500 & SELL 450, fully filled 450, remaining at 400, 500")
-# ob, account1, account2 = remake()
-# ob.addOrder("buy", 450, 100, "limit", "john")
-# ob.addOrder("buy", 400, 100, "limit", "john")
-# ob.display()
-# displayTraders()
+# buy 450 and buy 400, sell 500 and sell 450, fill 450 level, others remain
+print("\n BUY 450 & BUY 400, SELL 500 & SELL 450, fully filled 450, remaining at 400, 500")
+ob, account1, account2 = remake()
+import time
+import statistics
 
-# ob.addOrder("sell", 500, 100, "limit", "bob")
-# ob.addOrder("sell", 450, 100, "limit", "bob")
-# ob.display()
-# displayTraders()
+# Run multiple iterations to get average performance
+iterations = 1000
+times = []
+
+for _ in range(iterations):
+    start = time.perf_counter()
+    
+    ob.addOrder("buy", 450, 100, "limit", "john")
+    ob.addOrder("buy", 400, 100, "limit", "john")
+    ob.addOrder("sell", 500, 100, "limit", "bob") 
+    ob.addOrder("sell", 450, 100, "limit", "bob")
+    
+    end = time.perf_counter()
+    times.append(end - start)
+
+# Calculate statistics
+avg_time = statistics.mean(times)
+ops_per_sec = iterations / sum(times)
+
+print(f"\nPerformance metrics:")
+print(f"Average time per iteration: {avg_time*1000:.3f} ms")
+print(f"Operations per second: {ops_per_sec:.1f}")
+
+# Display final state
+ob.display()
+displayTraders()
 
 # # limit buy and market sell
 # print("\n LIM BUY & MARKET SELL, EXPECTED 1 full bid order @ 500, 100 sold @ 550")
@@ -121,11 +141,9 @@ displayTraders()
 # ob.addOrder("buy", 550, 100, "limit", "john")
 # ob.display()
 # displayTraders()
-
 # order2 = ob.addOrder("sell", 0, 50, "market", "bob")
 # ob.display()
 # displayTraders()
-
 # order2 = ob.addOrder("sell", 600, 50, "market", "bob")
 # ob.display()
 # displayTraders()

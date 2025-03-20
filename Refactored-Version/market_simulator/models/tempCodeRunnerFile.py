@@ -1,1 +1,1 @@
-displayTraders()
+Original
