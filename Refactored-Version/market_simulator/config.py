@@ -167,7 +167,7 @@ CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
 
 # LLM configuration
-LLM_MODEL = "mistral-7b-q4km:latest" 
+LLM_MODEL = "gemma3:1b" 
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
