@@ -31,57 +31,17 @@ class TATrader(ExecutionalTrader):
             if current_position + order_size <= position_limit:
                 self.placeOrder(markets[market], "buy", mean_price - std_dev*2, order_size, "market")
 
-        # if price changed by over 0.5 in 100 ticks, mean revert by fading the trade
-        
-
-        # # trade on cross of close and moving average of 500 ticks
-        # if len(price_list) >= 500:
-        #     stma = sum(price_list[-500:]) / 500
-        #     order_size = ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE)
+        # If price is near a key level (nearest number), trade off the level
+        if abs(round(current_price) - current_price) < 0.1:
+            order_size = ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE)
             
-        #     # If price crosses above MA, buy
-        #     if current_price > stma and price_list[-2] <= stma:
-        #         # Check if buying would exceed position limit
-        #         if current_position + order_size <= position_limit:
-        #             self.placeOrder(markets[market], "buy", current_price, order_size, "market")
-                
-        #     # If price crosses below MA, sell    
-        #     elif current_price < stma and price_list[-2] >= stma:
-        #         # Check if selling would exceed position limit
-        #         if current_position - order_size >= -position_limit:
-        #             self.placeOrder(markets[market], "sell", current_price, order_size, "market")
+            if mean_price > round(current_price):
+                # Check if selling would exceed position limit
+                if current_position - order_size >= -position_limit:
+                    self.placeOrder(markets[market], "sell", round(current_price), order_size, "market")
+            elif mean_price < round(current_price):
+                # Check if buying would exceed position limit
+                if current_position + order_size <= position_limit:
+                    self.placeOrder(markets[market], "buy", round(current_price), order_size, "market")
 
-        # # If price is near a key level (nearest number), trade off the level
-        # if abs(round(current_price) - current_price) < 0.1:
-        #     stma = sum(price_list[-200:]) / 200
-        #     order_size = ceil(random.uniform(0.5, 1.5)*TA_LARGE_ORDER_SIZE)
-            
-        #     if stma > round(current_price):
-        #         # Check if selling would exceed position limit
-        #         if current_position - order_size >= -position_limit:
-        #             self.placeOrder(markets[market], "sell", round(current_price), order_size, "market")
-        #     elif stma < round(current_price):
-        #         # Check if buying would exceed position limit
-        #         if current_position + order_size <= position_limit:
-        #             self.placeOrder(markets[market], "buy", round(current_price), order_size, "market")
-
-        # # If 2% drop over past 500 ticks, execute a dip-buying strategy
-        # if len(price_history[market]) >= 500:
-        #     start_price = price_history[market][-500]
-        #     current_price = price_history[market][-1]
-        #     price_drop = (start_price - current_price) / start_price
-        #     price_spike = (current_price - start_price) / start_price
-            
-        #     if price_drop > 0.02:
-        #         order_size = int(TA_MEGA_ORDER_SIZE*random.uniform(0.5, 1.5))
-        #         # Check if buying would exceed position limit
-        #         if current_position + order_size <= position_limit:
-        #             self.executeTradeInLegs(markets[market], "buy", current_price, order_size)
-
-        #     if price_spike > 0.02:
-        #         order_size = int(TA_MEGA_ORDER_SIZE*random.uniform(0.5, 1.5))
-        #         # Check if selling would exceed position limit
-        #         if current_position - order_size >= -position_limit:
-        #             self.executeTradeInLegs(markets[market], "sell", current_price, order_size)
-                
         # Limit the number of limitorders placed to save on compute

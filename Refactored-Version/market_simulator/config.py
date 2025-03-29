@@ -3,6 +3,8 @@ WORLD_CONTEXT = """
 Ensure that all your responses follow the correct, defined response format and keep your additional thoughts outside the final response.     
 """
 
+RFR = 0.03 # risk free rate of 3% to start
+
 # Asset configuration
 ASSETS_CONFIG = {
     "SPY": {
@@ -10,63 +12,78 @@ ASSETS_CONFIG = {
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 10000000,
-        "included_in_spy": False
+        "included_in_spy": False,
+        "use_rp": False
     },
     "TECH ETF": {
         "initial_price": 200,
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 2000000000,
-        "included_in_spy": True
+        "risk": 0.05,
+        "included_in_spy": True,
+        "use_rp": True
     },
     "CONSUMER ETF": {
         "initial_price": 200,
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 2000000000,
-        "included_in_spy": True
+        "risk": 0.04,
+        "included_in_spy": True,
+        "use_rp": True
     },
     "UTILITIES ETF": {
         "initial_price": 100,
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 2000000000,
-        "included_in_spy": True
+        "risk": 0.02,
+        "included_in_spy": True,
+        "use_rp": True
     },
     "BANKING ETF": {
         "initial_price": 200,
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 2000000000,
-        "included_in_spy": True
+        "risk": 0.03,
+        "included_in_spy": True,
+        "use_rp": True
     },
     "MSCI World ETF": {
         "initial_price": 100,
         "spread": 0.02,
         "annual_return": 0.08,
+        "risk":0.03,
         "num_shares": 1000000000,
-        "included_in_spy": False
+        "included_in_spy": False,
+        "use_rp": True
     },
     "Bitcoin": {
         "initial_price": 100,
         "spread": 0.02,
         "annual_return": 0.5,
         "num_shares": 1000000000,
-        "included_in_spy": False
+        "included_in_spy": False,
+        "use_rp": False
     },
     "Gold": {
         "initial_price": 100,
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 1000000000,
-        "included_in_spy": False
+        "included_in_spy": False,
+        "use_rp": False
     },
     "China ETF": {
         "initial_price": 100,
         "spread": 0.02,
         "annual_return": 0.08,
         "num_shares": 1000000000,
-        "included_in_spy": False
+        "risk": 0.06,
+        "included_in_spy": False,
+        "use_rp": True
     }
 }
 
@@ -87,6 +104,13 @@ developments, natural disasters, or any funny news.
 Do not say anything other than the headline, keep your response under 15 words long,
 and do not make a x happens as y headline, simply say an event which happened. Do NOT MENTION POINTS, OR CHANGES IN STOCK PRICES. 
 Here are the most recent headlines for context: {recent_headlines}.
+"""
+
+EXPLANATION_NEWS_PROMPT = """
+{world_context}
+A breaking news headline for my simulated world caused the risk for {asset} to change by {risk}.
+Give a possible news headline which could have caused such a reaction in the markets. 
+Keep the headline under 15 words long, don't say anything other than the headline, don't mention the risk parameter itself. 
 """
 
 SENTIMENT_ANALYSIS_PROMPT = """
@@ -171,7 +195,7 @@ LLM_MODEL = "gemma3:1b"
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
-HF_POSITION_LIMIT = 100000 
+HF_POSITION_LIMIT = 100000
 HFT_BASE_ORDER_SIZE = 10000
 
 # Market maker - provides liquidity

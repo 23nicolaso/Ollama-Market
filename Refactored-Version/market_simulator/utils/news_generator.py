@@ -1,9 +1,9 @@
 import threading
 import re
-from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets
+from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets, calculate_fair_value
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
-    URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT
+    URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT, EXPLANATION_NEWS_PROMPT
 )
 
 # Global variables to store agent references
@@ -20,17 +20,30 @@ def init_agents(retail_trader, hft_fund, market_maker, long_term_investor):
     _market_maker = market_maker
     _long_term_investor = long_term_investor
 
-def generate_news(custom_headline=None):
+def generate_news(custom_headline=None, explain_this=None):
     """Generates a news headline and updates market sentiment"""
+    # Begin by randomly updating the risk parameters:
     if custom_headline:
         headline = custom_headline
     else:
-        headline = invoke_model(
-            NEWS_GENERATION_PROMPT.format(
-                world_context=WORLD_CONTEXT,
-                recent_headlines=recentHeadlines
+        if explain_this:
+            risk = explain_this[0]
+            asset = explain_this[1]
+
+            headline = invoke_model(
+                EXPLANATION_NEWS_PROMPT.format(
+                    world_context=WORLD_CONTEXT,
+                    risk=risk,
+                    asset=asset
+                )
             )
-        )
+        else:
+            headline = invoke_model(
+                NEWS_GENERATION_PROMPT.format(
+                    world_context=WORLD_CONTEXT,
+                    recent_headlines=recentHeadlines
+                )
+            )
     print(headline)
     recentHeadlines.append(headline)
     if len(recentHeadlines) > 10:
@@ -99,10 +112,10 @@ def generate_news(custom_headline=None):
                 sentiment_scores_dict[asset] = 0.5
 
     for asset in ASSETS:
-        if asset in hft_scores:
-            hft_sentiment_scores_dict[asset] = hft_scores[asset]
-        else:
-            hft_sentiment_scores_dict[asset] = 0.5
+            if asset in hft_scores:
+                hft_sentiment_scores_dict[asset] = hft_scores[asset]
+            else:
+                hft_sentiment_scores_dict[asset] = 0.5
 
     _retail_trader.retailSentimentScore = sentiment_scores_dict
     
@@ -125,9 +138,9 @@ def generate_chat():
     # print(f"Chat: {chat}")
     # chat_queue.put(chat)
 
-def generate_news_thread(headline=None):
+def generate_news_thread(headline=None, explain_this=None):
     """Creates a thread to generate news"""
-    news_thread = threading.Thread(target=generate_news, args=(headline,))
+    news_thread = threading.Thread(target=generate_news, args=(headline,explain_this))
     news_thread.daemon = True
     news_thread.start()
 

@@ -16,7 +16,7 @@ from market_simulator.agents.hft_fund import HFTFund
 from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.agents.long_term_investor import LongTermInvestor
 from market_simulator.gui.main_window import MainWindow
-from market_simulator.utils.market_utils import makeMarkets, markets, price_history, update_price_history, spreads_by_market
+from market_simulator.utils.market_utils import makeMarkets, markets, price_history, update_price_history, spreads_by_market, randomly_alter_risk_params
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread, init_agents
 from market_simulator.price_server import start_server as start_api_server
 from market_simulator.web.server import run as run_web_server
@@ -34,45 +34,40 @@ def run_simulation(root, main_window):
     news_feed_frame._update_news_feed()
     news_feed_frame._update_chat_window()
 
-    while True:
+    while True: 
+        simulation_age += 1
+    
         for market in markets:
-            retail_trader.trade(markets[market])
             market_maker.provideLiquidity(markets[market])
+            retail_trader.trade(markets[market])
+            retail_trader.shiftSentimentToMean()
+            spy_arb_fund.arbitrage()
+            market_maker.makeMarket(markets[market])
+            hft_fund.updatePositioning(market)
 
-        retail_trader.shiftSentimentToMean()
+            mean_reversion_fund.calculate_target_positions()
+            mean_reversion_fund.update_positions(market)
+            
+            long_term_investor.trade(markets[market])
+            long_term_investor.updatePositioning(market)
 
-        if tick > 10:        
-            simulation_age += 1
+            user_account.updatePositioning(market)
+
+            update_price_history(market, markets[market].lastPrice)
+            ta_traders.manageTATrades(market)
+    
+            if simulation_age & 0b111 == 0:
+                result = randomly_alter_risk_params(market)
         
-            for market in markets:
-                retail_trader.trade(markets[market])
-                spy_arb_fund.arbitrage()
-                market_maker.makeMarket(markets[market])
-                hft_fund.updatePositioning(market)
-
-                mean_reversion_fund.calculate_target_positions()
-                mean_reversion_fund.update_positions(market)
+                if result is not None:
+                    generate_news_thread(explain_this=(result, market))
                 
-                long_term_investor.trade(markets[market])
-                long_term_investor.updatePositioning(market)
 
-                user_account.updatePositioning(market)
-
-                update_price_history(market, markets[market].lastPrice)
-                ta_traders.manageTATrades(market)
-                # ta_traders.checkConditionalOrders(market)
-                
-                # ta_traders.updatePositioning(market)
-
-                if len(price_history[market]) < 100:
-                    continue
-
-            # Update GUI components
-            main_window.update_prices()
-            main_window.update_sentiments(retail_trader)
-            main_window.update()
-            tick = 0
-        
+        # Update GUI components
+        main_window.update_prices()
+        main_window.update_sentiments(retail_trader)
+        main_window.update()
+    
         try:
             root.update()
         except tk.TclError:
@@ -107,7 +102,6 @@ def main():
 
         # Generate initial news and chat
         generate_news_thread()
-        generate_chat_thread()
 
         # Start API server in a separate thread
         api_thread = threading.Thread(target=start_api_server)

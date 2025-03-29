@@ -34,19 +34,18 @@ class MarketMaker(MarketAgent):
         # Adjust prices based on position skew
         bidPrice = round(midPrice - (baseSpread/2 * (1 + skew)), 2)
         askPrice = round(midPrice + (baseSpread/2 * (1 - skew)), 2)
-        bq, aq = orderBook.getNearbyDepth(NEARBY_RANGE)
         # Layer orders at different sizes and prices
         # if order book is illiquid not matching liquidity requirements in one direction, quote orders
+
         for i in range(MM_DEPTH):
             # Reduce size during high volatility
             layerSize = int(MM_BASE_ORDER_SIZE * (i + 1) / volatility_factor)
-            
-            if bq < MM_REQUIRED_LIQ:
-                bidLayerPrice = round(bidPrice - (0.01 * i), 2)
-                self.placeOrder(orderBook, "buy", bidLayerPrice, layerSize, "limit")
-            if aq < MM_REQUIRED_LIQ:
-                askLayerPrice = round(askPrice + (0.01 * i), 2)
-                self.placeOrder(orderBook, "sell", askLayerPrice, layerSize, "limit")
+    
+            bidLayerPrice = round(bidPrice - (0.01 * i), 2)
+            self.placeOrder(orderBook, "buy", bidLayerPrice, layerSize, "limit")
+        
+            askLayerPrice = round(askPrice + (0.01 * i), 2)
+            self.placeOrder(orderBook, "sell", askLayerPrice, layerSize, "limit")
 
     def provideLiquidity(self, orderBook):
         remaining_urgent_buys, remaining_urgent_sells = orderBook.getUrgentQuantity()

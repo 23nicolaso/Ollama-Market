@@ -2,6 +2,7 @@ import random
 import math
 from market_simulator.agents.base_agent import MarketAgent
 from market_simulator.config import ASSETS, RETAIL_POSITION_LIMIT, RETAIL_MAX_ORDER_SIZE, USE_CYCLICAL_SENTIMENT, SENTIMENT_REVERSION_RATE
+from market_simulator.utils.market_utils import calculate_fair_value
 
 class RetailTrader(MarketAgent):
     def __init__(self, accountID, cash):
@@ -64,7 +65,7 @@ class RetailTrader(MarketAgent):
         base_quantity = random.randint(1, RETAIL_MAX_ORDER_SIZE)
         s_quantity = int(base_quantity * (1 + sentiment_diff * 4))  # Scale up quantity based on sentiment difference
         position = self.account.getPosition(orderBook.asset)
-        type = random.choice(["market", "limit"])
+        type = "market"
         quantity = s_quantity if type == "market" else s_quantity * 4
 
         if quantity > 0:

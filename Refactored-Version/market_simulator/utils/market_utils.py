@@ -2,9 +2,10 @@ from langchain_ollama import OllamaLLM
 import queue
 from market_simulator.config import (
     ASSETS, INITIAL_PRICES, SPREADS, ANNUAL_RETURNS,
-    LLM_MODEL, MAX_HISTORY_LENGTH
+    LLM_MODEL, MAX_HISTORY_LENGTH, ASSETS_CONFIG, RFR
 )
 from datetime import datetime, timedelta
+import random
 from market_simulator.utils.db_utils import get_price_history as get_db_price_history
 from market_simulator.utils.db_utils import db_manager as db
 import numpy as np
@@ -73,7 +74,6 @@ class CircularBuffer:
         """Returns the number of elements currently in the buffer."""
         return self.size if self.full else self.index
 
-
 # Add these to the global variables
 news_queue = queue.Queue()
 chat_queue = queue.Queue()
@@ -90,6 +90,42 @@ price_history = {}  # Stores list of past prices for each asset
 assets = ASSETS  # Stores list of assets
 markets = {}  # Stores list of OrderBook objects, indexed by asset
 recentHeadlines = []  # Stores list of recently generated headlines
+
+# store risk parameters for each asset
+RISKS = {asset: config["risk"] for asset, config in ASSETS_CONFIG.items() if config["use_rp"]}
+EV = {asset: config["initial_price"] * (1+config["annual_return"]) for asset, config in ASSETS_CONFIG.items()}
+EST_INFLATION = 0.03
+
+def calculate_fair_value(asset):
+    # Calculate a fair value for an asset using risk free rate, risk parameters
+    if RISKS.get(asset):
+        required_ror = RISKS[asset] + EST_INFLATION + RFR
+    else:
+        required_ror = RFR + EST_INFLATION
+    fair_value = EV[asset]/(1+required_ror)
+    return fair_value
+
+def calculate_r_adj_ytm(asset):
+    if RISKS.get(asset):
+        return (EV[asset]/last_prices[asset]-(RISKS[asset]))
+
+def randomly_alter_risk_params(asset):
+    # Randomly alter risk param, with a very small chance of a major change across the board. If major change, there should be a news
+    # article created explaining it. 
+    # Randomly alter risk parameters with small probability
+    if RISKS.get(asset):  # Only alter if asset uses risk parameters
+        # Small random changes (±2%) with 20% probability
+        if random.random() < 0.2:
+            RISKS[asset] *= random.uniform(0.98, 1.02)
+            
+        # Major changes (±20%) with 1% probability
+        if random.random() < 0.01:
+            mult = random.uniform(0.8, 1.2)
+            RISKS[asset] *= mult
+            
+            return (mult-1)*100
+        
+        return None
 
 # Initialize last_prices and price_history from DB or defaults
 for asset in ASSETS:

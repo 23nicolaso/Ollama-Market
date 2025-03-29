@@ -5,13 +5,10 @@ class MarketAgent:
     def __init__(self, accountID, cash):
         self.account = Account(accountID, cash)
         accounts[accountID] = self.account
-        self.orders = []
+    
         
     def placeOrder(self, orderBook, direction, price, quantity, orderType):
-        order_key = orderBook.addOrder(direction, price, quantity, orderType, self.account.accountID)
-        if order_key != 0:
-            self.orders.append(order_key)
-        return order_key
+        orderBook.addOrder(direction, price, quantity, orderType, self.account.accountID)
 
     def cancelAllOrders(self, orderBook):
         orderBook.cancelOrdersByAccount(self.account.accountID)
