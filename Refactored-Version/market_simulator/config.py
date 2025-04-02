@@ -1,9 +1,24 @@
 # World configuration
 WORLD_CONTEXT = """ 
-Ensure that all your responses follow the correct, defined response format and keep your additional thoughts outside the final response.     
+Ensure that all your responses follow the correct, defined response format.     
+"""
+
+STATE_STRING = "A new president has just been elected, and is launching widespread reforms!"
+
+STATE_PROMPT = f"""
+The state string is your memory of the current situation in this world. 
+Your old state string is: <{STATE_STRING}>. 
+Please update the state string to better represent the situation in the simulated world with this new headline for context: {{headline}}
 """
 
 RFR = 0.03 # risk free rate of 3% to start
+
+def set_state_string(str):
+    global STATE_STRING
+    import re
+    # Extract text between asterisks if present, otherwise use full string
+    match = re.search(r'\*([^*]+)\*', str)
+    STATE_STRING = match.group(1) if match else str
 
 # Asset configuration
 ASSETS_CONFIG = {
@@ -96,28 +111,34 @@ NUM_SHARES = {asset: config["num_shares"] for asset, config in ASSETS_CONFIG.ite
 SPY_INCLUDED_ASSETS = [asset for asset, config in ASSETS_CONFIG.items() if config["included_in_spy"]]
 
 # LLM Prompts
-NEWS_GENERATION_PROMPT = """
-{world_context}
+NEWS_GENERATION_PROMPT = f"""
+{{world_context}}
+The state string is your memory of the current situation in this world. 
+Your old state string is: <{STATE_STRING}>. 
 Make one dramatic breaking news headline for my simulated world. 
 I want it to be news of economic events, statements by politicians,
 developments, natural disasters, or any funny news. 
 Do not say anything other than the headline, keep your response under 15 words long,
 and do not make a x happens as y headline, simply say an event which happened. Do NOT MENTION POINTS, OR CHANGES IN STOCK PRICES. 
-Here are the most recent headlines for context: {recent_headlines}.
+Here are the most recent headlines for context: {{recent_headlines}}.
 """
 
-EXPLANATION_NEWS_PROMPT = """
-{world_context}
-A breaking news headline for my simulated world caused the risk for {asset} to change by {risk}.
-Give a possible news headline which could have caused such a reaction in the markets. 
-Keep the headline under 15 words long, don't say anything other than the headline, don't mention the risk parameter itself. 
+EXPLANATION_NEWS_PROMPT = f"""
+{{world_context}}
+The state string is your memory of the current situation in this world. 
+Your old state string is: <{STATE_STRING}>. 
+Provide a breaking news headline for my simulated world which would be {{risk}} for {{asset}}. 
+Make it dramatic, news of economic events, business deals/choices, statements by politicians, natural disasters or business mistakes.
+Keep the headline under 15 words long, only respond with the headline itself, and don't mention points or changes in stock prices. 
 """
 
-SENTIMENT_ANALYSIS_PROMPT = """
-{world_context}
-Here is the most recent news headline: {headline}
+SENTIMENT_ANALYSIS_PROMPT = f"""
+{{world_context}}
+The state string is your memory of the current situation in this world. 
+Your old state string is: <{STATE_STRING}>. 
+Here is the most recent news headline: {{headline}}
 
-Does this seem like good or bad news for people holding these assets: {assets}
+Does this seem like good or bad news for people holding these assets: {{assets}}
 
 Please provide a sentiment score for each asset based strictly on this format: 
 ASSET1: [SCORE], ASSET2: [SCORE], ..., ASSETN: [SCORE]
@@ -129,14 +150,16 @@ ASSET1: [SCORE], ASSET2: [SCORE], ..., ASSETN: [SCORE]
 For example:
 SPY: 0.5, TECH ETF: 0.4, GOLD: 0.7, BITCOIN: 0.2, ...
 
-Now, based on the headline provided, give scores for the following assets: {assets}.
+Now, based on the headline provided, give scores for the following assets: {{assets}}.
 """
 
-SENTIMENT_ANALYSIS_PROMPT_HFT = """
-{world_context}
-Here is the most recent news headline: {headline}
+SENTIMENT_ANALYSIS_PROMPT_HFT = f"""
+{{world_context}}
+The state string is your memory of the current situation in this world. 
+Your old state string is: <{STATE_STRING}>. 
+Here is the most recent news headline: {{headline}}
 
-You are a HFT analyst. Does this seem like good or bad news for people holding these assets: {assets}
+You are a HFT analyst. Does this seem like good or bad news for people holding these assets: {{assets}}
 
 Please provide a sentiment score for each asset based strictly on this format: 
 ASSET1: [SCORE], ASSET2: [SCORE], ..., ASSETN: [SCORE]
@@ -148,7 +171,7 @@ ASSET1: [SCORE], ASSET2: [SCORE], ..., ASSETN: [SCORE]
 For example:
 SPY: 0.5, TECH ETF: 0.4, GOLD: 0.7, BITCOIN: 0.2, ...
 
-Now, based on the headline provided, give scores for the following assets: {assets}.
+Now, based on the headline provided, give scores for the following assets: {{assets}}.
 """
 
 URGENCY_ANALYSIS_PROMPT = """
@@ -191,31 +214,31 @@ CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
 
 # LLM configuration
-LLM_MODEL = "gemma3:1b" 
+LLM_MODEL = "gemma3:4b" 
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
-HF_POSITION_LIMIT = 100000
-HFT_BASE_ORDER_SIZE = 10000
+HF_POSITION_LIMIT = 1000000
+HFT_BASE_ORDER_SIZE = 100000
 
 # Market maker - provides liquidity
-MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
+MM_POSITION_LIMIT = 100000  # Large position limit to maintain liquidity
 MM_BASE_ORDER_SIZE = 1000  
 MM_MAX_VOLATILITY_MULT = 5  
-MM_DEPTH = 5  
+MM_DEPTH = 5
 MM_REQUIRED_LIQ = 1000
 NEARBY_RANGE = 0.05
 
 # Retail traders - many small trades
-RETAIL_MAX_ORDER_SIZE = 100  # Small individual trades
-RETAIL_POSITION_LIMIT = 50000  # Limited position size
+RETAIL_MAX_ORDER_SIZE = 1000  # Small individual trades
+RETAIL_POSITION_LIMIT = 1000000  # Limited position size
 USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swings
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
-TA_POSITION_LIMIT = 100000  # Moderate position limit
+TA_POSITION_LIMIT = 1000000  # Substantial position limit
 TA_MEGA_ORDER_SIZE = 10000  # Huge, infrequent trades
-TA_LARGE_ORDER_SIZE = 1000  # Larger trades for strong signals
+TA_LARGE_ORDER_SIZE = 1000  # Larger trades
 
 # Long-term investor - larger but infrequent trades
 LT_INVESTOR_MAX_ORDER_SIZE = 100  # Increased for more impactful position building

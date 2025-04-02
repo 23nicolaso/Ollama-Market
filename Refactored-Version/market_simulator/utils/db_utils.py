@@ -83,6 +83,9 @@ class DatabaseManager:
             if end_time:
                 query = query.filter(PriceHistory.timestamp <= end_time)
             return [(record.price, record.timestamp) for record in query.all()]
+        except: 
+            init_db()
+
         finally:
             self.Session.remove()  # Changed from session.remove() to self.Session.remove()
     

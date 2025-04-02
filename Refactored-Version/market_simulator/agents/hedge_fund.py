@@ -1,7 +1,7 @@
 import random
 from market_simulator.agents.executional_trader import ExecutionalTrader
 from market_simulator.utils.market_utils import price_history, markets, assets, calculate_r_adj_ytm
-from market_simulator.config import HF_POSITION_LIMIT, SPREADS
+from market_simulator.config import HF_POSITION_LIMIT, SPREADS, RFR
 
 class HedgeFund(ExecutionalTrader):
     def __init__(self, accountID, cash, strategy_type):
@@ -20,6 +20,7 @@ class HedgeFund(ExecutionalTrader):
 
     def mean_reversion_strategy(self):
         # Calculate YTM for all assets
+        # Trades so each asset returns roughly the same as the risk free asset, after adjusting for inflation and risk. 
         ytms = {}
         for asset in assets:
             result = calculate_r_adj_ytm(asset)
@@ -30,8 +31,12 @@ class HedgeFund(ExecutionalTrader):
         highest_ytm_asset = max(ytms, key=ytms.get)
         lowest_ytm_asset = min(ytms, key=ytms.get)
         
-        # Short the highest YTM asset
-        self.placeOrder(markets[highest_ytm_asset], "buy", 0.01, 100, "market")
-        self.placeOrder(markets[lowest_ytm_asset], "sell", 0.01, 100, "market")
+        # If more than 1% away from RFR, should do the mean reversion trade
+        if ytms[lowest_ytm_asset] < 1 + RFR - 0.01:
+            # print("SELLING, ", lowest_ytm_asset, " because: ", ytms[lowest_ytm_asset])
+            self.placeOrder(markets[lowest_ytm_asset], "sell", markets[lowest_ytm_asset].bestBid, 10000, "market")
+        if ytms[highest_ytm_asset] > 1 + RFR + 0.01:
+            # print("BUYING, ", highest_ytm_asset, " because: ", ytms[highest_ytm_asset])
+            self.placeOrder(markets[highest_ytm_asset], "buy", markets[highest_ytm_asset].bestAsk, 10000, "market")
+
         # print(ytms)
-        # print("BUYING: ", highest_ytm_asset, ". SELLING: ", lowest_ytm_asset)

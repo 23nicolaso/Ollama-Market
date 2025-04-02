@@ -18,6 +18,27 @@ class CircularBuffer:
         self.index = 0  # Tracks the next write position
         self.full = False  # Tracks if the buffer has filled
         
+    def getLastNPrices(self, n):
+        """Returns the n most recent prices"""
+        if n <= 0:
+            return np.array([])
+            
+        if not self.full:
+            # If buffer not full, return last n prices from available data
+            return self.buffer[max(0, self.index - n):self.index]
+            
+        # If buffer is full, handle wrap-around case
+        if n >= self.size:
+            return self.get()  # Return all prices
+            
+        # Get last n prices with wrap-around
+        if self.index >= n:
+            return self.buffer[self.index - n:self.index]
+        else:
+            # Need to wrap around
+            return np.concatenate((self.buffer[self.size - (n - self.index):], 
+                                 self.buffer[:self.index]))
+
     def getLastPrice(self):
         """Returns the most recent price in the buffer."""
         if self.index == 0:
@@ -40,6 +61,10 @@ class CircularBuffer:
         if self.index == 0:  # Marks buffer as full once it wraps
             self.full = True
     
+    def isFull(self):
+        """Return bool if full"""
+        return self.full
+
     def clear(self):
         """Clears the contents of the circular buffer."""
         self.index = 0
@@ -52,17 +77,54 @@ class CircularBuffer:
             return self.buffer[:self.index]  # Only valid data
         return np.concatenate((self.buffer[self.index:], self.buffer[:self.index]))  # Reorder
 
-    def mean(self):
-        """Returns the mean price without reordering."""
-        if not self.full:
+    def mean(self, n = MAX_HISTORY_LENGTH):
+        """Returns the mean price of the past n prices"""
+        if n == self.size and self.full:
+            return np.mean(self.buffer)
+            
+        if not self.full and n == self.size:
             return np.mean(self.buffer[:self.index])
-        return np.mean(self.buffer)
+            
+        if self.index >= n:
+            return np.mean(self.buffer[self.index - n:self.index])
+        else:
+            # Need to wrap around
+            return np.mean(np.concatenate((self.buffer[self.size - (n - self.index):], 
+                                         self.buffer[:self.index])))
 
-    def std(self):
-        """Returns the standard deviation without reordering."""
-        if not self.full:
-            return np.std(self.buffer[:self.index], ddof=0)  
-        return np.std(self.buffer, ddof=0)
+    def std(self, n = MAX_HISTORY_LENGTH):
+        """Returns the standard deviation of the past n prices"""
+        if n == self.size and self.full:
+            return np.std(self.buffer, ddof=0)
+            
+        if not self.full and n == self.size:
+            return np.std(self.buffer[:self.index], ddof=0)
+            
+        if self.index >= n:
+            return np.std(self.buffer[self.index - n:self.index], ddof=0)
+        else:
+            # Need to wrap around
+            return np.std(np.concatenate((self.buffer[self.size - (n - self.index):], 
+                                        self.buffer[:self.index])), ddof=0)
+
+    def crossed_over_mean(self, n=MAX_HISTORY_LENGTH):
+        """Returns True if price just crossed over the n-period mean, False otherwise"""
+        if self.index < 2:  # Need at least 2 points to detect a crossover
+            return False
+            
+        current_price = self.buffer[self.index - 1]
+        prev_price = self.buffer[self.index - 2]
+        mean_price = self.mean(n)
+        
+        # Check for upward crossover
+        if prev_price <= mean_price and current_price > mean_price:
+            return True
+            
+        # Check for downward crossover
+        if prev_price >= mean_price and current_price < mean_price:
+            return True
+            
+        return False
 
     def sum(self):
         """Returns the sum without reordering."""
@@ -109,21 +171,25 @@ def calculate_r_adj_ytm(asset):
     if RISKS.get(asset):
         return (EV[asset]/last_prices[asset]-(RISKS[asset]))
 
+def alter_risk_params_with_news(asset, sentiment, importance):
+    if RISKS.get(asset):
+        RISKS[asset] *= 1 + (0.01 * (sentiment-0.5) * importance)
+
 def randomly_alter_risk_params(asset):
     # Randomly alter risk param, with a very small chance of a major change across the board. If major change, there should be a news
     # article created explaining it. 
     # Randomly alter risk parameters with small probability
     if RISKS.get(asset):  # Only alter if asset uses risk parameters
-        # Small random changes (±2%) with 20% probability
+        # Small random changes (±0.001) with 20% probability
         if random.random() < 0.2:
-            RISKS[asset] *= random.uniform(0.98, 1.02)
+            RISKS[asset] += random.uniform(-0.001, 0.001)
             
-        # Major changes (±20%) with 1% probability
-        if random.random() < 0.01:
-            mult = random.uniform(0.8, 1.2)
-            RISKS[asset] *= mult
+        # Major changes (±0.01) with 0.1% probability
+        if random.random() < 0.001:
+            val = random.uniform(-0.01, +0.01)
+            RISKS[asset] += val
             
-            return (mult-1)*100
+            return val
         
         return None
 

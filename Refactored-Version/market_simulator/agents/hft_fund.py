@@ -9,16 +9,16 @@ class HFTFund(ExecutionalTrader):
 
     def tradeTheNews(self, market, sentiment_score):
         #  If sentiment is above 0.7 or below 0.3, make the HFT front run the trade by market buying/selling 
-        if sentiment_score <= 0.3:
+        if sentiment_score <= 0.1:
             current_price = markets[market].lastPrice
-            quantity = 5*HFT_BASE_ORDER_SIZE
+            quantity = HFT_BASE_ORDER_SIZE
 
             self.placeOrder(markets[market], "sell", current_price, int(quantity), "market")
             self.executeTradeInLegs(markets[market], "buy", current_price, int(quantity))
 
-        elif sentiment_score >= 0.7:
+        elif sentiment_score >= 0.9:
             current_price = markets[market].lastPrice
 
-            quantity = 5*HFT_BASE_ORDER_SIZE
+            quantity = HFT_BASE_ORDER_SIZE
             self.placeOrder(markets[market], "buy", current_price, int(quantity), "market")
             self.executeTradeInLegs(markets[market], "sell", current_price, int(quantity))

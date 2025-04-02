@@ -38,12 +38,11 @@ def run_simulation(root, main_window):
         simulation_age += 1
     
         for market in markets:
-            market_maker.provideLiquidity(markets[market])
+            market_maker.makeMarket(markets[market])
             retail_trader.trade(markets[market])
             retail_trader.shiftSentimentToMean()
             spy_arb_fund.arbitrage()
-            market_maker.makeMarket(markets[market])
-            hft_fund.updatePositioning(market)
+            hft_fund.updateOrdersInLegs(markets[market])
 
             mean_reversion_fund.calculate_target_positions()
             mean_reversion_fund.update_positions(market)
@@ -54,13 +53,17 @@ def run_simulation(root, main_window):
             user_account.updatePositioning(market)
 
             update_price_history(market, markets[market].lastPrice)
-            ta_traders.manageTATrades(market)
-    
-            if simulation_age & 0b111 == 0:
-                result = randomly_alter_risk_params(market)
-        
-                if result is not None:
-                    generate_news_thread(explain_this=(result, market))
+
+            if price_history[market].isFull(): #  only do some updates once initial price is set correctly
+                if simulation_age & 0b11 == 0:
+                    result = randomly_alter_risk_params(market)
+            
+                    if result is not None:
+                        generate_news_thread(explain_this=(result, market))
+                
+                ta_traders.manageTATrades(market)
+                
+            market_maker.provideLiquidity(markets[market])
                 
 
         # Update GUI components
@@ -99,9 +102,6 @@ def main():
 
         # Initialize news generator with agents
         init_agents(retail_trader, hft_fund, market_maker, long_term_investor)
-
-        # Generate initial news and chat
-        generate_news_thread()
 
         # Start API server in a separate thread
         api_thread = threading.Thread(target=start_api_server)

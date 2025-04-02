@@ -1,9 +1,10 @@
 import threading
 import re
-from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets, calculate_fair_value
+from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets, calculate_fair_value, alter_risk_params_with_news
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
-    URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT, EXPLANATION_NEWS_PROMPT
+    URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT, EXPLANATION_NEWS_PROMPT,
+    STATE_PROMPT, set_state_string
 )
 
 # Global variables to store agent references
@@ -27,7 +28,7 @@ def generate_news(custom_headline=None, explain_this=None):
         headline = custom_headline
     else:
         if explain_this:
-            risk = explain_this[0]
+            risk = "good" if explain_this[0] < 0 else "bad" 
             asset = explain_this[1]
 
             headline = invoke_model(
@@ -44,7 +45,6 @@ def generate_news(custom_headline=None, explain_this=None):
                     recent_headlines=recentHeadlines
                 )
             )
-    print(headline)
     recentHeadlines.append(headline)
     if len(recentHeadlines) > 10:
         recentHeadlines.pop(0)
@@ -72,6 +72,15 @@ def generate_news(custom_headline=None, explain_this=None):
             headline=recentHeadlines[-1]
         )
     )
+
+    updated_state_string = invoke_model(
+        STATE_PROMPT.format(
+            headline=recentHeadlines[-1]
+        )
+    )
+    set_state_string(updated_state_string)
+    print(updated_state_string)
+    print(headline, sentiment_scores, urgency_score)
 
     try:
         urgency_score = int(re.search(r'\d+', urgency_score).group())
@@ -121,11 +130,11 @@ def generate_news(custom_headline=None, explain_this=None):
     
     # Simulate HFT trading the news
     for market in markets:
+        alter_risk_params_with_news(market,sentiment_scores_dict[asset],urgency_score)
         _market_maker.makeMarket(markets[market])
         _hft_fund.tradeTheNews(market, hft_sentiment_scores_dict[market])
         _retail_trader.trade(markets[market])
         _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
-        _market_maker.provideLiquidity(markets[market])
 
 def generate_chat():
     """Generates chat messages about market conditions"""

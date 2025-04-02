@@ -9,44 +9,15 @@ class RetailTrader(MarketAgent):
         super().__init__(accountID, cash)
         self.retailSentimentScore = {asset: 0.5 for asset in ASSETS}
         self.newsUrgency = 1
-        # Add new attributes for cyclical behavior with smaller amplitudes
-        self.cycle_frequencies = {
-            asset: {
-                'fast': random.uniform(0.01, 0.02),    # Fast cycle (100-200 ticks)
-                'medium': random.uniform(0.002, 0.005), # Medium cycle (500-1000 ticks) 
-                'slow': random.uniform(0.0005, 0.001)   # Slow cycle (2000-4000 ticks)
-            } for asset in ASSETS
-        }
-        self.cycle_amplitudes = {
-            asset: {
-                'fast': random.uniform(0.02, 0.03),    # Smaller amplitude
-                'medium': random.uniform(0.03, 0.04),   # Smaller amplitude
-                'slow': random.uniform(0.04, 0.05)      # Smaller amplitude
-            } for asset in ASSETS
-        }
         self.tick_counter = 0
-
-    def get_cyclical_influence(self, asset):
-        # Calculate combined wave effect
-        self.tick_counter += 1
-        wave = (
-            math.sin(self.tick_counter * self.cycle_frequencies[asset]['fast']) * self.cycle_amplitudes[asset]['fast'] +
-            math.sin(self.tick_counter * self.cycle_frequencies[asset]['medium']) * self.cycle_amplitudes[asset]['medium'] +
-            math.sin(self.tick_counter * self.cycle_frequencies[asset]['slow']) * self.cycle_amplitudes[asset]['slow']
-        )
-        return wave
 
     def trade(self, orderBook):
         try:
             # Get base sentiment and cyclical influence
             base_sentiment = self.retailSentimentScore[orderBook.asset]
-            if USE_CYCLICAL_SENTIMENT and base_sentiment > 0.4 and base_sentiment < 0.6:
-                cyclical_influence = max(-0.01, min(0.01, self.get_cyclical_influence(orderBook.asset))) * 10
-            else:
-                cyclical_influence = 0
             
             # Calculate final sentiment
-            final_sentiment = max(0.1, min(0.9, base_sentiment + cyclical_influence))
+            final_sentiment = max(0.25, min(0.75, base_sentiment))
             
             # Determine trade direction based on final sentiment
             direction = "buy" if final_sentiment > random.random() else "sell"
@@ -55,8 +26,8 @@ class RetailTrader(MarketAgent):
             final_sentiment = 0.5
 
         try:
-            bid = orderBook.bestBid.price
-            ask = orderBook.bestAsk.price
+            bid = orderBook.bestBid
+            ask = orderBook.bestAsk
         except:
             bid = orderBook.lastPrice
             ask = orderBook.lastPrice

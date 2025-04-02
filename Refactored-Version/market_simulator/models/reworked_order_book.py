@@ -21,6 +21,7 @@ class Order:
     def fillQuantity(self, asset, quantity, price):
         accounts[self.accountID].addPosition(asset, quantity*self.direction)
         accounts[self.accountID].addPosition("CASH", -price*quantity*self.direction)
+        last_prices[asset] = price
         self.quantity -= quantity
 
     def fillEntireOrder(self, asset, price):
@@ -215,7 +216,11 @@ class OrderBook:
                 urgentBook.clear() # O(1) operation
                 remaining_quantity -= urgentQuantity
                 total_fill_price += fillPrice*urgentQuantity
-                urgentQuantity = 0
+
+                if direction == "buy":
+                    self._urgentSellQuantity = 0
+                else:
+                    self._urgentBuyQuantity = 0
 
             else: # urgent book quantity > quantity, so order will be fully filled
                 urgentQuantity -= remaining_quantity
@@ -421,6 +426,9 @@ class OrderBook:
             raise ValueError("Quantity must be positive: " + str(quantity))
         if accountID not in accounts:
             raise ValueError("Account ID not found: " + str(accountID))
+        if not price:
+            print("no price")
+            return
         if price < 0:
             print("Price must be positive: " + str(price))
             return
@@ -541,7 +549,7 @@ class OrderBook:
     def bestBid(self):
         """Cached property for best bid price"""
         if not self.bids:
-            return None
+            return self.lastPrice
         if self._best_bid is None:
             self._best_bid = self.bids.keys()[0][0]
         return self._best_bid
@@ -550,7 +558,7 @@ class OrderBook:
     def bestAsk(self):
         """Cached property for best ask price"""
         if not self.asks:
-            return None
+            return self.lastPrice
         if self._best_ask is None:
             self._best_ask = self.asks.keys()[0][0]
         return self._best_ask

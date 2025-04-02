@@ -10,7 +10,20 @@ class OrderBook:
         self.asks = {}
         self.urgentBuys = []
         self.urgentSells = []
+
+        self._last_price = None
+        self._best_bid = None
+        self._best_ask = None
+        self._bidSize = 0
+        self._askSize = 0
         last_prices[asset] = initialPrice
+
+    def _invalidate_cache(self):
+        """Invalidate cached properties when orderbook state changes"""
+        self._best_bid = None
+        self._best_ask = None
+        self._mid_price = None
+        self._last_price = None
 
     def getBids(self):
         return self.bids
@@ -93,13 +106,13 @@ class OrderBook:
 
             self.fillUrgentOrders()
 
-    def get.bestBid(self):
+    def getbestBid(self):
         if self.bids:
             return self.bids[max(self.bids.keys())]
         else:
             return None
 
-    def get.bestAsk(self):
+    def getbestAsk(self):
         if self.asks:
             return self.asks[min(self.asks.keys())]
         else:
@@ -107,33 +120,33 @@ class OrderBook:
 
     def matchBooks(self):
         while True:
-            .bestBid = self.bestBid
-            .bestAsk = self.bestAsk
-            if not .bestBid or not .bestAsk or .bestBid.getPrice() < .bestAsk.getPrice():
+            bestBid = self.bestBid
+            bestAsk = self.bestAsk
+            if not bestBid or not bestAsk or bestBid.getPrice() < bestAsk.getPrice():
                 break
             
-            quantityToFill = min(.bestBid.getQuantity(), .bestAsk.getQuantity())
+            quantityToFill = min(bestBid.getQuantity(), bestAsk.getQuantity())
             
             # Get the account IDs from the orders
-            buyAccountID = .bestBid.getAccountID()
-            sellAccountID = .bestAsk.getAccountID()
+            buyAccountID = bestBid.getAccountID()
+            sellAccountID = bestAsk.getAccountID()
 
             if not buyAccountID or not sellAccountID:
                 break # invalid book matching, no buy/sell accounts. 
             
             # Execute the trade
-            .bestBid.fulfillQuantity(quantityToFill)
-            .bestAsk.fulfillQuantity(quantityToFill)
+            bestBid.fulfillQuantity(quantityToFill)
+            bestAsk.fulfillQuantity(quantityToFill)
             
             # Emit trade updates
-            tradePrice = .bestBid.getPrice()  # Could also use .bestAsk.getPrice() as they're equal
+            tradePrice = bestBid.getPrice()  # Could also use .bestAsk.getPrice() as they're equal
             emit_trade_update(buyAccountID, self.asset, "buy", quantityToFill, tradePrice)
             emit_trade_update(sellAccountID, self.asset, "sell", quantityToFill, tradePrice)
 
-            if .bestBid.getQuantity() == 0:
-                self.bids.pop(.bestBid.getPrice())
-            if .bestAsk.getQuantity() == 0:
-                self.asks.pop(.bestAsk.getPrice())
+            if bestBid.getQuantity() == 0:
+                self.bids.pop(bestBid.getPrice())
+            if bestAsk.getQuantity() == 0:
+                self.asks.pop(bestAsk.getPrice())
 
     def getUnfilledUrgentOrders(self):
         return self.urgentBuys, self.urgentSells

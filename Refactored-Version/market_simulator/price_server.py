@@ -5,7 +5,6 @@ import threading
 import time
 from market_simulator.utils.db_utils import db_manager as db
 from market_simulator.utils.market_utils import price_history, assets, markets, get_price_history
-from market_simulator.utils.news_generator import generate_news_thread
 from market_simulator.agents.user_trader import UserTrader
 from datetime import datetime
 
@@ -37,12 +36,6 @@ def emit_orderbook_update(asset):
             })
         except:
             bidsandasks = {}
-
-def generate_periodic_news():
-    """Generate news every 5 minutes"""
-    while True:
-        generate_news_thread()
-        time.sleep(300)  # Sleep for 5 minutes
 
 @app.route('/assets')
 def get_assets():
@@ -114,11 +107,6 @@ def start_server(host='0.0.0.0', port=5000):
     update_thread = threading.Thread(target=emit_updates)
     update_thread.daemon = True
     update_thread.start()
-    
-    # Start the news generation thread
-    news_thread = threading.Thread(target=generate_periodic_news)
-    news_thread.daemon = True
-    news_thread.start()
     
     # Start the Flask-SocketIO server
     socketio.run(app, host=host, port=port)
