@@ -58,7 +58,7 @@ class SpyArbFund(ExecutionalTrader):
             self.placeOrder(
                 markets["SPY"],
                 "sell",
-                spy_bid,
+                0.01,
                 ARB_QUANTITY,
                 "market"
             )
@@ -68,7 +68,7 @@ class SpyArbFund(ExecutionalTrader):
                 self.placeOrder(
                     markets[asset],
                     "buy",
-                    markets[asset].lastPrice,
+                    0.01,
                     int(self.spy_composition[asset]),
                     "market"
                 )
@@ -79,7 +79,7 @@ class SpyArbFund(ExecutionalTrader):
             self.placeOrder(
                 markets["SPY"],
                 "buy",
-                spy_ask,
+                0.01,
                 ARB_QUANTITY,
                 "market"
             )
@@ -89,7 +89,7 @@ class SpyArbFund(ExecutionalTrader):
                 self.placeOrder(
                     markets[asset],
                     "sell",
-                    markets[asset].lastPrice,
+                    0.01,
                     int(self.spy_composition[asset]),
                     "market"
                 )

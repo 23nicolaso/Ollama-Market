@@ -16,7 +16,7 @@ from market_simulator.agents.hft_fund import HFTFund
 from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.agents.long_term_investor import LongTermInvestor
 from market_simulator.gui.main_window import MainWindow
-from market_simulator.utils.market_utils import makeMarkets, markets, price_history, update_price_history, spreads_by_market, randomly_alter_risk_params
+from market_simulator.utils.market_utils import makeMarkets, markets, price_history, update_price_history, spreads_by_market, randomly_alter_risk_params, setLastNewsTick, wasNewsRecent
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread, init_agents
 from market_simulator.price_server import start_server as start_api_server
 from market_simulator.web.server import run as run_web_server
@@ -38,11 +38,13 @@ def run_simulation(root, main_window):
         simulation_age += 1
     
         for market in markets:
+            market_maker.provideLiquidity(markets[market])
             market_maker.makeMarket(markets[market])
             retail_trader.trade(markets[market])
             retail_trader.shiftSentimentToMean()
             spy_arb_fund.arbitrage()
             hft_fund.updateOrdersInLegs(markets[market])
+            hft_fund.tradeMicrostructure(market)
 
             mean_reversion_fund.calculate_target_positions()
             mean_reversion_fund.update_positions(market)
@@ -60,10 +62,12 @@ def run_simulation(root, main_window):
             
                     if result is not None:
                         generate_news_thread(explain_this=(result, market))
+                        setLastNewsTick(simulation_age)
                 
-                ta_traders.manageTATrades(market)
-                
-            market_maker.provideLiquidity(markets[market])
+                if not wasNewsRecent(simulation_age): 
+                    # ta traders don't trade when there is recent news
+                    ta_traders.manageTATrades(market)
+                    ta_traders.updatePositioning(market)
                 
 
         # Update GUI components

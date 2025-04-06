@@ -47,7 +47,7 @@ def displayTraders():
 # ob.display()
 # displayTraders()
 
-# # bid 500 ask 500 clear @ 500
+# bid 500 ask 500 clear @ 500
 # print("\n BUY 500, SELL 500. FULL FILL @ 500")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")
@@ -86,7 +86,6 @@ def displayTraders():
 # ob.addOrder("buy", 500, 100, "limit", "john")
 # ob.display()
 # displayTraders()
-
 # order2 = ob.addOrder("sell", 450, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
@@ -134,7 +133,7 @@ print(f"Operations per second: {ops_per_sec:.1f}")
 ob.display()
 displayTraders()
 
-# # limit buy and market sell
+# limit buy and market sell
 # print("\n LIM BUY & MARKET SELL, EXPECTED 1 full bid order @ 500, 100 sold @ 550")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")

@@ -16,6 +16,17 @@ class PriceHistory(Base):
     price = Column(Float)
     timestamp = Column(DateTime, default=lambda: datetime.now(ZoneInfo('UTC')))
 
+class TradeHistory(Base):
+    __tablename__ = 'trade_history'
+    
+    id = Column(Integer, primary_key=True)
+    asset = Column(String)
+    price = Column(Float)
+    quantity = Column(Float)
+    buyer_id = Column(String)
+    seller_id = Column(String)
+    timestamp = Column(DateTime, default=lambda: datetime.now(ZoneInfo('UTC')))
+
 class DatabaseManager:
     _instance = None
     _lock = Lock()
@@ -89,6 +100,38 @@ class DatabaseManager:
         finally:
             self.Session.remove()  # Changed from session.remove() to self.Session.remove()
     
+    def queue_trade_update(self, asset, price, quantity, buyer_id, seller_id, timestamp=None):
+        """Queue a trade update for batch processing"""
+        if timestamp is None:
+            timestamp = datetime.now(ZoneInfo('UTC'))
+        record = TradeHistory(
+            asset=asset,
+            price=price,
+            quantity=quantity,
+            buyer_id=buyer_id,
+            seller_id=seller_id,
+            timestamp=timestamp
+        )
+        self.write_queue.put(record)
+
+    def get_trade_history(self, asset=None, start_time=None, end_time=None, account_id=None):
+        """Get trade history from database"""
+        session = self.Session()
+        try:
+            query = session.query(TradeHistory)
+            if asset:
+                query = query.filter(TradeHistory.asset == asset)
+            if start_time:
+                query = query.filter(TradeHistory.timestamp >= start_time)
+            if end_time:
+                query = query.filter(TradeHistory.timestamp <= end_time)
+            if account_id:
+                query = query.filter((TradeHistory.buyer_id == account_id) | (TradeHistory.seller_id == account_id))
+            return [(record.price, record.quantity, record.buyer_id, record.seller_id, record.timestamp) 
+                   for record in query.all()]
+        finally:
+            self.Session.remove()
+    
     def shutdown(self):
         """Gracefully shutdown the database manager"""
         self.is_running = False
@@ -99,6 +142,13 @@ class DatabaseManager:
         """Wipes all data from the database"""
         Base.metadata.drop_all(self.engine)
         Base.metadata.create_all(self.engine)
+        # Initialize the database with some initial data if needed
+        session = self.Session()
+        try:
+            # Add any initial data here if needed
+            session.commit()
+        finally:
+            self.Session.remove()
 
 # Global instance
 db_manager = DatabaseManager()
@@ -112,6 +162,9 @@ def store_price(asset, price, timestamp=None):
 
 def get_price_history(asset, start_time=None, end_time=None):
     return db_manager.get_price_history(asset, start_time, end_time)
+
+def get_trade_history(asset=None, start_time=None, end_time=None, account_id=None):
+    return db_manager.get_trade_history(asset, start_time, end_time, account_id)
 
 def shutdown_db():
     db_manager.shutdown()

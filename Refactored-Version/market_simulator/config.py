@@ -189,8 +189,8 @@ Here is the most recent headlines for context: {recent_headline}
 # Agent configuration
 POSITION_LIMITS = {asset: 500000 for asset in ASSETS}
 
-ARBITRAGE_THRESHOLD = 0.1
-ARB_QUANTITY = 1000
+ARBITRAGE_THRESHOLD = 0.05
+ARB_QUANTITY = 10000
 
 INITIAL_CASH = {
     "RETAIL TRADER": 1000000,
@@ -218,27 +218,30 @@ LLM_MODEL = "gemma3:4b"
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
-HF_POSITION_LIMIT = 1000000
-HFT_BASE_ORDER_SIZE = 100000
+HF_POSITION_LIMIT = 5000000
+HF_BASE_ORDER_SIZE = 100000
+HFT_BASE_ORDER_SIZE = 10000
+HFT_POSITION_LIMIT = 100000
 
 # Market maker - provides liquidity
-MM_POSITION_LIMIT = 100000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 1000  
+MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
+MM_BASE_ORDER_SIZE = 5000  
 MM_MAX_VOLATILITY_MULT = 5  
-MM_DEPTH = 5
+MM_DEPTH = 10
 MM_REQUIRED_LIQ = 1000
 NEARBY_RANGE = 0.05
 
 # Retail traders - many small trades
-RETAIL_MAX_ORDER_SIZE = 1000  # Small individual trades
-RETAIL_POSITION_LIMIT = 1000000  # Limited position size
+RETAIL_MAX_ORDER_SIZE = 2500  # Small individual trades
+RETAIL_POSITION_LIMIT = 100000  # Limited position size
 USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swings
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - medium-sized trades
-TA_POSITION_LIMIT = 1000000  # Substantial position limit
-TA_MEGA_ORDER_SIZE = 10000  # Huge, infrequent trades
-TA_LARGE_ORDER_SIZE = 1000  # Larger trades
+TA_POSITION_LIMIT = 500000  # Substantial position limit
+TA_MEGA_ORDER_SIZE = 50000  # Huge, infrequent trades
+TA_LARGE_ORDER_SIZE = 5000  # Larger trades
 
 # Long-term investor - larger but infrequent trades
-LT_INVESTOR_MAX_ORDER_SIZE = 100  # Increased for more impactful position building
+LT_INVESTOR_MAX_ORDER_SIZE = 50000  # Increased for more impactful position building
+LTI_POS_LIMIT = 2500000 # MASSIVE

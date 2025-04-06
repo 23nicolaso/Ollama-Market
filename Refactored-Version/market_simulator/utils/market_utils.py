@@ -10,6 +10,16 @@ from market_simulator.utils.db_utils import get_price_history as get_db_price_hi
 from market_simulator.utils.db_utils import db_manager as db
 import numpy as np
 
+simulation_last_news_tick = 0
+
+def setLastNewsTick(tick):
+    global simulation_last_news_tick
+    simulation_last_news_tick = tick
+
+def wasNewsRecent(tick):
+    return tick - simulation_last_news_tick > 500 
+
+
 class CircularBuffer:
     # CIRCULAR BUFFER TO STORE PAST PRICES INSTEAD OF ARRAY FOR FAST SPEED
     def __init__(self, size=500):
@@ -173,7 +183,7 @@ def calculate_r_adj_ytm(asset):
 
 def alter_risk_params_with_news(asset, sentiment, importance):
     if RISKS.get(asset):
-        RISKS[asset] *= 1 + (0.01 * (sentiment-0.5) * importance)
+        RISKS[asset] *= 1 + (0.1 * (sentiment-0.5) * importance)
 
 def randomly_alter_risk_params(asset):
     # Randomly alter risk param, with a very small chance of a major change across the board. If major change, there should be a news
@@ -232,10 +242,8 @@ def makeMarkets():
 
 def estimateUnderlyingValue(asset):
     """Estimates the underlying value of an asset based on economic factors"""
-    estimated_price = initial_prices[asset] * (1 + average_annual_return_by_market[asset] / 252 / 24) ** simulation_age
-    economic_health_adjustment = economic_health_by_market[asset] * 10 * spreads_by_market[asset]
-    adjusted_price = max(0, estimated_price + economic_health_adjustment)
-    return adjusted_price
+    estimated_price = calculate_fair_value(asset)
+    return estimated_price
 
 def get_price_history(asset, start_time=None, end_time=None):
     """

@@ -1,7 +1,7 @@
 from market_simulator.agents.executional_trader import ExecutionalTrader
 from market_simulator.utils.market_utils import assets, markets
 import random
-from market_simulator.config import LT_INVESTOR_MAX_ORDER_SIZE, NUM_SHARES
+from market_simulator.config import LT_INVESTOR_MAX_ORDER_SIZE, NUM_SHARES, LTI_POS_LIMIT
 
 class LongTermInvestor(ExecutionalTrader):
     def __init__(self, account_id="LongTermInvestor", cash=10000000):
@@ -13,10 +13,12 @@ class LongTermInvestor(ExecutionalTrader):
     def trade(self, market):
         """Trade based on long-term investment strategy with panic selling"""
 
-        if random.random() < 0.025:
-            # Buy random amount on random intervals
-            quantity = random.randint(1, LT_INVESTOR_MAX_ORDER_SIZE)
-            self.placeOrder(market, "buy", market.lastPrice, quantity, "market")
+        quantity = random.randint(1, LT_INVESTOR_MAX_ORDER_SIZE)
+
+        if self.account.positions[market.asset] + quantity < LTI_POS_LIMIT:
+            if random.random() < 0.01:
+                # Buy random amount on random intervals
+                self.executeTradeInLegs(market, "buy", market.lastPrice, quantity)
     
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.1 and importance == 10: 

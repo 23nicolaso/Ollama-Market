@@ -21,14 +21,27 @@ class MarketMaker(MarketAgent):
         # Calculate volatility based on recent price history
         mean_price = price_history[orderBook.asset].mean()
         std_dev = price_history[orderBook.asset].std()
-        volatility_factor = min(10.0, max(1.0, (std_dev / mean_price) * 1000))  # Cap at 5x spread widening
+        volatility_factor = min(10.0, max(1.0, (std_dev / mean_price) * 1000))
 
         # Adjust base spread for volatility
         baseSpread = baseSpread * volatility_factor
-        bidPrice = round(midPrice - (baseSpread/2), 2)
-        askPrice = round(midPrice + (baseSpread/2), 2)
-        # Layer orders at different sizes and prices
-        # if order book is illiquid not matching liquidity requirements in one direction, quote orders
+
+        # Calculate inventory skew
+        current_position = self.account.getPosition(orderBook.asset)
+        position_threshold = 0.25 * MM_POSITION_LIMIT
+        skew_factor = 0
+        
+        if current_position > position_threshold:
+            # Long inventory - skew down
+            skew_factor = min(1.0, (current_position - position_threshold) / MM_POSITION_LIMIT)
+            midPrice = midPrice * (1 - skew_factor * 0.01)  # Reduce mid price by up to 1%
+        elif current_position < -position_threshold:
+            # Short inventory - skew up
+            skew_factor = min(1.0, abs(current_position + position_threshold) / MM_POSITION_LIMIT)
+            midPrice = midPrice * (1 + skew_factor * 0.01)  # Increase mid price by up to 1%
+
+        bidPrice = round(midPrice - (baseSpread), 2)
+        askPrice = round(midPrice + (baseSpread), 2)
 
         for i in range(MM_DEPTH):
             # Reduce size during high volatility
@@ -44,11 +57,9 @@ class MarketMaker(MarketAgent):
         remaining_urgent_buys, remaining_urgent_sells = orderBook.getUrgentQuantity()
 
         if remaining_urgent_buys > 0:
-            # print("SELLING liquidity to the market")
-            price_change = self.spreads[orderBook.asset] * remaining_urgent_buys / (MM_DEPTH*MM_BASE_ORDER_SIZE) # Adjust the divisor as needed
+            price_change = self.spreads[orderBook.asset] * remaining_urgent_buys / (MM_DEPTH*MM_BASE_ORDER_SIZE)
             self.placeOrder(orderBook, "sell", orderBook.lastPrice + round(price_change, 2), remaining_urgent_buys, "limit")
 
         if remaining_urgent_sells > 0:
-            # print("BUYING liquidity from the market")
-            price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE) # Adjust the divisor as needed
+            price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE)
             self.placeOrder(orderBook, "buy", orderBook.lastPrice - round(price_change, 2), remaining_urgent_sells, "limit")

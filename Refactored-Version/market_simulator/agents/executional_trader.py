@@ -36,19 +36,24 @@ class ExecutionalTrader(MarketAgent):
     
     def updatePositioning(self, market):
         self.partialExecuteMarket(markets[market])
-    
+
     def partialExecuteMarket(self, orderBook):
         if orderBook in self.intendedOrders:
             order = self.intendedOrders[orderBook]
             if order["quantity"] > 0:
-                # Determine a random amount to fill, between 0.05 and 0.1 x quantity
-                quantity_to_fill = max(1, int(random.uniform(0.05, 0.1) * order["quantity"]))
+                # Use price as a reference, try to buy without pushing price too fast
+                # scale quantity on distance from price
+                target_price = order["price"]
         
                 # Place the order
                 if order["direction"] == "sell":
-                    self.placeOrder(orderBook, "sell", orderBook.bestBid, quantity_to_fill, "market")
+                    current_price = orderBook.bestBid
+                    quantity_to_fill = min(order["quantity"], 5000, max(100, (current_price - target_price) * 5000)) 
+                    self.placeOrder(orderBook, "sell", orderBook.bestAsk + random.choice([-0.2, -0.1, 0, 0.1, 0.2]), quantity_to_fill, "limit")
                 else:
-                    self.placeOrder(orderBook, "buy", orderBook.bestAsk, quantity_to_fill, "market")
+                    current_price = orderBook.bestAsk
+                    quantity_to_fill = min(order["quantity"], 5000, max(100, (target_price - current_price) * 5000))
+                    self.placeOrder(orderBook, "buy", orderBook.bestBid + random.choice([-0.2, -0.1, 0, 0.1, 0.2]), quantity_to_fill, "limit")
 
                 # Update the remaining quantity
                 order["quantity"] -= quantity_to_fill
@@ -62,12 +67,16 @@ class ExecutionalTrader(MarketAgent):
             return
         try:
             if self.intendedOrders[orderBook]["direction"] == "buy" and self.intendedOrders[orderBook]["price"] >= orderBook.bestAsk.getPrice():
-                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],orderBook.bestAsk.getQuantity())
-                self.placeOrder(orderBook, "buy", 0, quantityToFill, "market")
+                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],max(orderBook.bestAsk.getQuantity(), 1000))
+                self.placeOrder(orderBook, "buy", orderBook.bestAsk.getPrice(), quantityToFill, "limit")
+                if quantityToFill > 5000:
+                    print("WHAT")
                 self.intendedOrders[orderBook]["quantity"] -= quantityToFill
             elif self.intendedOrders[orderBook]["direction"] == "sell" and self.intendedOrders[orderBook]["price"] <= orderBook.bestBid.getPrice():
-                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],orderBook.bestBid.getQuantity())
-                self.placeOrder(orderBook, "sell", 0, quantityToFill, "market")
+                quantityToFill = min(self.intendedOrders[orderBook]["quantity"], max(orderBook.bestBid.getQuantity(), 1000))
+                self.placeOrder(orderBook, "sell", orderBook.bestBid.getPrice(), quantityToFill, "limit")
+                if quantityToFill > 5000:
+                    print("WHAT")
                 self.intendedOrders[orderBook]["quantity"] -= quantityToFill
         except:
             return 

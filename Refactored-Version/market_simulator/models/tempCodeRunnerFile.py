@@ -1,1 +1,10 @@
-Original
+RKET BUY, EXPECTED 1 full ask order @ 600, 100 sold @ 550")
+ob, account1, account2 = remake()
+ob.addOrder("sell", 550, 100, "limit", "john")
+ob.addOrder("sell", 600, 100, "limit", "john")
+ob.display()
+displayTraders()
+ob.addOrder("buy", 600, 50, "market", "bob")
+ob.addOrder("buy", 0, 50, "market", "bob")
+ob.display()
+displayTraders()
