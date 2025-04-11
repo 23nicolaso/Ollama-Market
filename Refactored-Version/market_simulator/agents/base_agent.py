@@ -5,7 +5,6 @@ class MarketAgent:
     def __init__(self, accountID, cash):
         self.account = Account(accountID, cash)
         accounts[accountID] = self.account
-    
         
     def placeOrder(self, orderBook, direction, price, quantity, orderType):
         orderBook.addOrder(direction, price, quantity, orderType, self.account.accountID)
@@ -16,6 +15,9 @@ class MarketAgent:
     def cancelOrder(self, orderBook, order):
         orderBook.cancelOrder(order)
         self.orders.remove(order)
+
+    def getPosition(self, asset):
+        return self.account.getPosition(asset)
 
     def checkOrders(self, orderBook):
         for order in self.orders:

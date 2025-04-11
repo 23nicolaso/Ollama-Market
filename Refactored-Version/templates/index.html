@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Codebase Visualizer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-force@3"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+        
+        #sidebar {
+            width: 300px;
+            height: 100%;
+            overflow-y: auto;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        #main {
+            flex-grow: 1;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #visualization {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .file-item {
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        
+        .file-name {
+            font-weight: bold;
+        }
+        
+        .class-item, .function-item {
+            margin-left: 15px;
+            cursor: pointer;
+        }
+        
+        .method-item, .attribute-item {
+            margin-left: 30px;
+            cursor: pointer;
+        }
+        
+        .selected {
+            background-color: #e0e0e0;
+        }
+        
+        .expandable:before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .expanded:before {
+            transform: rotate(90deg);
+        }
+        
+        .collapsible {
+            display: none;
+        }
+        
+        .expanded + .collapsible {
+            display: block;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+        
+        .node {
+            fill: #69b3a2;
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        
+        .selected-node {
+            fill: #ff5733;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            stroke-width: 2px;
+        }
+        
+        .node-label {
+            font-size: 12px;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        
+        #actions {
+            padding: 10px 0;
+        }
+        
+        input[type="text"] {
+            width: 60%;
+            padding: 5px;
+        }
+        
+        button {
+            padding: 5px 10px;
+            margin-left: 5px;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.8);
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Code Structure</h2>
+        <div id="file-tree"></div>
+    </div>
+    
+    <div id="main">
+        <div id="actions">
+            <input type="text" id="directory-input" placeholder="Enter directory path">
+            <button id="parse-button">Parse Codebase</button>
+        </div>
+        
+        <div id="visualization">
+            <svg id="graph"></svg>
+            <div id="loading">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        let codebaseData = null;
+        let selectedEntity = null;
+        let simulation = null;
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', init);
+        
+        function init() {
+            document.getElementById('parse-button').addEventListener('click', parseCodebase);
+            fetchCodebase();
+        }
+        
+        async function fetchCodebase() {
+            try {
+                const response = await fetch('/api/codebase');
+                codebaseData = await response.json();
+                
+                if (codebaseData.files && codebaseData.files.length > 0) {
+                    renderFileTree();
+                }
+            } catch (error) {
+                console.error('Error fetching codebase data:', error);
+            }
+        }
+        
+        async function parseCodebase() {
+            const directoryInput = document.getElementById('directory-input');
+            const directory = directoryInput.value.trim();
+            
+            if (!directory) {
+                alert('Please enter a directory path');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ directory })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    await fetchCodebase();
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Error parsing codebase:', error);
+                alert('Error parsing codebase. See console for details.');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function renderFileTree() {
+            const fileTree = document.getElementById('file-tree');
+            fileTree.innerHTML = '';
+            
+            if (!codebaseData.files) return;
+            
+            codebaseData.files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'file-name expandable';
+                fileName.textContent = file.name;
+                fileName.addEventListener('click', () => toggleExpand(fileName));
+                
+                const fileContent = document.createElement('div');
+                fileContent.className = 'collapsible';
+                
+                // Add classes
+                if (file.classes.length > 0) {
+                    file.classes.forEach(cls => {
+                        const classItem = document.createElement('div');
+                        classItem.className = 'class-item expandable';
+                        classItem.textContent = cls.name;
+                        classItem.addEventListener('click', () => toggleExpand(classItem));
+                        
+                        const classContent = document.createElement('div');
+                        classContent.className = 'collapsible';
+                        
+                        // Add methods
+                        cls.methods.forEach(method => {
+                            const methodItem = document.createElement('div');
+                            methodItem.className = 'method-item';
+                            methodItem.textContent = `${method.name}(${method.args.join(', ')})`;
+                            methodItem.addEventListener('click', () => {
+                                selectEntity(methodItem, method.path);
+                                visualizeConnections(method.path);
+                            });
+                            classContent.appendChild(methodItem);
+                        });
+                        
+                        // Add attributes
+                        cls.attributes.forEach(attr => {
+                            const attrItem = document.createElement('div');
+                            attrItem.className = 'attribute-item';
+                            attrItem.textContent = attr.name;
+                            classContent.appendChild(attrItem);
+                        });
+                        
+                        fileContent.appendChild(classItem);
+                        fileContent.appendChild(classContent);
+                    });
+                }
+                
+                // Add functions
+                if (file.functions.length > 0) {
+                    file.functions.forEach(func => {
+                        const funcItem = document.createElement('div');
+                        funcItem.className = 'function-item';
+                        funcItem.textContent = `${func.name}(${func.args.join(', ')})`;
+                        funcItem.addEventListener('click', () => {
+                            selectEntity(funcItem, func.path);
+                            visualizeConnections(func.path);
+                        });
+                        fileContent.appendChild(funcItem);
+                    });
+                }
+                
+                fileItem.appendChild(fileName);
+                fileItem.appendChild(fileContent);
+                fileTree.appendChild(fileItem);
+            });
+        }
+        
+        function toggleExpand(element) {
+            element.classList.toggle('expanded');
+        }
+        
+        function selectEntity(element, entityPath) {
+            // Remove previous selection
+            const previouslySelected = document.querySelector('.selected');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('selected');
+            }
+            
+            // Set new selection
+            element.classList.add('selected');
+            selectedEntity = entityPath;
+        }
+        
+        async function visualizeConnections(entityPath) {
+            showLoading(true);
+            
+            try {
+                const parts = entityPath.split('/');
+                const entityType = parts.length > 2 ? 'method' : 'function';
+                
+                const response = await fetch(`/api/connections/${entityType}/${entityPath}`);
+                const data = await response.json();
+                
+                renderGraph(data);
+            } catch (error) {
+                console.error('Error visualizing connections:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function renderGraph(data) {
+            const svg = d3.select('#graph');
+            svg.selectAll('*').remove();
+            
+            const connections = data.connections;
+            if (!connections || connections.length === 0) {
+                // If no connections, just show the selected entity
+                const nodes = [{ id: data.entity, group: 1 }];
+                const links = [];
+                drawGraph(nodes, links);
+                return;
+            }
+            
+            // Create nodes set to avoid duplicates
+            const nodesSet = new Set();
+            nodesSet.add(data.entity);
+            
+            connections.forEach(conn => {
+                nodesSet.add(conn.source);
+                nodesSet.add(conn.target);
+            });
+            
+            // Convert to array
+            const nodes = Array.from(nodesSet).map(id => ({ 
+                id, 
+                group: id === data.entity ? 1 : 2,
+                label: id.split('/').pop()
+            }));
+            
+            // Create links
+            const links = connections.map(conn => ({
+                source: conn.source,
+                target: conn.target,
+                type: conn.type
+            }));
+            
+            drawGraph(nodes, links);
+        }
+        
+        function drawGraph(nodes, links) {
+            const svg = d3.select('#graph');
+            const width = svg.node().parentElement.clientWidth;
+            const height = svg.node().parentElement.clientHeight;
+            
+            // Create the simulation
+            simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(50));
+            
+            // Create the links
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .join('line')
+                .attr('class', 'link')
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // Arrow marker for links
+            svg.append('defs').append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '0 -5 10 10')
+                .attr('refX', 15)
+                .attr('refY', 0)
+                .attr('orient', 'auto')
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .append('path')
+                .attr('d', 'M0,-5L10,0L0,5')
+                .attr('fill', '#999');
+            
+            // Create the nodes
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .join('circle')
+                .attr('class', d => `node ${d.group === 1 ? 'selected-node' : ''}`)
+                .attr('r', 10)
+                .call(drag(simulation));
+            
+            // Add labels to nodes
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(nodes)
+                .join('text')
+                .attr('class', 'node-label')
+                .attr('dy', -15)
+                .text(d => d.label || d.id.split('/').pop());
+            
+            // Update positions on tick
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+        }
+        
+        function drag(simulation) {
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+            
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+            
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+            
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

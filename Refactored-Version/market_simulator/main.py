@@ -47,9 +47,8 @@ def run_simulation(root, main_window):
             hft_fund.tradeMicrostructure(market)
 
             mean_reversion_fund.calculate_target_positions()
-            mean_reversion_fund.update_positions(market)
+            mean_reversion_fund.refreshNBBOOrder(markets[market])
             
-            long_term_investor.trade(markets[market])
             long_term_investor.updatePositioning(market)
 
             user_account.updatePositioning(market)
@@ -57,17 +56,17 @@ def run_simulation(root, main_window):
             update_price_history(market, markets[market].lastPrice)
 
             if price_history[market].isFull(): #  only do some updates once initial price is set correctly
-                if simulation_age & 0b11 == 0:
+                if simulation_age & 0b111 == 0:
                     result = randomly_alter_risk_params(market)
             
                     if result is not None:
                         generate_news_thread(explain_this=(result, market))
                         setLastNewsTick(simulation_age)
                 
-                if not wasNewsRecent(simulation_age): 
-                    # ta traders don't trade when there is recent news
-                    ta_traders.manageTATrades(market)
-                    ta_traders.updatePositioning(market)
+                # if not wasNewsRecent(simulation_age): 
+                #     # ta traders don't trade when there is recent news
+                #     ta_traders.manageTATrades(market)
+                #     ta_traders.updatePositioning(market)
                 
 
         # Update GUI components

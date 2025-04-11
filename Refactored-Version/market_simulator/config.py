@@ -19,6 +19,7 @@ def set_state_string(str):
     # Extract text between asterisks if present, otherwise use full string
     match = re.search(r'\*([^*]+)\*', str)
     STATE_STRING = match.group(1) if match else str
+    print(STATE_STRING)
 
 # Asset configuration
 ASSETS_CONFIG = {
@@ -51,7 +52,7 @@ ASSETS_CONFIG = {
     "UTILITIES ETF": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.08,
+        "annual_return": 0.09,
         "num_shares": 2000000000,
         "risk": 0.02,
         "included_in_spy": True,
@@ -78,7 +79,7 @@ ASSETS_CONFIG = {
     "Bitcoin": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.5,
+        "annual_return": 0.08,
         "num_shares": 1000000000,
         "included_in_spy": False,
         "use_rp": False
@@ -94,7 +95,7 @@ ASSETS_CONFIG = {
     "China ETF": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.08,
+        "annual_return": 0.12,
         "num_shares": 1000000000,
         "risk": 0.06,
         "included_in_spy": False,
@@ -218,16 +219,16 @@ LLM_MODEL = "gemma3:4b"
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
-HF_POSITION_LIMIT = 5000000
-HF_BASE_ORDER_SIZE = 100000
+HF_POSITION_LIMIT = 50000000
+HF_BASE_ORDER_SIZE = 1000000
 HFT_BASE_ORDER_SIZE = 10000
 HFT_POSITION_LIMIT = 100000
 
 # Market maker - provides liquidity
 MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 5000  
-MM_MAX_VOLATILITY_MULT = 5  
-MM_DEPTH = 10
+MM_BASE_ORDER_SIZE = 1000 
+MM_MAX_VOLATILITY_MULT = 10
+MM_DEPTH = 5
 MM_REQUIRED_LIQ = 1000
 NEARBY_RANGE = 0.05
 
@@ -237,11 +238,11 @@ RETAIL_POSITION_LIMIT = 100000  # Limited position size
 USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swings
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
-# Technical analysis traders - medium-sized trades
-TA_POSITION_LIMIT = 500000  # Substantial position limit
-TA_MEGA_ORDER_SIZE = 50000  # Huge, infrequent trades
-TA_LARGE_ORDER_SIZE = 5000  # Larger trades
+# Technical analysis traders - small-sized trades by retail-like investors
+TA_POSITION_LIMIT = 10000  # somewhat small position limit
+TA_MEGA_ORDER_SIZE = 5000  # 
+TA_LARGE_ORDER_SIZE = 1000  # 
 
 # Long-term investor - larger but infrequent trades
 LT_INVESTOR_MAX_ORDER_SIZE = 50000  # Increased for more impactful position building
-LTI_POS_LIMIT = 2500000 # MASSIVE
+LTI_POS_LIMIT = 20000000 # MASSIVE

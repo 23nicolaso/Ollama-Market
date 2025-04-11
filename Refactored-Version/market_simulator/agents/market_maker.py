@@ -19,9 +19,10 @@ class MarketMaker(MarketAgent):
         baseSpread = self.spreads[orderBook.asset]
 
         # Calculate volatility based on recent price history
-        mean_price = price_history[orderBook.asset].mean()
-        std_dev = price_history[orderBook.asset].std()
-        volatility_factor = min(10.0, max(1.0, (std_dev / mean_price) * 1000))
+        mean = price_history[orderBook.asset].mean()
+        std = price_history[orderBook.asset].std()
+
+        volatility_factor = min(10.0, max(1.0, (std / mean) * 1000))
 
         # Adjust base spread for volatility
         baseSpread = baseSpread * volatility_factor

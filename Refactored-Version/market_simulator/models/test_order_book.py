@@ -39,7 +39,6 @@ def displayTraders():
 # ob.addOrder("sell", 540, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
-
 # ob.addOrder("buy", 510, 1, "market", "bob")
 # ob.display()
 # displayTraders()
@@ -47,13 +46,12 @@ def displayTraders():
 # ob.display()
 # displayTraders()
 
-# bid 500 ask 500 clear @ 500
+# # bid 500 ask 500 clear @ 500
 # print("\n BUY 500, SELL 500. FULL FILL @ 500")
 # ob, account1, account2 = remake()
 # ob.addOrder("buy", 500, 100, "limit", "john")
 # ob.display()
 # displayTraders()
-
 # ob.addOrder("sell", 500, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
@@ -63,7 +61,6 @@ def displayTraders():
 # ob.addOrder("sell", 500, 100, "limit", "john")
 # ob.display()
 # displayTraders()
-
 # ob.addOrder("buy", 500, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
@@ -75,7 +72,6 @@ def displayTraders():
 # ob.addOrder("buy", 450, 100, "limit", "john")
 # ob.display()
 # displayTraders()
-
 # ob.addOrder("sell", 550, 100, "limit", "bob")
 # ob.display()
 # displayTraders()
@@ -101,37 +97,37 @@ def displayTraders():
 # displayTraders()
 
 # buy 450 and buy 400, sell 500 and sell 450, fill 450 level, others remain
-print("\n BUY 450 & BUY 400, SELL 500 & SELL 450, fully filled 450, remaining at 400, 500")
-ob, account1, account2 = remake()
-import time
-import statistics
+# print("\n BUY 450 & BUY 400, SELL 500 & SELL 450, fully filled 450, remaining at 400, 500")
+# ob, account1, account2 = remake()
+# import time
+# import statistics
 
-# Run multiple iterations to get average performance
-iterations = 1000
-times = []
+# # Run multiple iterations to get average performance
+# iterations = 10000
+# times = []
 
-for _ in range(iterations):
-    start = time.perf_counter()
+# for _ in range(iterations):
+#     start = time.perf_counter()
     
-    ob.addOrder("buy", 450, 100, "limit", "john")
-    ob.addOrder("buy", 400, 100, "limit", "john")
-    ob.addOrder("sell", 500, 100, "limit", "bob") 
-    ob.addOrder("sell", 450, 100, "limit", "bob")
+#     ob.addOrder("buy", 450, 100, "limit", "john")
+#     ob.addOrder("buy", 400, 100, "limit", "john")
+#     ob.addOrder("sell", 500, 100, "limit", "bob") 
+#     ob.addOrder("sell", 450, 100, "limit", "bob")
     
-    end = time.perf_counter()
-    times.append(end - start)
+#     end = time.perf_counter()
+#     times.append(end - start)
 
-# Calculate statistics
-avg_time = statistics.mean(times)
-ops_per_sec = iterations / sum(times)
+# # Calculate statistics
+# avg_time = statistics.mean(times)/4
+# ops_per_sec = iterations*4 / sum(times)
 
-print(f"\nPerformance metrics:")
-print(f"Average time per iteration: {avg_time*1000:.3f} ms")
-print(f"Operations per second: {ops_per_sec:.1f}")
+# print(f"\nPerformance metrics:")
+# print(f"Average time per iteration: {avg_time*1000:.3f} ms")
+# print(f"Operations per second: {ops_per_sec:.1f}")
 
-# Display final state
-ob.display()
-displayTraders()
+# # Display final state
+# ob.display()
+# displayTraders()
 
 # limit buy and market sell
 # print("\n LIM BUY & MARKET SELL, EXPECTED 1 full bid order @ 500, 100 sold @ 550")
@@ -160,7 +156,7 @@ displayTraders()
 # displayTraders()
 
 # # market buy and market sell
-# print("\n MARKET BUY & MARKET SELL")
+# print("\n MARKET SELL & MARKET BUY")
 # ob, account1, account2 = remake()
 # ob.addOrder("sell", 0, 100, "market", "john")
 # ob.display()
@@ -191,7 +187,7 @@ displayTraders()
 # ob.display()
 # displayTraders()
 
-# market sell and then limit buy
+# # market sell and then limit buy
 # print("\n MARKET SELL & LIMIT BUY")
 # ob, account1, account2 = remake()
 # ob.addOrder("sell", 0, 100, "market", "john")

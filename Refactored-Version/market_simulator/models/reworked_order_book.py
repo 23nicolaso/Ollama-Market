@@ -29,14 +29,14 @@ class Order:
         self.orderType = orderType
         self.direction = 1 if direction == "buy" else -1
 
-    def fillQuantity(self, asset, quantity, price):
+    def fillQuantity(self, asset, quantity, price, placerID):
         accounts[self.accountID].addPosition(asset, quantity*self.direction)
         accounts[self.accountID].addPosition("CASH", -price*quantity*self.direction)
         last_prices[asset] = price
         self.quantity -= quantity
 
-    def fillEntireOrder(self, asset, price):
-        self.fillQuantity(asset, self.quantity, price)
+    def fillEntireOrder(self, asset, price, placerID):
+        self.fillQuantity(asset, self.quantity, price, placerID)
         self.quantity = 0
 
 class OrderBook:
@@ -177,13 +177,6 @@ class OrderBook:
             price = key[0]
             self._ask_levels[price] = self._ask_levels.get(price, 0) + order.quantity
 
-    def clearEmptyOrderlevels(self):
-        return # redundant
-    
-    def clearFarOrders(self):
-        # Get current price
-        return
-
     def removeFilledKeys(self, direction):
         """Removes keys marked in self.filledKeys from the appropriate book."""
         if not self.filledKeys:
@@ -219,7 +212,7 @@ class OrderBook:
              print(f"Warning: {not_found_count}/{len(keys_to_remove)} keys scheduled for removal were not found.")
 
 
-    def clearAgainstMarketBook(self, quantity, price, direction):
+    def clearAgainstMarketBook(self, quantity, price, direction, accountID):
         # =^..^=   =^..^=   =^..^=    =^..^=    =^..^=    =^..^=    =^..^= #
         #               FILLING AGAINST MARKET ORDER BOOKS                 #
         # =^..^=   =^..^=   =^..^=    =^..^=    =^..^=    =^..^=    =^..^= #
@@ -246,7 +239,7 @@ class OrderBook:
             # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
             if urgentQuantity < quantity:  
                 for order in urgentBook:
-                    order.fillEntireOrder(self.asset, price)
+                    order.fillEntireOrder(self.asset, price, accountID)
                     self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, price))
 
                 urgentBook.clear() # O(1) operation
@@ -288,7 +281,7 @@ class OrderBook:
                     # ----------------------------------------------------------------- #
                     if urgentOrder.quantity >= remaining_quantity: # case where current urgent order is larger than or equal to remaining quantity
                         fill_qty = remaining_quantity
-                        urgentOrder.fillQuantity(self.asset, fill_qty, price) # reduce urgent order quantity by remaining quantity
+                        urgentOrder.fillQuantity(self.asset, fill_qty, price, accountID) # reduce urgent order quantity by remaining quantity
                         # queue to batch this heavy operation
                         self.updateQueue.append((urgentOrder.accountID, self.asset, opposite_side, fill_qty, price))
 
@@ -301,7 +294,7 @@ class OrderBook:
                     # ------------------------------------------------------------------- #
                     else: # case where urgent order is smaller than remaining quantity
                         fill_qty = urgentOrder.quantity
-                        urgentOrder.fillEntireOrder(self.asset, price)
+                        urgentOrder.fillEntireOrder(self.asset, price, accountID)
                         remaining_quantity -= fill_qty
                         self.updateQueue.append((urgentOrder.accountID, self.asset, opposite_side, fill_qty, price))
 
@@ -357,7 +350,7 @@ class OrderBook:
                 for order in book.values(): 
                     self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, order.price))
                     fill_price += order.price * order.quantity
-                    order.fillEntireOrder(self.asset, order.price)
+                    order.fillEntireOrder(self.asset, order.price, accountID)
 
                 # Clear book
                 book.clear()
@@ -384,19 +377,21 @@ class OrderBook:
                         self.filledKeys.append(key)
                         fill_price += order.price * order.quantity
                         remaining_qty -= order.quantity
-                        order.fillEntireOrder(self.asset, order.price)
+                        order.fillEntireOrder(self.asset, order.price, accountID)
                     
                     else: # remaining quantity <= order quantity
                         if order.quantity == remaining_qty:
                             self.filledKeys.append(key)
-                            order.fillEntireOrder(self.asset, order.price)
+                            order.fillEntireOrder(self.asset, order.price, accountID)
                             self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, order.price))
                         else:
-                            order.fillQuantity(self.asset, remaining_qty, order.price)
+                            order.fillQuantity(self.asset, remaining_qty, order.price, accountID)
                             self.updateQueue.append((order.accountID, self.asset, opposite_side, remaining_qty, order.price))
 
                         fill_price += order.price * remaining_qty
+                    
                         self.removeFilledKeys(direction)
+
                         return quantity, fill_price
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
@@ -414,9 +409,6 @@ class OrderBook:
             keys_to_process = list(iterator)
 
             for key in keys_to_process:
-                # Check if the key still exists in the book, in case of concurrent modifications
-                # (less likely here but good practice) or if it was somehow removed.
-                # This check is crucial if the order book could be modified elsewhere.
                 if key not in book:
                     continue
 
@@ -437,14 +429,15 @@ class OrderBook:
                     remaining_qty -= fill_amount
                     # Update the state of the book order object itself (quantity becomes 0)
                     # Note: This doesn't remove it from the 'book' dict yet.
-                    order.fillEntireOrder(self.asset, fill_this_order_at)
+                    order.fillEntireOrder(self.asset, fill_this_order_at, accountID)
 
                 else:
                     # The current book order `order` is larger than the remaining quantity needed.
                     # It will be partially filled, and the incoming order will be fully satisfied.
                     fill_amount = remaining_qty
                     # Update the state of the book order object (reduce its quantity)
-                    order.fillQuantity(self.asset, fill_amount, fill_this_order_at)
+                    order.fillQuantity(self.asset, fill_amount, fill_this_order_at, accountID)
+                    
                     self.updateQueue.append((order.accountID, self.asset, opposite_side, fill_amount, fill_this_order_at))
                     fill_price += fill_amount * fill_this_order_at
                     remaining_qty = 0
@@ -465,10 +458,9 @@ class OrderBook:
 
             # NOW, after the loop is complete, remove all the book orders
             # that were fully filled and whose keys were added to filledKeys.
-            if self.filledKeys: # Only call if there are keys to remove
-                 self.removeFilledKeys(direction) # Call this ONCE
-
             # Return the total quantity filled and the total value exchanged
+
+            self.removeFilledKeys(direction)
             return filled_qty, fill_price
 
     def clearAgainstBook(self, quantity, direction, price, orderType, accountID):
@@ -496,7 +488,7 @@ class OrderBook:
         
         # Handle Market -> Market, Limit -> Market 
         market_fill_price = price if orderType == "limit" else self.lastPrice 
-        qty_filled_market = self.clearAgainstMarketBook(remaining_quantity, direction, market_fill_price)
+        qty_filled_market = self.clearAgainstMarketBook(remaining_quantity, market_fill_price, direction, accountID)
 
         if qty_filled_market:
             total_fill_price += qty_filled_market * market_fill_price
@@ -504,13 +496,17 @@ class OrderBook:
             emit_trade_update(accountID, self.asset, direction, qty_filled_market)
 
         # Handle Market -> Limit, Limit -> Market
-        qty_filled_limit, limit_fill_price = self.clearAgainstLimitBook(remaining_quantity, direction, price, orderType, accountID)
-        if qty_filled_limit and limit_fill_price:
+        result = self.clearAgainstLimitBook(remaining_quantity, direction, price, orderType, accountID)
+        if result:
+            limit_fill_price = result[1]
+            qty_filled_limit = result[0]
+
             total_fill_price += limit_fill_price
             remaining_quantity -= qty_filled_limit
             emit_trade_update(accountID, self.asset, direction, qty_filled_limit)
 
         # Fully Handle Deques
+        translated_direction = 1 if "buy" else -1
         while self.updateQueue: # while deque not empty
             acc_id, asset, side, qty, price = self.updateQueue.popleft()
             emit_trade_update(acc_id, asset, side, qty)
@@ -603,6 +599,14 @@ class OrderBook:
             self._askSize -= order.quantity
             return True
         return False
+    
+    def getRemainingQuantity(self, composite_key):
+        if composite_key in self.bids:
+            return self.bids[composite_key].quantity
+        elif composite_key in self.asks:
+            return self.asks[composite_key].quantity
+        else:
+            return -1
 
     def getUrgentQuantity(self):
         # returns sum of quantities of urgent orders
@@ -635,6 +639,7 @@ class OrderBook:
         print(f"{self.asset} Orderbook")
         print(f"Last Price: {self.lastPrice}")
         print(f"Bids, Asks: {self.getBidAskPairs()}")
+        print(f"Bidsize, Asksize: ", self._bidSize, self._askSize)
         if self._urgentBuyQuantity>0:
             print(f"Urgent Buy Quantity: {self._urgentBuyQuantity}")
         if self._urgentSellQuantity> 0 :

@@ -20,27 +20,26 @@ class HedgeFund(ExecutionalTrader):
 
     def mean_reversion_strategy(self):
         # Calculate YTM for all assets
-        # Trades so each asset returns roughly the same as the risk free asset, after adjusting for inflation and risk. 
-        ytms = {}
+        # Trades so each asset trades near its fair value.
+        fv_gaps = {}
         fvs = {}
         for asset in assets:
-            result = calculate_r_adj_ytm(asset)
             fv = calculate_fair_value(asset)
-            if result is not None:
-                ytms[asset] = result
+
             if fv is not None:
                 fvs[asset] = fv
+                fv_gaps[asset] = (markets[asset].lastPrice - fv)/fv
             
         # Find assets with highest and lowest YTM
-        highest_ytm_asset = max(ytms, key=ytms.get)
-        lowest_ytm_asset = min(ytms, key=ytms.get)
+        mostOverpriced = max(fv_gaps, key=fv_gaps.get)
+        mostUnderpriced = min(fv_gaps, key=fv_gaps.get)
         
-        # If more than 1% away from RFR, should do the mean reversion trade
-        if ytms[lowest_ytm_asset] < 1 + RFR - 0.01:
-            # print("SELLING, ", lowest_ytm_asset, " because: ", ytms[lowest_ytm_asset])
-            self.executeTradeInLegs(markets[lowest_ytm_asset], "sell", fvs[asset], HF_BASE_ORDER_SIZE)
-        if ytms[highest_ytm_asset] > 1 + RFR + 0.01:
-            # print("BUYING, ", highest_ytm_asset, " because: ", ytms[highest_ytm_asset])
-            self.executeTradeInLegs(markets[highest_ytm_asset], "buy", fvs[asset], HF_BASE_ORDER_SIZE)
-
-        # print(ytms)
+        # If more than 3% away from fair value, should do the mean reversion trade
+        if fv_gaps[mostOverpriced] < 0.03 or fv_gaps[mostUnderpriced] > -0.03:
+            self.removePositionTargets()
+        if fv_gaps[mostOverpriced] > 0.03:
+            print("SELLING, ", mostOverpriced, " because: ", fv_gaps[mostOverpriced])
+            self.targetPosition(markets[mostOverpriced], "sell", fvs[mostOverpriced], HF_POSITION_LIMIT)
+        if fv_gaps[mostUnderpriced] < -0.03:
+            print("BUYING, ", mostUnderpriced, " because: ", fv_gaps[mostUnderpriced])
+            self.targetPosition(markets[mostUnderpriced], "buy", fvs[mostUnderpriced], HF_POSITION_LIMIT)

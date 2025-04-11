@@ -7,7 +7,9 @@ class ExecutionalTrader(MarketAgent):
     def __init__(self, accountID, cash):
         super().__init__(accountID, cash)
         self.intendedOrders = {}
+        self.intendedPosition = {}
         self.conditionalOrders = {}
+        self.nbboOrders = {}
 
     def getConditionalOrdersInDirection(self, orderBook, direction):
         if orderBook not in self.conditionalOrders:
@@ -30,37 +32,83 @@ class ExecutionalTrader(MarketAgent):
 
     def executeTradeInLegs(self, orderBook, direction, price, quantity):
         self.intendedOrders[orderBook] = {"direction": direction, "price": price, "quantity": quantity}
+
+    def targetPosition(self, orderBook, direction, price, quantity):
+        self.intendedPosition[orderBook] = {"direction": direction, "price": price, "quantity": quantity}
     
     def removeOldIntendedOrders(self):
         self.intendedOrders.clear()
+
+    def flattenIntendedExecutions(self):
+        self.removeOldIntendedOrders()
+
+    def removePositionTargets(self):
+        self.intendedPosition.clear()
     
     def updatePositioning(self, market):
         self.partialExecuteMarket(markets[market])
 
-    def partialExecuteMarket(self, orderBook):
+    def partialExecuteMarket(self, orderBook): # for iceberg orders
         if orderBook in self.intendedOrders:
             order = self.intendedOrders[orderBook]
             if order["quantity"] > 0:
-                # Use price as a reference, try to buy without pushing price too fast
+                # Use price as a reference, split up quantity into random orders
                 # scale quantity on distance from price
                 target_price = order["price"]
+                price_diff = target_price - orderBook.lastPrice if order["direction"] == "sell" else orderBook.lastPrice - target_price
+                quantity = min(random.randint(1, 10000), 5000*min(1, max(0.01, price_diff)), order["quantity"])
         
                 # Place the order
                 if order["direction"] == "sell":
                     current_price = orderBook.bestBid
-                    quantity_to_fill = min(order["quantity"], 5000, max(100, (current_price - target_price) * 5000)) 
-                    self.placeOrder(orderBook, "sell", orderBook.bestAsk + random.choice([-0.2, -0.1, 0, 0.1, 0.2]), quantity_to_fill, "limit")
+                    orderType = random.choice(["market", "limit"])
+                    self.placeOrder(orderBook, "sell", orderBook.bestAsk + random.choice([-0.2, -0.1, 0, 0.1, 0.2]), quantity, orderType)
                 else:
                     current_price = orderBook.bestAsk
-                    quantity_to_fill = min(order["quantity"], 5000, max(100, (target_price - current_price) * 5000))
-                    self.placeOrder(orderBook, "buy", orderBook.bestBid + random.choice([-0.2, -0.1, 0, 0.1, 0.2]), quantity_to_fill, "limit")
+                    orderType = random.choice(["market", "limit"])
+                    self.placeOrder(orderBook, "buy", orderBook.bestBid + random.choice([-0.2, -0.1, 0, 0.1, 0.2]), quantity, orderType)
 
                 # Update the remaining quantity
-                order["quantity"] -= quantity_to_fill
+                order["quantity"] -= quantity
                 
                 # If the order is completely filled, remove it from intended orders
                 if order["quantity"] <= 0:
                     del self.intendedOrders[orderBook]
+
+    def refreshNBBOOrder(self, orderBook):
+        if orderBook in self.intendedPosition:
+            print("test")
+            position = self.intendedPosition[orderBook]
+            direction = 1 if position["direction"] == "buy" else -1
+            gap = position["quantity"]*direction-self.getPosition(orderBook.asset)
+            nbboOrder = self.nbboOrders.get(orderBook)
+            if nbboOrder:
+                distance = orderBook.lastPrice - nbboOrder.price
+                nbboQuantity = orderBook.getRemainingQuantity(nbboOrder)
+            else:
+                distance = 1
+                nbboQuantity = -1
+
+            if gap > 0: # need to strategically refresh buy orders
+                q = min(random.randint(1,10000),gap)
+                if distance > 0.1 or nbboQuantity <= 0: # if far from current bid, refresh order
+                    if distance > 0.1 and nbboQuantity > 0:
+                        orderBook.cancelOrder(nbboOrder)
+                        # print("cancelling buy")
+                    
+                    order = self.placeOrder(orderBook, "buy", orderBook.bestBid + 0.1, q, "limit")
+                    self.nbboOrders[orderBook] = order
+                    # print("PLACING BUY @", orderBook.bestBid+0.1, " with q:", q)
+            
+            elif gap < 0: # need to strategically refresh sell orders
+                q = min(random.randint(1,10000),-gap)
+                if distance < - 0.1 or nbboQuantity <= 0: # if far from current ask, refresh order
+                    if distance < -0.1 and nbboQuantity > 0:
+                        orderBook.cancelOrder(nbboOrder)
+                    order = self.placeOrder(orderBook, "sell", orderBook.bestAsk - 0.1, q, "limit")
+                    self.nbboOrders[orderBook] = order
+                    # print("PLACING SELL @", orderBook.bestAsk-0.1, " with q:", q)
+
 
     def updateOrdersInLegs(self, orderBook):
         if orderBook.bestBid is None or orderBook.bestAsk is None:

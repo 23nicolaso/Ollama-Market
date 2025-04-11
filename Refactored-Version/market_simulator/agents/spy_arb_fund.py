@@ -1,5 +1,5 @@
 from market_simulator.agents.executional_trader import ExecutionalTrader
-from market_simulator.utils.market_utils import markets
+from market_simulator.utils.market_utils import markets, last_prices
 from market_simulator.config import NUM_SHARES, SPY_INCLUDED_ASSETS, ARBITRAGE_THRESHOLD, ARB_QUANTITY
 
 class SpyArbFund(ExecutionalTrader):
@@ -14,7 +14,7 @@ class SpyArbFund(ExecutionalTrader):
     def _calculate_market_caps(self):
         """Calculate market cap for each constituent stock"""
         for asset in SPY_INCLUDED_ASSETS:
-            price = markets[asset].lastPrice
+            price = last_prices[asset]
             shares = NUM_SHARES[asset]
             self.market_caps[asset] = price * shares
 
