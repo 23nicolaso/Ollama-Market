@@ -9,6 +9,29 @@ class OrderLevel:
         self.netQuantity = quantity
         self.orders = []
 
+    def __eq__(self, other):
+        # other is an int here
+        if isinstance(other, int):
+            return self.netQuantity == other
+    
+    def __lt__(self, other):
+        if isinstance(other, int):
+            return self.netQuantity < other
+
+    def __le__(self, other):
+        if isinstance(other, int):
+            return self.netQuantity <= other
+    
+    def __ge__(self, other):
+        if isinstance(other, int):
+            return self.netQuantity >= other
+    
+    def __gt__(self, other):
+        if isinstance(other, int):
+            return self.netQuantity > other
+
+
+
     def addOrder(self, quantity, accountID):
         self.netQuantity += quantity
         creation_time = time.time()

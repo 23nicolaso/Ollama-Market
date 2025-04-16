@@ -44,7 +44,7 @@ def run_simulation(root, main_window):
             retail_trader.shiftSentimentToMean()
             spy_arb_fund.arbitrage()
             hft_fund.updateOrdersInLegs(markets[market])
-            hft_fund.tradeMicrostructure(market)
+            # hft_fund.tradeMicrostructure(market) # NOTE REMOVED BECAUSE IT WAS ABNORMAL
 
             mean_reversion_fund.calculate_target_positions()
             mean_reversion_fund.refreshNBBOOrder(markets[market])
@@ -62,12 +62,6 @@ def run_simulation(root, main_window):
                     if result is not None:
                         generate_news_thread(explain_this=(result, market))
                         setLastNewsTick(simulation_age)
-                
-                # if not wasNewsRecent(simulation_age): 
-                #     # ta traders don't trade when there is recent news
-                #     ta_traders.manageTATrades(market)
-                #     ta_traders.updatePositioning(market)
-                
 
         # Update GUI components
         main_window.update_prices()
@@ -95,13 +89,13 @@ def main():
         
         # Initialize agents
         global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund
-        retail_trader = RetailTrader("RETAIL TRADER", 1000000)
-        hft_fund = HFTFund("EVENTS TRADING FUND", 10000000)
-        spy_arb_fund = SpyArbFund("SPY ARBITRAGE FUND", 10000000)
+        retail_trader = RetailTrader("Retail", 1000000)
+        hft_fund = HFTFund("HFT Fund", 10000000)
+        spy_arb_fund = SpyArbFund("Spy ARB Fund", 10000000)
         mean_reversion_fund = HedgeFund("Mean Reversion Fund", 10000000, "mean_reversion")
-        ta_traders = TATrader("TA TRADING FIRM", 1000000)
-        market_maker = MarketMaker("MARKET MAKER", 100000000000000, spreads=spreads_by_market)
-        long_term_investor = LongTermInvestor("LONG TERM INVESTOR", 10000000)
+        ta_traders = TATrader("TA Trading Firm", 1000000)
+        market_maker = MarketMaker("Market Maker", 100000000000000, spreads=spreads_by_market)
+        long_term_investor = LongTermInvestor("Long Term Investor", 10000000)
 
         # Initialize news generator with agents
         init_agents(retail_trader, hft_fund, market_maker, long_term_investor)

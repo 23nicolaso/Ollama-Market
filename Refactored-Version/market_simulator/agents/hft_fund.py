@@ -1,6 +1,7 @@
 from market_simulator.agents.executional_trader import ExecutionalTrader
 from market_simulator.utils.market_utils import markets, price_history, last_prices
 from market_simulator.config import SPREADS, HFT_BASE_ORDER_SIZE, HFT_POSITION_LIMIT
+import random
 
 class HFTFund(ExecutionalTrader):
     def __init__(self, accountID, cash):
@@ -8,32 +9,36 @@ class HFTFund(ExecutionalTrader):
         self.intendedOrders = {}
 
     def tradeMicrostructure(self, ticker):
-        return
-        # # Check for order book imbalance
-        # order_book = markets[ticker]
-        # total_bid_size = order_book._bidSize
-        # total_ask_size = order_book._askSize
-        
-        # # Calculate imbalance ratio
-        # if total_bid_size > 0 and total_ask_size > 0:
-        #     imbalance_ratio = total_bid_size / total_ask_size
+        self.cancelAllOrders(markets[ticker])
+        posSize = self.account.getPosition(ticker)
+        ob = markets[ticker]
+
+        # front run big limit orders
+        bidBook, askBook = ob.getBidAskPairs()
+        for price, quantity in bidBook.items():
+            if quantity > 10000 and posSize < HFT_POSITION_LIMIT:
+                self.placeOrder(ob, "buy", float(price)+0.01, random.randint(1, HFT_BASE_ORDER_SIZE), "limit")
             
-        #     # If significant imbalance (more than 2x), front run with market order
-        #     if imbalance_ratio > 2:
-        #         # Front run with buy order when there's excess demand
-        #         current_position = self.account.getPosition(ticker)
-        #         if max_buy > 0:
-        #             quantity = min(HFT_BASE_ORDER_SIZE * 2, total_bid_size // 4, max_buy)
-        #             if int(quantity) > 0:
-        #                 self.placeOrder(order_book, "buy", 0.01, int(quantity), "market")
-                
-        #     elif imbalance_ratio < 0.5:
-        #         # Front run with sell order when there's excess supply
-        #         current_position = self.account.getPosition(ticker)
-        #         if max_sell > 0:
-        #             quantity = min(HFT_BASE_ORDER_SIZE * 2, total_ask_size // 4, max_sell)
-        #             if int(quantity) > 0:
-        #                 self.placeOrder(order_book, "sell", 0.01, int(quantity), "market")
+        for price, quantity in askBook.items():
+            if quantity > 10000 and posSize > -HFT_POSITION_LIMIT:
+                self.placeOrder(ob, "sell", float(price)-0.01, random.randint(1, HFT_BASE_ORDER_SIZE), "limit")
+        
+        # trade asymmetry in order books
+        bidSize = ob.get_bidSize()
+        askSize = ob.get_askSize()
+        if bidSize + askSize > 0:
+            imbalance = (bidSize - askSize)/(bidSize + askSize)
+        else:
+            imbalance = 0
+
+        if imbalance > 0.6 and posSize < HFT_POSITION_LIMIT:
+            q =  random.randint(1, HFT_BASE_ORDER_SIZE)
+            self.placeOrder(ob, "buy", 100, q, "market")
+            self.placeOrder(ob, "sell", ob.bestAsk+0.05, q, "limit")
+        elif imbalance < -0.6 and posSize > - HFT_POSITION_LIMIT:
+            q =  random.randint(1, HFT_BASE_ORDER_SIZE)
+            self.placeOrder(ob, "sell", 100, q, "market")
+            self.placeOrder(ob, "sell", ob.bestBid-0.05, q, "limit")
 
     def tradeTheNews(self, market, sentiment_score):
         #  If sentiment is above 0.7 or below 0.3, make the HFT front run the trade by market buying/selling 

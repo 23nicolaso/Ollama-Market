@@ -37,7 +37,7 @@ class RetailTrader(MarketAgent):
         s_quantity = int(base_quantity * (1 + sentiment_diff * 4))  # Scale up quantity based on sentiment difference
         position = self.account.getPosition(orderBook.asset)
         type = random.choice(["market","limit"])
-        quantity = s_quantity if type == "market" else s_quantity // 4
+        quantity = s_quantity if type == "market" else s_quantity // 2
 
         if quantity > 0:
             if direction == "buy":

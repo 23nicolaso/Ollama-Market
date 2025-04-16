@@ -26,7 +26,7 @@ class HedgeFund(ExecutionalTrader):
         for asset in assets:
             fv = calculate_fair_value(asset)
 
-            if fv is not None:
+            if fv is not None and asset != "SPY":
                 fvs[asset] = fv
                 fv_gaps[asset] = (markets[asset].lastPrice - fv)/fv
             

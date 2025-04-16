@@ -183,7 +183,10 @@ def calculate_r_adj_ytm(asset):
 
 def alter_risk_params_with_news(asset, sentiment, importance):
     if RISKS.get(asset):
-        RISKS[asset] *= 1 + (0.1 * (sentiment-0.5) * importance)
+        if importance == 10 and (sentiment <= 0.1 or sentiment >= 0.9):
+            RISKS[asset] *= 1 + (0.2 * (0.5-sentiment) * importance) # increased impact if massive news
+        else:
+            RISKS[asset] *= 1 + (0.1 * (0.5-sentiment) * importance)
 
 def randomly_alter_risk_params(asset):
     # Randomly alter risk param, with a very small chance of a major change across the board. If major change, there should be a news

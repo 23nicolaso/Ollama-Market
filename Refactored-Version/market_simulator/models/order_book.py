@@ -11,19 +11,13 @@ class OrderBook:
         self.urgentBuys = []
         self.urgentSells = []
 
-        self._last_price = None
-        self._best_bid = None
-        self._best_ask = None
-        self._bidSize = 0
-        self._askSize = 0
+        self._bestBid = None
+        self._bestAsk = None
+        self.bidSize = 0
+        self.askSize = 0
+        self.urgentBuySize = 0
+        self.urgentSellSize = 0
         last_prices[asset] = initialPrice
-
-    def _invalidate_cache(self):
-        """Invalidate cached properties when orderbook state changes"""
-        self._best_bid = None
-        self._best_ask = None
-        self._mid_price = None
-        self._last_price = None
 
     def getBids(self):
         return self.bids
@@ -31,10 +25,35 @@ class OrderBook:
     def getAsks(self):
         return self.asks
     
+    @property
+    def bestBid(self):
+        if not self._bestBid:
+            try:
+                self._bestBid = self.getBestBid().price
+            except AttributeError:
+                self._bestBid = self.lastPrice
+        return self._bestBid
+
+    @property
+    def bestAsk(self):
+        if not self._bestAsk:
+            try:
+                self._bestAsk = self.getBestAsk().price
+            except AttributeError:
+                self._bestAsk = self.lastPrice
+        return self._bestAsk
+
+    def invalidate_cache(self):
+        self._bestBid = None
+        self._bestAsk = None
+
     def getMidPrice(self):
         if not self.bids or not self.asks:
             return None
-        return (self.bestBid.getPrice() + self.bestAsk.getPrice()) / 2
+        return (self.bestBid + self.bestAsk) / 2
+
+    def getUrgentQuantity(self):
+        return self.urgentBuySize, self.urgentSellSize
 
     def getUrgentOrders(self):
         return self.urgentBuys, self.urgentSells
@@ -70,6 +89,9 @@ class OrderBook:
 
     def getAskSize(self):
         return sum([ask.netQuantity for ask in self.asks.values()])
+    
+    def getBidAskPairs(self):
+        return self.bids, self.asks
 
     def clearFarOrders(self):
         # delete this
@@ -90,6 +112,7 @@ class OrderBook:
                 del self.asks[price]
 
     def addOrder(self, direction, price, quantity, orderType, accountID):
+        self.invalidate_cache()
         book = self.bids if direction == "buy" else self.asks
         if orderType=="limit":
             if price in book:
@@ -100,28 +123,36 @@ class OrderBook:
             self.matchBooks()
         else:
             if direction == "buy":
+                self.urgentBuySize += quantity
                 self.urgentBuys.append((quantity, accountID))
             else:
+                self.urgentSellSize += quantity
                 self.urgentSells.append((quantity, accountID))
 
             self.fillUrgentOrders()
 
-    def getbestBid(self):
+    def getBestBid(self):
         if self.bids:
             return self.bids[max(self.bids.keys())]
         else:
             return None
 
-    def getbestAsk(self):
+    def getBestAsk(self):
         if self.asks:
             return self.asks[min(self.asks.keys())]
         else:
             return None
+        
+    def get_bidSize(self):
+        return self.getBidSize()
+    
+    def get_askSize(self): # too lazy to rewrite all uses
+        return self.getAskSize()
 
     def matchBooks(self):
         while True:
-            bestBid = self.bestBid
-            bestAsk = self.bestAsk
+            bestBid = self.getBestBid()
+            bestAsk = self.getBestAsk()
             if not bestBid or not bestAsk or bestBid.getPrice() < bestAsk.getPrice():
                 break
             
@@ -140,14 +171,18 @@ class OrderBook:
             
             # Emit trade updates
             tradePrice = bestBid.getPrice()  # Could also use .bestAsk.getPrice() as they're equal
-            emit_trade_update(buyAccountID, self.asset, "buy", quantityToFill, tradePrice)
-            emit_trade_update(sellAccountID, self.asset, "sell", quantityToFill, tradePrice)
+            emit_trade_update(buyAccountID, self.asset, "buy", quantityToFill)
+            emit_trade_update(sellAccountID, self.asset, "sell", quantityToFill)
 
             if bestBid.getQuantity() == 0:
                 self.bids.pop(bestBid.getPrice())
             if bestAsk.getQuantity() == 0:
                 self.asks.pop(bestAsk.getPrice())
 
+    @property
+    def lastPrice(self):
+        return last_prices[self.asset]
+        
     def getUnfilledUrgentOrders(self):
         return self.urgentBuys, self.urgentSells
 
@@ -157,6 +192,8 @@ class OrderBook:
         while self.urgentBuys and self.urgentSells:
             if self.urgentBuys[0][1] == self.urgentSells[0][1]:
                 quantityFilled = min(self.urgentBuys[0][0], self.urgentSells[0][0])
+                self.urgentBuySize -= quantityFilled
+                self.urgentSellSize -= quantityFilled
                 self.urgentBuys[0] = (self.urgentBuys[0][0] - quantityFilled, self.urgentBuys[0][1])
                 self.urgentSells[0] = (self.urgentSells[0][0] - quantityFilled, self.urgentSells[0][1])
                 if self.urgentSells[0][0] == 0:
@@ -170,7 +207,7 @@ class OrderBook:
             filledOrders += quantityFilled
             
             if self.bestBid and self.bestAsk:
-                midPrice = (self.bestBid.getPrice() + self.bestAsk.getPrice()) / 2
+                midPrice = (self.bestBid + self.bestAsk) / 2
             else:
                 midPrice = self.lastPrice
             
@@ -180,8 +217,8 @@ class OrderBook:
             accounts[sellAccountID].addPosition("CASH", midPrice*quantityFilled)
 
             # Emit trade updates
-            emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled, midPrice)
-            emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled, midPrice)
+            emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled)
+            emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled)
 
             # After each trade execution, update portfolio status
             if buyAccountID != "MARKET MAKER":
@@ -194,6 +231,8 @@ class OrderBook:
 
             self.urgentBuys[0] = (self.urgentBuys[0][0] - quantityFilled, buyAccountID)
             self.urgentSells[0] = (self.urgentSells[0][0] - quantityFilled, sellAccountID)
+            self.urgentBuySize -= quantityFilled
+            self.urgentSellSize -= quantityFilled
 
             # Remove empty orders
             if self.urgentBuys[0][0] == 0:
@@ -211,19 +250,21 @@ class OrderBook:
                 self.urgentBuys.pop(0)
             else:    
                 buyAccountID = self.urgentBuys[0][1]
-                if self.bestAsk:
-                    if self.bestAsk.getQuantity() == 0:
-                        self.asks.pop(self.bestAsk.getPrice())
+                bestAsk = self.getBestAsk()
+                if bestAsk:
+                    if bestAsk.getQuantity() == 0:
+                        self.asks.pop(bestAsk.getPrice())
                     else:
-                        quantityFilled = min(self.urgentBuys[0][0], self.bestAsk.getQuantity())
-                        self.bestAsk.fulfillQuantity(quantityFilled)
+                        quantityFilled = min(self.urgentBuys[0][0], bestAsk.getQuantity())
+                        bestAsk.fulfillQuantity(quantityFilled)
                         self.urgentBuys[0] = (self.urgentBuys[0][0] - quantityFilled, buyAccountID)
+                        self.urgentBuySize -= quantityFilled
                         accounts[buyAccountID].addPosition(self.asset, quantityFilled)
-                        accounts[buyAccountID].addPosition("CASH", -self.bestAsk.getPrice()*quantityFilled)
-                        last_prices[self.asset] = self.bestAsk.getPrice()
+                        accounts[buyAccountID].addPosition("CASH", -bestAsk.getPrice()*quantityFilled)
+                        last_prices[self.asset] = bestAsk.getPrice()
                         
                         # Emit trade update
-                        emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled, self.bestAsk.getPrice())
+                        emit_trade_update(buyAccountID, self.asset, "buy", quantityFilled)
                 else:
                     break
 
@@ -236,19 +277,21 @@ class OrderBook:
                 self.urgentSells.pop(0)
             else:
                 sellAccountID = self.urgentSells[0][1]
-                if self.bestBid:
-                    if self.bestBid.getQuantity() == 0:
-                        self.bids.pop(self.bestBid.getPrice())
+                bestBid = self.getBestBid()
+                if bestBid:
+                    if bestBid.getQuantity() == 0:
+                        self.bids.pop(bestBid.getPrice())
                     else:
-                        quantityFilled = min(self.urgentSells[0][0], self.bestBid.getQuantity())
-                        self.bestBid.fulfillQuantity(quantityFilled)
-                        self.urgentSells[0] = (self.urgentSells[0][0] - quantityFilled, sellAccountID)
+                        quantityFilled = min(self.urgentSells[0][0], bestBid.getQuantity())
+                        bestBid.fulfillQuantity(quantityFilled)
+                        self.urgentSells[0] = (self.urgentSells[0][0] - quantityFilled, sellAccountID)               
+                        self.urgentSellSize -= quantityFilled
                         accounts[sellAccountID].addPosition(self.asset, -quantityFilled)
-                        accounts[sellAccountID].addPosition("CASH", self.bestBid.getPrice()*quantityFilled)
-                        last_prices[self.asset] = self.bestBid.getPrice()
+                        accounts[sellAccountID].addPosition("CASH", bestBid.getPrice()*quantityFilled)
+                        last_prices[self.asset] = bestBid.getPrice()
                         
                         # Emit trade update
-                        emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled, self.bestBid.getPrice())
+                        emit_trade_update(sellAccountID, self.asset, "sell", quantityFilled)
                 else:
                     break
         
