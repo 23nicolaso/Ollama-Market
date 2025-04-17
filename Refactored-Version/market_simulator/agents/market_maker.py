@@ -22,7 +22,7 @@ class MarketMaker(MarketAgent):
         mean = price_history[orderBook.asset].mean()
         std = price_history[orderBook.asset].std()
 
-        volatility_factor = min(10.0, max(1.0, (std / mean) * 1000))
+        volatility_factor = min(5.0, max(1.0, (std / mean) * 1000))
 
         # Adjust base spread for volatility
         baseSpread = baseSpread * volatility_factor
@@ -58,9 +58,9 @@ class MarketMaker(MarketAgent):
         remaining_urgent_buys, remaining_urgent_sells = orderBook.getUrgentQuantity()
 
         if remaining_urgent_buys > 0:
-            price_change = self.spreads[orderBook.asset] * remaining_urgent_buys / (MM_DEPTH*MM_BASE_ORDER_SIZE)
+            price_change = self.spreads[orderBook.asset] * remaining_urgent_buys / (MM_DEPTH*MM_BASE_ORDER_SIZE*10)
             self.placeOrder(orderBook, "sell", orderBook.lastPrice + round(price_change, 2), remaining_urgent_buys, "limit")
 
         if remaining_urgent_sells > 0:
-            price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE)
+            price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE*10)
             self.placeOrder(orderBook, "buy", orderBook.lastPrice - round(price_change, 2), remaining_urgent_sells, "limit")

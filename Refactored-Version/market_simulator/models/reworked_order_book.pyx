@@ -1,5 +1,10 @@
+#cython: language_level=3
+#cython: boundscheck=False
+#cython: wraparound=False
+#cython: cdivision=True
+
 """
-reworked_order_book.py
+reworked_order_book.pyx
 "`. .`"`. .`"`. .`"`. .`"`. .`"`. .`"`. .`"`. .`"`. .`"`. .`
    `     `     `     `     `     `     `     `     `     `
     This is my slightly more optimal matching engine!
@@ -12,7 +17,6 @@ Although in practice, it seems its actually much slower LOL!
 """
 
 from market_simulator.utils.market_utils import last_prices, accounts
-from market_simulator.price_server import emit_trade_update
 from market_simulator.utils.db_utils import db_manager
 from sortedcontainers import SortedDict
 from collections import deque
@@ -68,7 +72,6 @@ class OrderBook:
         last_prices[asset] = initialPrice
 
         self.filledKeys = deque() # deque to store filled keys marked for removal
-        self.updateQueue = deque() # deque to store account, db updates queued for processing
 
     # Add method to invalidate cache when orderbook changes
     def _invalidate_cache(self):
@@ -76,7 +79,6 @@ class OrderBook:
         self._best_bid = None
         self._best_ask = None
         self._mid_price = None
-        self._last_price = None
 
     def getBidAskPairs(self):
         """
@@ -226,8 +228,6 @@ class OrderBook:
             urgentBook = self.urgentSells
             urgentQuantity = self._urgentSellQuantity 
 
-        opposite_side = "sell" if direction == "buy" else "buy"
-
         # ------------------------------------------#
         # 2. Actually fill the orders against books #
         # ------------------------------------------# 
@@ -239,7 +239,6 @@ class OrderBook:
             if urgentQuantity < quantity:  
                 for order in urgentBook:
                     order.fillEntireOrder(self.asset, price, accountID)
-                    self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, price))
 
                 urgentBook.clear() # O(1) operation
 
@@ -281,8 +280,6 @@ class OrderBook:
                     if urgentOrder.quantity >= remaining_quantity: # case where current urgent order is larger than or equal to remaining quantity
                         fill_qty = remaining_quantity
                         urgentOrder.fillQuantity(self.asset, fill_qty, price, accountID) # reduce urgent order quantity by remaining quantity
-                        # queue to batch this heavy operation
-                        self.updateQueue.append((urgentOrder.accountID, self.asset, opposite_side, fill_qty, price))
 
                         if urgentOrder.quantity > 0:
                             urgentBook.appendleft(urgentOrder) # put partially filled urgent order back into front of queue
@@ -295,7 +292,6 @@ class OrderBook:
                         fill_qty = urgentOrder.quantity
                         urgentOrder.fillEntireOrder(self.asset, price, accountID)
                         remaining_quantity -= fill_qty
-                        self.updateQueue.append((urgentOrder.accountID, self.asset, opposite_side, fill_qty, price))
 
     def clearAgainstLimitBook(self, quantity, direction, price, orderType, accountID):
         # =^..^=   =^..^=   =^..^=    =^..^=    =^..^=    =^..^=    =^..^= #
@@ -347,7 +343,6 @@ class OrderBook:
                 
                 # Add all orders to updateQueue
                 for order in book.values(): 
-                    self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, order.price))
                     fill_price += order.price * order.quantity
                     order.fillEntireOrder(self.asset, order.price, accountID)
 
@@ -372,7 +367,6 @@ class OrderBook:
                         break # Stop iteration if fully filled
                     
                     if remaining_qty > order.quantity:
-                        self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, order.price))
                         self.filledKeys.append(key)
                         fill_price += order.price * order.quantity
                         remaining_qty -= order.quantity
@@ -382,10 +376,8 @@ class OrderBook:
                         if order.quantity == remaining_qty:
                             self.filledKeys.append(key)
                             order.fillEntireOrder(self.asset, order.price, accountID)
-                            self.updateQueue.append((order.accountID, self.asset, opposite_side, order.quantity, order.price))
                         else:
                             order.fillQuantity(self.asset, remaining_qty, order.price, accountID)
-                            self.updateQueue.append((order.accountID, self.asset, opposite_side, remaining_qty, order.price))
 
                         fill_price += order.price * remaining_qty
                     
@@ -403,9 +395,9 @@ class OrderBook:
                 return 0, 0 # empty book means 0 filled @ 0
 
             remaining_qty = quantity
-            # Use list(iterator) to create a static list of keys to process,
+            # Use set(iterator) to create a static list of keys to process,
             # preventing issues if the dictionary changes during iteration.
-            keys_to_process = list(iterator)
+            keys_to_process = set(iterator)
 
             for key in keys_to_process:
                 if key not in book:
@@ -422,7 +414,6 @@ class OrderBook:
                 if remaining_qty >= order.quantity:
                     # The current book order `order` will be fully filled by the incoming order.
                     fill_amount = order.quantity
-                    self.updateQueue.append((order.accountID, self.asset, opposite_side, fill_amount, fill_this_order_at))
                     self.filledKeys.append(key) # Mark this book order's key for removal *later*
                     fill_price += fill_amount * fill_this_order_at
                     remaining_qty -= fill_amount
@@ -437,7 +428,6 @@ class OrderBook:
                     # Update the state of the book order object (reduce its quantity)
                     order.fillQuantity(self.asset, fill_amount, fill_this_order_at, accountID)
                     
-                    self.updateQueue.append((order.accountID, self.asset, opposite_side, fill_amount, fill_this_order_at))
                     fill_price += fill_amount * fill_this_order_at
                     remaining_qty = 0
                     # Do NOT add key to filledKeys, as the book order still has quantity left.
@@ -482,6 +472,8 @@ class OrderBook:
         MARKET -> LIMIT: fill at the limit price
         LIMIT -> LIMIT: fill at the limit price of the first limit order
         """
+        if quantity <= 0:
+            return 0, 0
         remaining_quantity = quantity
         total_fill_price = 0
         
@@ -492,7 +484,6 @@ class OrderBook:
         if qty_filled_market:
             total_fill_price += qty_filled_market * market_fill_price
             remaining_quantity -= qty_filled_market
-            emit_trade_update(accountID, self.asset, direction, qty_filled_market)
 
         # Handle Market -> Limit, Limit -> Market
         result = self.clearAgainstLimitBook(remaining_quantity, direction, price, orderType, accountID)
@@ -502,13 +493,6 @@ class OrderBook:
 
             total_fill_price += limit_fill_price
             remaining_quantity -= qty_filled_limit
-            emit_trade_update(accountID, self.asset, direction, qty_filled_limit)
-
-        # Fully Handle Deques
-        translated_direction = 1 if "buy" else -1
-        while self.updateQueue: # while deque not empty
-            acc_id, asset, side, qty, price = self.updateQueue.popleft()
-            emit_trade_update(acc_id, asset, side, qty)
         
         # Returns quantity filled, and the price it was filled at
         quantity_filled = quantity - remaining_quantity
@@ -525,14 +509,12 @@ class OrderBook:
         if accountID not in accounts:
             raise ValueError("Account ID not found: " + str(accountID))
         if not price and orderType == "limit":
-            print("no price")
             return
         if price < 0:
-            print("Price must be positive: " + str(price))
             return
         
         # round price to 2 decimal places
-        price = round(price, 2)
+        price = int(price*100)/100
         quantity = int(quantity)
         self._invalidate_cache()
         # Fill as much as possible against other side of the book
@@ -645,7 +627,7 @@ class OrderBook:
             print(f"Urgent Sell Quantity: {self._urgentSellQuantity}")
 
     def displayPrice(self):
-        print(f"{self.asset} price: {round(self.lastPrice, 2)}")
+        print(f"{self.asset} price: {int(self.lastPrice*100)/100}")
 
     def get_bidSize(self):
         return self._bidSize 

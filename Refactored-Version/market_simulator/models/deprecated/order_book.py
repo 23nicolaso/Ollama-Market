@@ -1,4 +1,4 @@
-from market_simulator.models.order_level import OrderLevel
+from market_simulator.models.deprecated.order_level import OrderLevel
 from market_simulator.utils.market_utils import last_prices, accounts
 from market_simulator.price_server import emit_trade_update
 from market_simulator.portfolio_utils import calculate_portfolio_status, emit_portfolio_update

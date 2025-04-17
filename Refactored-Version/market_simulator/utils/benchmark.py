@@ -1,5 +1,5 @@
-from reworked_order_book import OrderBook as reob
-from order_book import OrderBook as ob
+from reworkedOB import OrderBook as reob
+# from order_book import OrderBook as ob
 from market_simulator.utils.market_utils import accounts
 from account import Account
 import time
@@ -70,4 +70,3 @@ def testOb():
     print(f"Operations per second: {ops_per_sec:.1f}")
 
 cProfile.run('testReob()', 'reobProfile.prof')
-cProfile.run('testOb()', 'obProfile.prof')

@@ -43,6 +43,8 @@ def run_simulation(root, main_window):
             retail_trader.trade(markets[market])
             retail_trader.shiftSentimentToMean()
             spy_arb_fund.arbitrage()
+            if market == "SPY":
+                spy_arb_fund.quoteSpreads()
             hft_fund.updateOrdersInLegs(markets[market])
             # hft_fund.tradeMicrostructure(market) # NOTE REMOVED BECAUSE IT WAS ABNORMAL
 

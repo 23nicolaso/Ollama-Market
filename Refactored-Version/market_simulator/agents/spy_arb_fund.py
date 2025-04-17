@@ -1,5 +1,5 @@
 from market_simulator.agents.executional_trader import ExecutionalTrader
-from market_simulator.utils.market_utils import markets, last_prices
+from market_simulator.utils.market_utils import markets, last_prices, SPREADS
 from market_simulator.config import NUM_SHARES, SPY_INCLUDED_ASSETS, ARBITRAGE_THRESHOLD, ARB_QUANTITY
 
 class SpyArbFund(ExecutionalTrader):
@@ -43,6 +43,26 @@ class SpyArbFund(ExecutionalTrader):
         self._cancel_old()
         self._update_navps()
         self._update_weights()
+
+    def quoteSpreads(self):
+        orderBook = markets["SPY"]
+        self.update_calculations()
+        fairPrice = self.navps
+        self.cancelAllOrders(orderBook)
+
+        # Calculate base spread
+        baseSpread = SPREADS["SPY"] * 2
+        
+        bidPrice = round(fairPrice - (baseSpread), 2)
+        askPrice = round(fairPrice + (baseSpread), 2)
+        
+        layerSize = ARB_QUANTITY
+
+        bidLayerPrice = round(bidPrice - 0.01, 2)
+        self.placeOrder(orderBook, "buy", bidLayerPrice, layerSize, "limit")
+    
+        askLayerPrice = round(askPrice + 0.01, 2)
+        self.placeOrder(orderBook, "sell", askLayerPrice, layerSize, "limit")
 
     def arbitrage(self):
         """Execute arbitrage if profitable opportunity exists"""
