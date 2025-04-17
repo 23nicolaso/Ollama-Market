@@ -1,6 +1,6 @@
 # Market Simulator
 
-This project is a full stack stock market simulation experiment. It uses Python, HTML, Ollama and the LLM model "Mistral 7:B" to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
+This project is a full stack stock market simulation experiment. It uses Cython, Python, HTML, Ollama and the LLM model "Gemma-3-4B" to create a dynamic market environment with multiple trading agents, real-time price updates, and a graphical user interface for monitoring market activity.
 
 This was done to experiment with prompt engineering, experiment with coding with AI, and to have fun programming for practice. 
 
