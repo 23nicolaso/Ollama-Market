@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Cython build artifacts
+*.c
+*.cpp
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Profiling data
+*.prof
+
+# Temporary files
+*.bak
+*.tmp
+*.swp
+*.swo
+tempCodeRunnerFile.py
+
+# Database files
+*.db
+
+# Logs
+*.log
