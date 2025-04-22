@@ -399,8 +399,11 @@
         let currentAsset = null;
         let socket = null;
         let candleData = new Map(); // Store candles for each asset
+        let volumeData = new Map(); // Store volume for each asset
         let currentCandles = new Map(); // Store current candles for all assets
-        const CANDLE_INTERVAL = 10; // 10 seconds per candle
+        let currentVolume = new Map(); // Store current volumes for all assets
+        let previousVolume = new Map(); // Track previous volumes for differential calculation
+        const CANDLE_INTERVAL = 60; // 60 seconds per candle
 
         // Connect to Socket.IO server
         socket = io();
@@ -428,12 +431,6 @@
         function createChart() {
             const container = document.getElementById('chart-container');
             
-            // Ensure the library is available
-            if (typeof LightweightCharts === 'undefined') {
-                console.error('LightweightCharts library not loaded');
-                return;
-            }
-            
             chart = LightweightCharts.createChart(container, {
                 layout: {
                     background: { color: '#2a2e39' },
@@ -459,12 +456,43 @@
                 },
             });
 
+            // Add the candlestick series
             candleSeries = chart.addCandlestickSeries({
                 upColor: '#26a69a',
                 downColor: '#ef5350',
                 borderVisible: false,
                 wickUpColor: '#26a69a',
                 wickDownColor: '#ef5350',
+            });
+
+            // Create a separate price scale for the volume series
+            volumeSeries = chart.addHistogramSeries({
+                color: '#26a69a',
+                priceFormat: {
+                    type: 'volume',
+                },
+                // This creates a separate pane
+                priceScaleId: 'volume',
+                // Configure where it appears
+                scaleMargins: {
+                    top: 0.4, // Start at 80% from the top
+                    bottom: 0,
+                },
+            });
+
+            // Configure the volume price scale
+            chart.priceScale('volume').applyOptions({
+                scaleMargins: {
+                    top: 0.9,
+                    bottom: 0,
+                },
+                // Make the volume scale visible
+                borderVisible: true,
+                borderColor: '#485c7b',
+                // Optional: Auto-scale to fit volume bars
+                autoScale: true,
+                // Optional: Show volume values
+                visible: true,
             });
 
             // Make chart responsive
@@ -484,6 +512,15 @@
                 high: price,
                 low: price,
                 close: price
+            };
+        }
+
+        // Create a volume tick
+        function createVolume(volume, timestamp, color) {
+            return {
+                time: Math.floor(timestamp / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL,
+                value: volume,
+                color: color
             };
         }
 
@@ -528,6 +565,69 @@
             }
         }
 
+        // Update current volume tick with current volume
+        function updateCurrentVolume(totalVolume, timestamp, asset, price) {
+            // Determine if this is an up or down candle for coloring
+            let volumeColor = '#26a69a'; // Default to up color
+            
+            // Get the previous candle if it exists
+            if (currentCandles.has(asset)) {
+                const currentCandle = currentCandles.get(asset);
+                if (price < currentCandle.open) {
+                    volumeColor = '#ef5350'; // Red for down candles
+                }
+            }
+            
+            // Initialize previous volume if not exists
+            if (!previousVolume.has(asset)) {
+                previousVolume.set(asset, totalVolume);
+            }
+            
+            // Calculate differential volume for this period
+            const prevVol = previousVolume.get(asset);
+            const differentialVolume = Math.max(0, totalVolume - prevVol);
+            
+            if (!currentVolume.has(asset)) {
+                currentVolume.set(asset, createVolume(differentialVolume, timestamp, volumeColor));
+                return;
+            }
+
+            const volumeTick = currentVolume.get(asset);
+            const volumeTime = Math.floor(timestamp / (CANDLE_INTERVAL * 1000)) * CANDLE_INTERVAL;
+
+            if (volumeTime > volumeTick.time) {
+                // Save the completed volume
+                if (!volumeData.has(asset)) {
+                    volumeData.set(asset, []);
+                }
+                volumeData.get(asset).push({ ...volumeTick });
+                
+                // Reset previous volume for the new period
+                previousVolume.set(asset, totalVolume);
+                
+                // Create new volume tick
+                const newVolume = createVolume(0, timestamp, volumeColor); // Start at 0 for new period
+                currentVolume.set(asset, newVolume);
+                
+                // Update the chart if this is the current asset
+                if (asset === currentAsset) {
+                    volumeSeries.update(volumeTick);
+                    setTimeout(() => {
+                        volumeSeries.update(newVolume);
+                    }, 0);
+                }
+            } else {
+                // Update current volume with the latest differential
+                volumeTick.value = differentialVolume;
+                volumeTick.color = volumeColor;
+                
+                // Update the chart if this is the current asset
+                if (asset === currentAsset) {
+                    volumeSeries.update(volumeTick);
+                }
+            }
+        }
+
         // Update price info
         function updatePriceInfo(price, history) {
             document.getElementById('last-price').textContent = price.toFixed(2);
@@ -550,6 +650,20 @@
                 if (data.asset === currentAsset) {
                     updatePriceInfo(data.price, data.history);
                 }
+            });
+
+            socket.on('volume_update', (data) => {
+                const timestamp = Date.now();
+                // Get the current price for this asset
+                let currentPrice = null;
+                if (data.asset === currentAsset) {
+                    currentPrice = parseFloat(document.getElementById('last-price').textContent);
+                } else if (currentCandles.has(data.asset)) {
+                    // Use close price of the current candle if available
+                    currentPrice = currentCandles.get(data.asset).close;
+                }
+                
+                updateCurrentVolume(data.volume, timestamp, data.asset, currentPrice);
             });
 
             socket.on('orderbook_update', (data) => {

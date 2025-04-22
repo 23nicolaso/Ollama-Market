@@ -14,7 +14,7 @@ class TATrader(ExecutionalTrader):
         # Calculate mean and standard deviation of price history
         mean_price = price_history[market].mean()
         std_dev = price_history[market].std()
-        current_price = markets[market].lastPrice
+        current_price = markets[market].last_price
         if not isinstance(current_price, float):
             current_price = 0
         st_mean = price_history[market].mean(n=50)

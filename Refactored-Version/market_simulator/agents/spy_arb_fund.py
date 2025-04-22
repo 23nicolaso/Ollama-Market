@@ -14,7 +14,7 @@ class SpyArbFund(ExecutionalTrader):
     def _calculate_market_caps(self):
         """Calculate market cap for each constituent stock"""
         for asset in SPY_INCLUDED_ASSETS:
-            price = last_prices[asset]
+            price = markets[asset].last_price
             shares = NUM_SHARES[asset]
             self.market_caps[asset] = price * shares
 
@@ -34,7 +34,7 @@ class SpyArbFund(ExecutionalTrader):
         """Calculate the number of shares of each constituent per SPY share"""
         
         for asset in SPY_INCLUDED_ASSETS:
-            weight = ( self.market_caps[asset] / 4000000000 ) / markets[asset].lastPrice
+            weight = ( self.market_caps[asset] / 4000000000 ) / markets[asset].last_price
             self.spy_composition[asset] = weight * ARB_QUANTITY
 
     def update_calculations(self):
@@ -44,33 +44,13 @@ class SpyArbFund(ExecutionalTrader):
         self._update_navps()
         self._update_weights()
 
-    def quoteSpreads(self):
-        orderBook = markets["SPY"]
-        self.update_calculations()
-        fairPrice = self.navps
-        self.cancelAllOrders(orderBook)
-
-        # Calculate base spread
-        baseSpread = SPREADS["SPY"] * 2
-        
-        bidPrice = round(fairPrice - (baseSpread), 2)
-        askPrice = round(fairPrice + (baseSpread), 2)
-        
-        layerSize = ARB_QUANTITY
-
-        bidLayerPrice = round(bidPrice - 0.01, 2)
-        self.placeOrder(orderBook, "buy", bidLayerPrice, layerSize, "limit")
-    
-        askLayerPrice = round(askPrice + 0.01, 2)
-        self.placeOrder(orderBook, "sell", askLayerPrice, layerSize, "limit")
-
     def arbitrage(self):
         """Execute arbitrage if profitable opportunity exists"""
         # Update calculations
         self.update_calculations()
         
-        spy_bid = markets["SPY"].bestBid
-        spy_ask = markets["SPY"].bestAsk
+        spy_bid = markets["SPY"].get_best_bid()
+        spy_ask = markets["SPY"].get_best_ask()
 
         # If basket is cheaper than SPY by more than arbitrage threshold, buy basket and sell SPY
         if self.navps < spy_bid - ARBITRAGE_THRESHOLD:

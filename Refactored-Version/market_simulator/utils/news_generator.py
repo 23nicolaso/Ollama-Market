@@ -1,5 +1,6 @@
 import threading
 import re
+from market_simulator.utils.tts_this import tts_this
 from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets, calculate_fair_value, alter_risk_params_with_news
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
@@ -28,14 +29,11 @@ def generate_news(custom_headline=None, explain_this=None):
         headline = custom_headline
     else:
         if explain_this:
-            risk = "good" if explain_this[0] < 0 else "bad" 
-            asset = explain_this[1]
 
             headline = invoke_model(
                 EXPLANATION_NEWS_PROMPT.format(
                     world_context=WORLD_CONTEXT,
-                    risk=risk,
-                    asset=asset
+                    update=explain_this
                 )
             )
         else:
@@ -127,6 +125,7 @@ def generate_news(custom_headline=None, explain_this=None):
                 hft_sentiment_scores_dict[asset] = 0.5
 
     _retail_trader.retailSentimentScore = sentiment_scores_dict
+    tts_this(headline, sentiment_scores_dict["SPY"], urgency_score)
     
     # Simulate HFT trading the news
     for market in markets:

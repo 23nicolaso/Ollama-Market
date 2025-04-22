@@ -29,3 +29,11 @@ cdef class Account:
     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):
         self.addPosition(asset, quantity * direction)
         self.addPosition("CASH", -price * quantity * direction)
+
+    def __repr__(self):
+        lines = []
+        lines.append("-"*5+"Account " + str(self.accountID) + "-"*5)
+        lines.append("\n")
+        for key in self.positions:
+            lines.append(str(key)+":"+str(self.positions[key]))
+        return "\n".join(lines)

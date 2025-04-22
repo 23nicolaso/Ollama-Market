@@ -34,11 +34,11 @@ class HFTFund(ExecutionalTrader):
         if imbalance > 0.6 and posSize < HFT_POSITION_LIMIT:
             q =  random.randint(1, HFT_BASE_ORDER_SIZE)
             self.placeOrder(ob, "buy", 100, q, "market")
-            self.placeOrder(ob, "sell", ob.bestAsk+0.05, q, "limit")
+            self.placeOrder(ob, "sell", ob.get_best_ask()+0.05, q, "limit")
         elif imbalance < -0.6 and posSize > - HFT_POSITION_LIMIT:
             q =  random.randint(1, HFT_BASE_ORDER_SIZE)
             self.placeOrder(ob, "sell", 100, q, "market")
-            self.placeOrder(ob, "sell", ob.bestBid-0.05, q, "limit")
+            self.placeOrder(ob, "sell", ob.get_best_bid()-0.05, q, "limit")
 
     def tradeTheNews(self, market, sentiment_score):
         #  If sentiment is above 0.7 or below 0.3, make the HFT front run the trade by market buying/selling 

@@ -3,7 +3,7 @@ WORLD_CONTEXT = """
 Ensure that all your responses follow the correct, defined response format.     
 """
 
-STATE_STRING = "A new president has just been elected, and is launching widespread reforms!"
+STATE_STRING = "President Sterling has just been elected in the US government, and is launching widespread reforms!"
 
 STATE_PROMPT = f"""
 The state string is your memory of the current situation in this world. 
@@ -12,6 +12,9 @@ Please update the state string to better represent the situation in the simulate
 """
 
 RFR = 0.03 # risk free rate of 3% to start
+
+def get_state_string():
+    return STATE_STRING
 
 def set_state_string(str):
     global STATE_STRING
@@ -128,8 +131,8 @@ EXPLANATION_NEWS_PROMPT = f"""
 {{world_context}}
 The state string is your memory of the current situation in this world. 
 Your old state string is: <{STATE_STRING}>. 
-Provide a breaking news headline for my simulated world which would be {{risk}} for {{asset}}. 
-Make it dramatic, news of economic events, business deals/choices, statements by politicians, natural disasters or business mistakes.
+In the financial sector, this data was just released {{update}}. 
+Make a headline summarizing this news.
 Keep the headline under 15 words long, only respond with the headline itself, and don't mention points or changes in stock prices. 
 """
 
@@ -215,7 +218,7 @@ CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
 
 # LLM configuration
-LLM_MODEL = "gemma3:4b" 
+LLM_MODEL = "gemma3:4b-it-qat" 
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
@@ -226,10 +229,9 @@ HFT_POSITION_LIMIT = 100000
 
 # Market maker - provides liquidity
 MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 1000 
+MM_BASE_ORDER_SIZE = 2000 
 MM_MAX_VOLATILITY_MULT = 10
 MM_DEPTH = 5
-MM_REQUIRED_LIQ = 1000
 NEARBY_RANGE = 0.05
 
 # Retail traders - many small trades
@@ -239,8 +241,8 @@ USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swin
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - small-sized trades by retail-like investors
-TA_POSITION_LIMIT = 10000  # somewhat small position limit
-TA_MEGA_ORDER_SIZE = 5000  # 
+TA_POSITION_LIMIT = 1000000  # 
+TA_MEGA_ORDER_SIZE = 10000  # 
 TA_LARGE_ORDER_SIZE = 1000  # 
 
 # Long-term investor - larger but infrequent trades

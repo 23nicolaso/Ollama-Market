@@ -28,7 +28,7 @@ class HedgeFund(ExecutionalTrader):
 
             if fv is not None and asset != "SPY":
                 fvs[asset] = fv
-                fv_gaps[asset] = (markets[asset].lastPrice - fv)/fv
+                fv_gaps[asset] = (markets[asset].last_price - fv)/fv
             
         # Find assets with highest and lowest YTM
         mostOverpriced = max(fv_gaps, key=fv_gaps.get)
@@ -38,8 +38,8 @@ class HedgeFund(ExecutionalTrader):
         if fv_gaps[mostOverpriced] < 0.03 or fv_gaps[mostUnderpriced] > -0.03:
             self.removePositionTargets()
         if fv_gaps[mostOverpriced] > 0.03:
-            print("SELLING, ", mostOverpriced, " because: ", fv_gaps[mostOverpriced])
+            # print("SELLING, ", mostOverpriced, " because: ", fv_gaps[mostOverpriced])
             self.targetPosition(markets[mostOverpriced], "sell", fvs[mostOverpriced], HF_POSITION_LIMIT)
         if fv_gaps[mostUnderpriced] < -0.03:
-            print("BUYING, ", mostUnderpriced, " because: ", fv_gaps[mostUnderpriced])
+            # print("BUYING, ", mostUnderpriced, " because: ", fv_gaps[mostUnderpriced])
             self.targetPosition(markets[mostUnderpriced], "buy", fvs[mostUnderpriced], HF_POSITION_LIMIT)

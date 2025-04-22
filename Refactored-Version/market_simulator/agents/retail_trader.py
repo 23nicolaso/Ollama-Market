@@ -24,13 +24,9 @@ class RetailTrader(MarketAgent):
         except KeyError:
             direction = "buy" if random.random() < 0.5 else "sell"
             final_sentiment = 0.5
-
-        try:
-            bid = orderBook.bestBid
-            ask = orderBook.bestAsk
-        except:
-            bid = orderBook.lastPrice
-            ask = orderBook.lastPrice
+    
+        bid = orderBook.get_best_bid()
+        ask = orderBook.get_best_ask()
 
         sentiment_diff = abs(final_sentiment - 0.5)  # How far sentiment is from neutral
         base_quantity = random.randint(1, RETAIL_MAX_ORDER_SIZE)

@@ -11,7 +11,7 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
-user_account = UserTrader("USER_001", 1000000)
+user_account = UserTrader(7, 1000000)
 
 def emit_trade_update(agent, asset, side, quantity):
     """Emit a trade update through websocket"""
@@ -26,16 +26,16 @@ def emit_orderbook_update(asset):
     """Emit order book update through websocket"""
     if asset in markets:
         market = markets[asset]
-        try:
-            bidsandasks = market.getBidAskPairs()
-            socketio.emit('orderbook_update', {
-                'asset': asset,
-                'bids': bidsandasks[0],
-                'asks': bidsandasks[1],
-                'timestamp': time.time()
-            })
-        except:
-            bidsandasks = {}
+    
+        bids = market.get_bids()
+        asks = market.get_asks()
+        socketio.emit('orderbook_update', {
+            'asset': asset,
+            'bids': bids,
+            'asks': asks,
+            'timestamp': time.time()
+        })
+
 
 @app.route('/assets')
 def get_assets():
@@ -94,6 +94,11 @@ def emit_updates():
                     'asset': asset,
                     'price': float(price_history[asset].getLastPrice()),
                     'history': price_history[asset].get().tolist()
+                })
+
+                socketio.emit('volume_update', {
+                    'asset': asset,
+                    'volume': int(markets[asset].net_volume)
                 })
             
             # Emit order book updates

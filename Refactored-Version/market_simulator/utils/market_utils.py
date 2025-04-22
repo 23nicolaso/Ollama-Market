@@ -1,4 +1,4 @@
-from langchain_ollama import OllamaLLM
+from ollama import Client
 import queue
 from market_simulator.config import (
     ASSETS, INITIAL_PRICES, SPREADS, ANNUAL_RETURNS,
@@ -179,14 +179,11 @@ def calculate_fair_value(asset):
 
 def calculate_r_adj_ytm(asset):
     if RISKS.get(asset):
-        return (EV[asset]/last_prices[asset]-(RISKS[asset]))
+        return (EV[asset]/markets[asset].last_price-(RISKS[asset]))
 
 def alter_risk_params_with_news(asset, sentiment, importance):
     if RISKS.get(asset):
-        if importance == 10 and (sentiment <= 0.1 or sentiment >= 0.9):
-            RISKS[asset] *= 1 + (0.2 * (0.5-sentiment) * importance) # increased impact if massive news
-        else:
-            RISKS[asset] *= 1 + (0.1 * (0.5-sentiment) * importance)
+        RISKS[asset] *= 1 + (0.1 * (0.5-sentiment) * importance)
 
 def randomly_alter_risk_params(asset):
     # Randomly alter risk param, with a very small chance of a major change across the board. If major change, there should be a news
@@ -219,12 +216,13 @@ for asset in ASSETS:
         price_history[asset].append([INITIAL_PRICES[asset]])
 
 # Initialize LLM
-model = OllamaLLM(model=LLM_MODEL)
+model = Client()
 
 def invoke_model(prompt):
     """Invokes the LLM with a given prompt"""
-    response = model.invoke(prompt)
-    return response
+    response = model.chat(model=LLM_MODEL, messages=[{'role': 'user', 'content': prompt}])
+    return response['message']['content']
+
 
 def update_price_history(asset, price):
     """Updates the price history for a given asset"""
@@ -239,7 +237,7 @@ def update_price_history(asset, price):
 
 def makeMarkets():
     """Creates OrderBook objects for all assets"""
-    from market_simulator.models.reworked_order_book import OrderBook
+    from market_simulator.models.sortedListOB import OrderBook
     for asset in assets:
         markets[asset] = OrderBook(asset, last_prices[asset])
 

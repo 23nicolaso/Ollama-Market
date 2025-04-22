@@ -8,7 +8,7 @@ class LongTermInvestor(ExecutionalTrader):
         super().__init__(account_id, cash)
         # Start with 10% of all assets
         for asset in assets:
-            self.account.positions[asset] = int(0.1 * NUM_SHARES[asset]) # Start with 10% of 1M shares for each asset
+            self.account.addPosition(asset, int(0.1 * NUM_SHARES[asset])) # Start with 10% of 1M shares for each asset
 
     def trade(self, market):
         """In reality, they might have some kind of strategy, but here its really just random"""
@@ -17,7 +17,7 @@ class LongTermInvestor(ExecutionalTrader):
         if self.account.positions[market.asset] + quantity < LTI_POS_LIMIT:
             if random.random() < 0.001:
                 # Buy random amount on random intervals
-                self.placeOrder(market, random.choice(["buy", "sell"]), market.lastPrice, quantity, "limit")
+                self.placeOrder(market, random.choice(["buy", "sell"]), market.last_price, quantity, "limit")
     
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.1 and importance == 10: 

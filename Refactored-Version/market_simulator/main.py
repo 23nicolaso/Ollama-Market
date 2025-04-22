@@ -1,4 +1,5 @@
 import tkinter as tk
+import time
 import random
 import threading
 import sys
@@ -8,6 +9,10 @@ from market_simulator.price_server import user_account
 # Add the parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from market_simulator.config import get_state_string
+
+from market_simulator.utils.tts_this import tts_this
+from market_simulator.models.marketState import MarkovModel
 from market_simulator.agents.market_maker import MarketMaker
 from market_simulator.agents.retail_trader import RetailTrader
 from market_simulator.agents.hedge_fund import HedgeFund
@@ -24,8 +29,11 @@ from market_simulator.utils.db_utils import init_db, shutdown_db
 
 def run_simulation(root, main_window):
     """Run the main simulation loop"""
+    markov_model = MarkovModel()
+    markov_model.simulate_day()
     simulation_age = 0
     tick = 0
+    release_time = None
 
     # Get reference to news feed frame
     news_feed_frame = main_window.news_feed_frame
@@ -35,6 +43,8 @@ def run_simulation(root, main_window):
     news_feed_frame._update_chat_window()
 
     while True: 
+        time.sleep(0.01)
+        
         simulation_age += 1
     
         for market in markets:
@@ -43,8 +53,7 @@ def run_simulation(root, main_window):
             retail_trader.trade(markets[market])
             retail_trader.shiftSentimentToMean()
             spy_arb_fund.arbitrage()
-            if market == "SPY":
-                spy_arb_fund.quoteSpreads()
+            ta_traders.manageTATrades(market)
             hft_fund.updateOrdersInLegs(markets[market])
             # hft_fund.tradeMicrostructure(market) # NOTE REMOVED BECAUSE IT WAS ABNORMAL
 
@@ -55,15 +64,31 @@ def run_simulation(root, main_window):
 
             user_account.updatePositioning(market)
 
-            update_price_history(market, markets[market].lastPrice)
+            update_price_history(market, markets[market].last_price)
 
-            if price_history[market].isFull(): #  only do some updates once initial price is set correctly
-                if simulation_age & 0b111 == 0:
-                    result = randomly_alter_risk_params(market)
-            
-                    if result is not None:
-                        generate_news_thread(explain_this=(result, market))
-                        setLastNewsTick(simulation_age)
+        if release_time:
+            if int(time.time()) > release_time:
+                real_state = markov_model.get_economy_state()
+                release_time = None
+                txt = f"Economic data released! Inflation comes in at {real_state['inflation']}, interest rate comes in at {real_state['interest_rate']}, unemployment at {real_state['unemployment']}, and economic growth is in a {real_state['economic_growth']}"
+                senti = 0.7 if real_state['sector_performance']['TECHNOLOGY'] > 0 else 0.3
+                tts_this(txt, sentiment=senti, importance=9)
+                generate_news_thread(explain_this=txt)
+
+        if simulation_age & 0b1111111111111 == 100:
+            # Financial Data is Produced
+            print("Financial Data is Being Le Calculated")
+            markov_model.simulate_day()
+            release_time = int(time.time()) + 120
+
+            # Gov Announces that Financial Data Will be Released in 5 mins
+            tts_this("Markets chop as traders await GDP growth, unemployment and inflation numbers. The numbers are releasing in five minutes.", 0.5, 10)
+        
+            # Quant firms begin analyzing to guess where financial data will take markets and place bets
+
+                # if result is not None:
+                #     generate_news_thread(explain_this=(result, market))
+                #     setLastNewsTick(simulation_age)
 
         # Update GUI components
         main_window.update_prices()
@@ -91,13 +116,13 @@ def main():
         
         # Initialize agents
         global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund
-        retail_trader = RetailTrader("Retail", 1000000)
-        hft_fund = HFTFund("HFT Fund", 10000000)
-        spy_arb_fund = SpyArbFund("Spy ARB Fund", 10000000)
-        mean_reversion_fund = HedgeFund("Mean Reversion Fund", 10000000, "mean_reversion")
-        ta_traders = TATrader("TA Trading Firm", 1000000)
-        market_maker = MarketMaker("Market Maker", 100000000000000, spreads=spreads_by_market)
-        long_term_investor = LongTermInvestor("Long Term Investor", 10000000)
+        retail_trader = RetailTrader(0, 1000000)
+        hft_fund = HFTFund(1, 10000000)
+        spy_arb_fund = SpyArbFund(2, 10000000)
+        mean_reversion_fund = HedgeFund(3, 10000000, "mean_reversion")
+        ta_traders = TATrader(4, 1000000)
+        market_maker = MarketMaker(5, 100000000000000, spreads=spreads_by_market)
+        long_term_investor = LongTermInvestor(6, 10000000)
 
         # Initialize news generator with agents
         init_agents(retail_trader, hft_fund, market_maker, long_term_investor)

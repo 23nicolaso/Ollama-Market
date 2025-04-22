@@ -1,6 +1,6 @@
 from market_simulator.agents.base_agent import MarketAgent
 from market_simulator.utils.market_utils import price_history
-from market_simulator.config import MM_POSITION_LIMIT, MM_BASE_ORDER_SIZE, MM_DEPTH, NEARBY_RANGE, MM_REQUIRED_LIQ
+from market_simulator.config import MM_POSITION_LIMIT, MM_BASE_ORDER_SIZE, MM_DEPTH, NEARBY_RANGE
 
 class MarketMaker(MarketAgent):
     def __init__(self, accountID, cash, spreads):
@@ -12,7 +12,7 @@ class MarketMaker(MarketAgent):
 
     def makeMarket(self, orderBook):
         # Get current market state
-        midPrice = orderBook.lastPrice
+        midPrice = orderBook.last_price
         self.wipeAllOrders(orderBook)
 
         # Calculate base spread
@@ -45,8 +45,7 @@ class MarketMaker(MarketAgent):
         askPrice = round(midPrice + (baseSpread), 2)
 
         for i in range(MM_DEPTH):
-            # Reduce size during high volatility
-            layerSize = int(MM_BASE_ORDER_SIZE * (i + 1) / volatility_factor)
+            layerSize = int(MM_BASE_ORDER_SIZE * (i + 1))
     
             bidLayerPrice = round(bidPrice - (0.01 * i), 2)
             self.placeOrder(orderBook, "buy", bidLayerPrice, layerSize, "limit")
@@ -55,12 +54,13 @@ class MarketMaker(MarketAgent):
             self.placeOrder(orderBook, "sell", askLayerPrice, layerSize, "limit")
 
     def provideLiquidity(self, orderBook):
-        remaining_urgent_buys, remaining_urgent_sells = orderBook.getUrgentQuantity()
+        remaining_urgent_buys = orderBook.get_market_buy_quantity()
+        remaining_urgent_sells = orderBook.get_market_sell_quantity()
 
         if remaining_urgent_buys > 0:
             price_change = self.spreads[orderBook.asset] * remaining_urgent_buys / (MM_DEPTH*MM_BASE_ORDER_SIZE*10)
-            self.placeOrder(orderBook, "sell", orderBook.lastPrice + round(price_change, 2), remaining_urgent_buys, "limit")
+            self.placeOrder(orderBook, "sell", orderBook.last_price + round(price_change, 2), remaining_urgent_buys, "limit")
 
         if remaining_urgent_sells > 0:
             price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE*10)
-            self.placeOrder(orderBook, "buy", orderBook.lastPrice - round(price_change, 2), remaining_urgent_sells, "limit")
+            self.placeOrder(orderBook, "buy", orderBook.last_price - round(price_change, 2), remaining_urgent_sells, "limit")
