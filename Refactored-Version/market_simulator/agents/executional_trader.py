@@ -88,7 +88,7 @@ class ExecutionalTrader(MarketAgent):
                 nbboQuantity = -1
 
             if gap > 0: # need to strategically refresh buy orders
-                q = min(random.randint(1,10000),gap)
+                q = int(min(random.randint(1,10000),gap))
                 if distance > 0.1 or nbboQuantity <= 0: # if far from current bid, refresh order
                     if distance > 0.1 and nbboQuantity > 0:
                         orderBook.cancelOrder(nbboOrder)
@@ -99,7 +99,7 @@ class ExecutionalTrader(MarketAgent):
                     # print("PLACING BUY @", orderBook.bestBid+0.1, " with q:", q)
             
             elif gap < 0: # need to strategically refresh sell orders
-                q = min(random.randint(1,10000),-gap)
+                q = int(min(random.randint(1,10000),-gap))
                 if distance < - 0.1 or nbboQuantity <= 0: # if far from current ask, refresh order
                     if distance < -0.1 and nbboQuantity > 0:
                         orderBook.cancelOrder(nbboOrder)

@@ -7,7 +7,7 @@ class SpyArbFund(ExecutionalTrader):
         super().__init__(accountID, cash)
         self.market_caps = {}
         self.spy_composition = {}
-        self.navps = 400
+        self.navps = 500
         self._calculate_market_caps()
         self._update_weights()
     

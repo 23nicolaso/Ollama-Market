@@ -15,6 +15,9 @@ cdef class Account:
     cpdef double getPosition(self, str asset):
         return self.positions.get(asset, 0.0)
 
+    cpdef object getPositions(self):
+        return self.positions
+
     cpdef double getCash(self):
         return self.positions["CASH"]
 

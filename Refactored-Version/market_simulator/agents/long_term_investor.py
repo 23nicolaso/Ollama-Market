@@ -14,11 +14,10 @@ class LongTermInvestor(ExecutionalTrader):
         """In reality, they might have some kind of strategy, but here its really just random"""
         quantity = random.randint(1, LT_INVESTOR_MAX_ORDER_SIZE)
 
-        if self.account.positions[market.asset] + quantity < LTI_POS_LIMIT:
-            if random.random() < 0.001:
-                # Buy random amount on random intervals
-                self.placeOrder(market, random.choice(["buy", "sell"]), market.last_price, quantity, "limit")
+        if random.random() < 0.001:
+            # Buy random amount on random intervals
+            self.placeOrder(market, random.choice(["buy", "sell"]), market.last_price, quantity, "limit")
     
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.1 and importance == 10: 
-            self.executeTradeInLegs(ticker, "sell", 0, self.account.getPosition(ticker)*0.05) # panic sell lol
+            self.placeOrder(ticker, "sell", 0, self.account.getPosition(ticker)*0.01, "market") # panic sell lol

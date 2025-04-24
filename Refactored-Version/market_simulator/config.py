@@ -27,82 +27,71 @@ def set_state_string(str):
 # Asset configuration
 ASSETS_CONFIG = {
     "SPY": {
-        "initial_price": 350,
+        "initial_price": 500,
         "spread": 0.02,
-        "annual_return": 0.08,
         "num_shares": 10000000,
         "included_in_spy": False,
         "use_rp": False
     },
-    "TECH ETF": {
+    "TECHNOLOGY": {
         "initial_price": 200,
         "spread": 0.02,
-        "annual_return": 0.08,
         "num_shares": 2000000000,
-        "risk": 0.05,
-        "included_in_spy": True,
-        "use_rp": True
+        "included_in_spy": True
     },
-    "CONSUMER ETF": {
+    "CONSUMER": {
         "initial_price": 200,
         "spread": 0.02,
-        "annual_return": 0.08,
         "num_shares": 2000000000,
-        "risk": 0.04,
-        "included_in_spy": True,
-        "use_rp": True
+        "included_in_spy": True
     },
-    "UTILITIES ETF": {
+    "HEALTHCARE": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.09,
         "num_shares": 2000000000,
-        "risk": 0.02,
-        "included_in_spy": True,
-        "use_rp": True
+        "included_in_spy": True
     },
-    "BANKING ETF": {
+    "FINANCIAL": {
         "initial_price": 200,
         "spread": 0.02,
-        "annual_return": 0.08,
         "num_shares": 2000000000,
-        "risk": 0.03,
-        "included_in_spy": True,
-        "use_rp": True
+        "included_in_spy": True
+    },
+    "ENERGY": {
+        "initial_price": 100,
+        "spread": 0.02,
+        "num_shares": 2000000000,
+        "included_in_spy": True
+    },
+    "INDUSTRIAL": {
+        "initial_price": 200,
+        "spread": 0.02,
+        "num_shares": 2000000000,
+        "included_in_spy": True
     },
     "MSCI World ETF": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.08,
-        "risk":0.03,
         "num_shares": 1000000000,
-        "included_in_spy": False,
-        "use_rp": True
+        "included_in_spy": False
     },
     "Bitcoin": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.08,
         "num_shares": 1000000000,
-        "included_in_spy": False,
-        "use_rp": False
+        "included_in_spy": False
     },
     "Gold": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.08,
         "num_shares": 1000000000,
-        "included_in_spy": False,
-        "use_rp": False
+        "included_in_spy": False
     },
     "China ETF": {
         "initial_price": 100,
         "spread": 0.02,
-        "annual_return": 0.12,
         "num_shares": 1000000000,
-        "risk": 0.06,
-        "included_in_spy": False,
-        "use_rp": True
+        "included_in_spy": False
     }
 }
 
@@ -110,7 +99,6 @@ ASSETS_CONFIG = {
 ASSETS = list(ASSETS_CONFIG.keys())
 INITIAL_PRICES = {asset: config["initial_price"] for asset, config in ASSETS_CONFIG.items()}
 SPREADS = {asset: config["spread"] for asset, config in ASSETS_CONFIG.items()}
-ANNUAL_RETURNS = {asset: config["annual_return"] for asset, config in ASSETS_CONFIG.items()}
 NUM_SHARES = {asset: config["num_shares"] for asset, config in ASSETS_CONFIG.items()}
 SPY_INCLUDED_ASSETS = [asset for asset, config in ASSETS_CONFIG.items() if config["included_in_spy"]]
 
@@ -119,12 +107,11 @@ NEWS_GENERATION_PROMPT = f"""
 {{world_context}}
 The state string is your memory of the current situation in this world. 
 Your old state string is: <{STATE_STRING}>. 
-Make one dramatic breaking news headline for my simulated world. 
-I want it to be news of economic events, statements by politicians,
-developments, natural disasters, or any funny news. 
+Make a huge, impactful news headline for my simulated world. 
+I want it to be the top headline of the day, summarizing a shocking event, statements by politicians,
+developments, natural disasters. Do not make it something generic. 
 Do not say anything other than the headline, keep your response under 15 words long,
-and do not make a x happens as y headline, simply say an event which happened. Do NOT MENTION POINTS, OR CHANGES IN STOCK PRICES. 
-Here are the most recent headlines for context: {{recent_headlines}}.
+and do not make a x happens as y headline. Do NOT MENTION POINTS, OR CHANGES IN STOCK PRICES.
 """
 
 EXPLANATION_NEWS_PROMPT = f"""
@@ -222,14 +209,14 @@ LLM_MODEL = "gemma3:4b-it-qat"
 
 # AGENT QUANTITY CONFIGURATIONS
 # High-frequency trading fund - makes many trades on news as soon as it comes out
-HF_POSITION_LIMIT = 50000000
-HF_BASE_ORDER_SIZE = 1000000
+HF_POSITION_LIMIT = 1000000
+HF_BASE_ORDER_SIZE = 100000
 HFT_BASE_ORDER_SIZE = 10000
 HFT_POSITION_LIMIT = 100000
 
 # Market maker - provides liquidity
-MM_POSITION_LIMIT = 1000000  # Large position limit to maintain liquidity
-MM_BASE_ORDER_SIZE = 2000 
+MM_POSITION_LIMIT = 10000000  # Large position limit to maintain liquidity
+MM_BASE_ORDER_SIZE = 3000
 MM_MAX_VOLATILITY_MULT = 10
 MM_DEPTH = 5
 NEARBY_RANGE = 0.05

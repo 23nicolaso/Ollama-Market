@@ -1,7 +1,8 @@
 import threading
 import re
+from market_simulator.utils.market_utils import markov_model as mm
 from market_simulator.utils.tts_this import tts_this
-from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets, calculate_fair_value, alter_risk_params_with_news
+from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
     URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT, EXPLANATION_NEWS_PROMPT,
@@ -13,14 +14,16 @@ _retail_trader = None
 _hft_fund = None
 _market_maker = None
 _long_term_investor = None
+_mean_reversion_fund = None
 
-def init_agents(retail_trader, hft_fund, market_maker, long_term_investor):
+def init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund):
     """Initialize the global agent references"""
-    global _retail_trader, _hft_fund, _market_maker, _long_term_investor
+    global _retail_trader, _hft_fund, _market_maker, _long_term_investor, _mean_reversion_fund
     _retail_trader = retail_trader
     _hft_fund = hft_fund
     _market_maker = market_maker
     _long_term_investor = long_term_investor
+    _mean_reversion_fund = mean_reversion_fund
 
 def generate_news(custom_headline=None, explain_this=None):
     """Generates a news headline and updates market sentiment"""
@@ -126,15 +129,17 @@ def generate_news(custom_headline=None, explain_this=None):
 
     _retail_trader.retailSentimentScore = sentiment_scores_dict
     tts_this(headline, sentiment_scores_dict["SPY"], urgency_score)
-    
+    mm.update_on_sentiment(sentiment_scores_dict["SPY"], urgency_score)
+
     # Simulate HFT trading the news
     for market in markets:
-        alter_risk_params_with_news(market,sentiment_scores_dict[asset],urgency_score)
         _market_maker.makeMarket(markets[market])
         _hft_fund.tradeTheNews(market, hft_sentiment_scores_dict[market])
         _retail_trader.trade(markets[market])
         _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
 
+    _mean_reversion_fund.set_market_return_profile(mm.get_economy_state()['sector_performance'])
+    
 def generate_chat():
     """Generates chat messages about market conditions"""
     return

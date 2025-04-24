@@ -403,7 +403,7 @@
         let currentCandles = new Map(); // Store current candles for all assets
         let currentVolume = new Map(); // Store current volumes for all assets
         let previousVolume = new Map(); // Track previous volumes for differential calculation
-        const CANDLE_INTERVAL = 60; // 60 seconds per candle
+        const CANDLE_INTERVAL = 10; // 60 seconds per candle
 
         // Connect to Socket.IO server
         socket = io();
@@ -681,7 +681,7 @@
         const agentTrades = new Map(); // Store trades by agent
 
         function updateTradeLog(trade) {
-            const { agent, asset, side, quantity } = trade;
+            const { agent, asset, quantity } = trade;
             
             // Initialize agent's trade data if not exists
             if (!agentTrades.has(agent)) {
@@ -690,16 +690,12 @@
             
             const agentData = agentTrades.get(agent);
             if (!agentData.has(asset)) {
-                agentData.set(asset, { buys: 0, sells: 0 });
+                agentData.set(asset, { position: 0 });
             }
             
             // Update trade counts
             const assetData = agentData.get(asset);
-            if (side === 'buy') {
-                assetData.buys += quantity;
-            } else {
-                assetData.sells += quantity;
-            }
+            assetData.position = quantity;
             
             // Update display
             renderTradeLog();
@@ -724,9 +720,7 @@
                     tradeItem.innerHTML = `
                         <span>${asset}</span>
                         <span>
-                            <span class="buy">+${data.buys}</span> / 
-                            <span class="sell">-${data.sells}</span> /
-                            <span class="net">${data.buys - data.sells}</span>
+                            <span class="net">${data.position}</span>
                         </span>
                     `;
                     agentCard.appendChild(tradeItem);

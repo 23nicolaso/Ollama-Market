@@ -1,14 +1,16 @@
-import soundfile as sf
 import sounddevice as sd
-from kokoro_onnx import Kokoro
+from kokoro import KPipeline
+from IPython.display import display, Audio
 import re
 from threading import Thread, Lock
 from market_simulator.utils.market_utils import invoke_model
-import asyncio
+import numpy as np
+from market_simulator.utils.market_utils import model
+from market_simulator.config import LLM_MODEL
 
-kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
+pipeline = KPipeline(lang_code='a')
 isTalking = False
-talking_lock = Lock()
+last_text = ""
 
 def tts_this(text, sentiment, importance):
     if sentiment >= 0.9:
@@ -17,42 +19,101 @@ def tts_this(text, sentiment, importance):
         sentiment_str = "up slightly"
     elif sentiment <= 0.2:
         sentiment_str = "selling off harshly"
+    elif sentiment == 0.5:
+        sentiment_str = "chopping sideways"
     else:
         sentiment_str = "down slightly"
     text = f'{text}. This news is {"highly" if importance >= 9 else "not that"} important. Markets are {sentiment_str} after the news' 
     Thread(target=run_tts_queue, args=(text,)).start()
 
 def run_tts_queue(text):
-    asyncio.run(tts_queue(text))
+    tts_queue(text)
 
-async def tts_queue(text):
+def stream_paragraphs(text = None):
+    buffer = ""
+    global last_text
+    if text:
+        response = model.chat(
+            model=LLM_MODEL,
+            messages=[{'role': 'user', 'content': 
+                f"""
+                You are an american ASMR financial podcast host for the podcast Market Mayhem. Comment on the latest market trends. 
+                Stay engaging and entertaining.
+
+                You just said:
+                {last_text}
+
+                Recent breaking news you haven’t yet addressed:
+                {text}
+
+                Continue your monologue naturally:
+                """}],
+            stream=True
+        )
+    else:
+        response = model.chat(
+            model=LLM_MODEL,
+            messages=[{'role': 'user', 'content': 
+                f"""
+                You are an american ASMR financial podcast host for the podcast Market Mayhem. Comment on the latest market trends. 
+                Stay engaging and entertaining.
+
+                You just said:
+                {last_text}
+
+                Continue your monologue naturally:
+                """}],
+            stream=True
+        )
+
+    buffer = ""
+    
+    for chunk in response:
+        content = chunk['message']['content']
+        buffer += content
+        
+        breaks = re.split(r'\n', buffer)
+        
+        buffer = ""
+        if not re.search(r'[!?]$', content):
+            buffer = breaks.pop()
+        
+        for segment in breaks:
+            # Skip content between asterisks
+            filtered_segment = re.sub(r'\*.*?\*', '', segment)
+            filtered_segment = re.sub(r'\(.*?\)', '', filtered_segment)
+            if filtered_segment.strip():
+                yield filtered_segment.strip()
+
+def tts_queue(text = None):
     global isTalking
-    with talking_lock:
-        if isTalking:
-            return
-        isTalking = True
+    global last_text
+
+    if isTalking:
+        sd.stop()
+        isTalking = False
 
     try:
-        # This might need to be async if it’s an async function
-        response = invoke_model(
-            "You are a financial commentator for the Market Mayhem Podcast in a simulated world. "
-            "Here's a news headline which just came out, make your fun, concise commentary combined with some serious analysis! "
-            + text
-        )
-        cleaned = re.sub(r'\*.*?\*', '', response)
-        double_cleaned = re.sub(r'\(.*?\)', '', cleaned)
-        print(double_cleaned)
+        for response in stream_paragraphs(text):
+            if response == "" or response is None:
+                return
+            
+            print(response)
+            last_text = response
+            stream = pipeline(
+                response,
+                voice='af_heart',
+                speed=1.2,
+                split_pattern=r'\n+'
+            )
 
-        stream = kokoro.create_stream(
-            double_cleaned,
-            voice='bm_george',
-            speed=1.2,
-            lang="en-us"
-        )
+            for i, (gs, ps, audio) in enumerate(stream):
+                print(i)  # i => index
+                print(gs) # gs => graphemes/text
+                print(ps) # ps => phonemes
+                sd.play(audio, 24000)
+                sd.wait()
 
-        async for samples, sample_rate in stream:
-            sd.play(samples, sample_rate)
-            sd.wait()
     finally:
-        with talking_lock:
-            isTalking = False
+        print("done speaking")
+        isTalking = False

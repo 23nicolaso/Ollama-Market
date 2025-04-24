@@ -1,1 +1,1 @@
-market_simulator.models.sortedListOB
+torch.cuda.is_available()

@@ -13,19 +13,9 @@ class HFTFund(ExecutionalTrader):
         posSize = self.account.getPosition(ticker)
         ob = markets[ticker]
 
-        # front run big limit orders
-        bidBook, askBook = ob.getBidAskPairs()
-        for price, quantity in bidBook.items():
-            if quantity > 10000 and posSize < HFT_POSITION_LIMIT:
-                self.placeOrder(ob, "buy", float(price)+0.01, random.randint(1, HFT_BASE_ORDER_SIZE), "limit")
-            
-        for price, quantity in askBook.items():
-            if quantity > 10000 and posSize > -HFT_POSITION_LIMIT:
-                self.placeOrder(ob, "sell", float(price)-0.01, random.randint(1, HFT_BASE_ORDER_SIZE), "limit")
-        
         # trade asymmetry in order books
-        bidSize = ob.get_bidSize()
-        askSize = ob.get_askSize()
+        bidSize = ob.get_bid_size()
+        askSize = ob.get_ask_size()
         if bidSize + askSize > 0:
             imbalance = (bidSize - askSize)/(bidSize + askSize)
         else:

@@ -1527,6 +1527,7 @@ struct __pyx_obj_7account_Account {
 struct __pyx_vtabstruct_7account_Account {
   void (*addPosition)(struct __pyx_obj_7account_Account *, PyObject *, double, int __pyx_skip_dispatch);
   double (*getPosition)(struct __pyx_obj_7account_Account *, PyObject *, int __pyx_skip_dispatch);
+  PyObject *(*getPositions)(struct __pyx_obj_7account_Account *, int __pyx_skip_dispatch);
   double (*getCash)(struct __pyx_obj_7account_Account *, int __pyx_skip_dispatch);
   double (*getValue)(struct __pyx_obj_7account_Account *, int __pyx_skip_dispatch);
   void (*tradeAtPrice)(struct __pyx_obj_7account_Account *, PyObject *, double, double, int, int __pyx_skip_dispatch);
@@ -1809,6 +1810,9 @@ static CYTHON_INLINE PyObject *__Pyx_CallUnboundCMethod2(__Pyx_CachedCFunction *
         __Pyx__ArgTypeTest(obj, type, name, exact))
 static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
 
+/* KeywordStringCheck.proto */
+static int __Pyx_CheckKeywordStrings(PyObject *kw, const char* function_name, int kw_allowed);
+
 /* DictGetItem.proto */
 #if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
 static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
@@ -1819,9 +1823,6 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
 #define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
 #define __Pyx_PyObject_Dict_GetItem(obj, name)  PyObject_GetItem(obj, name)
 #endif
-
-/* KeywordStringCheck.proto */
-static int __Pyx_CheckKeywordStrings(PyObject *kw, const char* function_name, int kw_allowed);
 
 /* Import.proto */
 static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
@@ -2324,6 +2325,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 /* #### Code section: module_declarations ### */
 static void __pyx_f_7account_7Account_addPosition(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_quantity, int __pyx_skip_dispatch); /* proto*/
 static double __pyx_f_7account_7Account_getPosition(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_7account_7Account_getPositions(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static double __pyx_f_7account_7Account_getCash(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static void __pyx_f_7account_7Account_tradeAtPrice(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_price, double __pyx_v_quantity, int __pyx_v_direction, int __pyx_skip_dispatch); /* proto*/
@@ -2344,7 +2346,7 @@ static const char __pyx_k__2[] = "-----";
 static const char __pyx_k__3[] = "\n";
 static const char __pyx_k__4[] = ":";
 static const char __pyx_k_gc[] = "gc";
-static const char __pyx_k__21[] = "?";
+static const char __pyx_k__22[] = "?";
 static const char __pyx_k_get[] = "get";
 static const char __pyx_k_new[] = "__new__";
 static const char __pyx_k_CASH[] = "CASH";
@@ -2384,6 +2386,7 @@ static const char __pyx_k_account_pyx[] = "account.pyx";
 static const char __pyx_k_addPosition[] = "addPosition";
 static const char __pyx_k_getPosition[] = "getPosition";
 static const char __pyx_k_last_prices[] = "last_prices";
+static const char __pyx_k_getPositions[] = "getPositions";
 static const char __pyx_k_is_coroutine[] = "_is_coroutine";
 static const char __pyx_k_pyx_checksum[] = "__pyx_checksum";
 static const char __pyx_k_stringsource[] = "<stringsource>";
@@ -2399,6 +2402,7 @@ static const char __pyx_k_asyncio_coroutines[] = "asyncio.coroutines";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_Account_addPosition[] = "Account.addPosition";
 static const char __pyx_k_Account_getPosition[] = "Account.getPosition";
+static const char __pyx_k_Account_getPositions[] = "Account.getPositions";
 static const char __pyx_k_Account_tradeAtPrice[] = "Account.tradeAtPrice";
 static const char __pyx_k_pyx_unpickle_Account[] = "__pyx_unpickle_Account";
 static const char __pyx_k_Account___reduce_cython[] = "Account.__reduce_cython__";
@@ -2409,14 +2413,15 @@ static const char __pyx_k_market_simulator_utils_market_ut[] = "market_simulator
 static int __pyx_pf_7account_7Account___init__(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_v_accountID, double __pyx_v_CASH); /* proto */
 static PyObject *__pyx_pf_7account_7Account_2addPosition(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_quantity); /* proto */
 static PyObject *__pyx_pf_7account_7Account_4getPosition(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset); /* proto */
-static PyObject *__pyx_pf_7account_7Account_6getCash(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7account_7Account_8getValue(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7account_7Account_10tradeAtPrice(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_price, double __pyx_v_quantity, int __pyx_v_direction); /* proto */
-static PyObject *__pyx_pf_7account_7Account_12__repr__(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7account_7Account_6getPositions(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7account_7Account_8getCash(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7account_7Account_10getValue(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7account_7Account_12tradeAtPrice(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_price, double __pyx_v_quantity, int __pyx_v_direction); /* proto */
+static PyObject *__pyx_pf_7account_7Account_14__repr__(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_7account_7Account_9accountID___get__(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
 static int __pyx_pf_7account_7Account_9accountID_2__set__(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
-static PyObject *__pyx_pf_7account_7Account_14__reduce_cython__(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7account_7Account_16__setstate_cython__(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_7account_7Account_16__reduce_cython__(struct __pyx_obj_7account_Account *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7account_7Account_18__setstate_cython__(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_7account___pyx_unpickle_Account(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_7account_Account(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_get = {0, 0, 0, 0, 0};
@@ -2459,6 +2464,7 @@ typedef struct {
   PyObject *__pyx_n_s_Account_addPosition;
   PyObject *__pyx_n_s_Account_getCash;
   PyObject *__pyx_n_s_Account_getPosition;
+  PyObject *__pyx_n_s_Account_getPositions;
   PyObject *__pyx_n_s_Account_getValue;
   PyObject *__pyx_n_s_Account_tradeAtPrice;
   PyObject *__pyx_n_s_CASH;
@@ -2466,7 +2472,7 @@ typedef struct {
   PyObject *__pyx_kp_s_Incompatible_checksums_0x_x_vs_0;
   PyObject *__pyx_n_s_PickleError;
   PyObject *__pyx_kp_u__2;
-  PyObject *__pyx_n_s__21;
+  PyObject *__pyx_n_s__22;
   PyObject *__pyx_kp_u__3;
   PyObject *__pyx_kp_u__4;
   PyObject *__pyx_n_s_account;
@@ -2486,6 +2492,7 @@ typedef struct {
   PyObject *__pyx_n_s_get;
   PyObject *__pyx_n_s_getCash;
   PyObject *__pyx_n_s_getPosition;
+  PyObject *__pyx_n_s_getPositions;
   PyObject *__pyx_n_s_getValue;
   PyObject *__pyx_n_s_getstate;
   PyObject *__pyx_n_s_import;
@@ -2526,18 +2533,19 @@ typedef struct {
   PyObject *__pyx_tuple__6;
   PyObject *__pyx_tuple__8;
   PyObject *__pyx_tuple__10;
-  PyObject *__pyx_tuple__13;
-  PyObject *__pyx_tuple__15;
-  PyObject *__pyx_tuple__17;
-  PyObject *__pyx_tuple__19;
+  PyObject *__pyx_tuple__14;
+  PyObject *__pyx_tuple__16;
+  PyObject *__pyx_tuple__18;
+  PyObject *__pyx_tuple__20;
   PyObject *__pyx_codeobj__7;
   PyObject *__pyx_codeobj__9;
   PyObject *__pyx_codeobj__11;
   PyObject *__pyx_codeobj__12;
-  PyObject *__pyx_codeobj__14;
-  PyObject *__pyx_codeobj__16;
-  PyObject *__pyx_codeobj__18;
-  PyObject *__pyx_codeobj__20;
+  PyObject *__pyx_codeobj__13;
+  PyObject *__pyx_codeobj__15;
+  PyObject *__pyx_codeobj__17;
+  PyObject *__pyx_codeobj__19;
+  PyObject *__pyx_codeobj__21;
 } __pyx_mstate;
 
 #if CYTHON_USE_MODULE_STATE
@@ -2590,6 +2598,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Account_addPosition);
   Py_CLEAR(clear_module_state->__pyx_n_s_Account_getCash);
   Py_CLEAR(clear_module_state->__pyx_n_s_Account_getPosition);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Account_getPositions);
   Py_CLEAR(clear_module_state->__pyx_n_s_Account_getValue);
   Py_CLEAR(clear_module_state->__pyx_n_s_Account_tradeAtPrice);
   Py_CLEAR(clear_module_state->__pyx_n_s_CASH);
@@ -2597,7 +2606,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_kp_s_Incompatible_checksums_0x_x_vs_0);
   Py_CLEAR(clear_module_state->__pyx_n_s_PickleError);
   Py_CLEAR(clear_module_state->__pyx_kp_u__2);
-  Py_CLEAR(clear_module_state->__pyx_n_s__21);
+  Py_CLEAR(clear_module_state->__pyx_n_s__22);
   Py_CLEAR(clear_module_state->__pyx_kp_u__3);
   Py_CLEAR(clear_module_state->__pyx_kp_u__4);
   Py_CLEAR(clear_module_state->__pyx_n_s_account);
@@ -2617,6 +2626,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_get);
   Py_CLEAR(clear_module_state->__pyx_n_s_getCash);
   Py_CLEAR(clear_module_state->__pyx_n_s_getPosition);
+  Py_CLEAR(clear_module_state->__pyx_n_s_getPositions);
   Py_CLEAR(clear_module_state->__pyx_n_s_getValue);
   Py_CLEAR(clear_module_state->__pyx_n_s_getstate);
   Py_CLEAR(clear_module_state->__pyx_n_s_import);
@@ -2657,18 +2667,19 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_tuple__6);
   Py_CLEAR(clear_module_state->__pyx_tuple__8);
   Py_CLEAR(clear_module_state->__pyx_tuple__10);
-  Py_CLEAR(clear_module_state->__pyx_tuple__13);
-  Py_CLEAR(clear_module_state->__pyx_tuple__15);
-  Py_CLEAR(clear_module_state->__pyx_tuple__17);
-  Py_CLEAR(clear_module_state->__pyx_tuple__19);
+  Py_CLEAR(clear_module_state->__pyx_tuple__14);
+  Py_CLEAR(clear_module_state->__pyx_tuple__16);
+  Py_CLEAR(clear_module_state->__pyx_tuple__18);
+  Py_CLEAR(clear_module_state->__pyx_tuple__20);
   Py_CLEAR(clear_module_state->__pyx_codeobj__7);
   Py_CLEAR(clear_module_state->__pyx_codeobj__9);
   Py_CLEAR(clear_module_state->__pyx_codeobj__11);
   Py_CLEAR(clear_module_state->__pyx_codeobj__12);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__14);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__16);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__18);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__20);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__13);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__15);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__17);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__19);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__21);
   return 0;
 }
 #endif
@@ -2699,6 +2710,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Account_addPosition);
   Py_VISIT(traverse_module_state->__pyx_n_s_Account_getCash);
   Py_VISIT(traverse_module_state->__pyx_n_s_Account_getPosition);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Account_getPositions);
   Py_VISIT(traverse_module_state->__pyx_n_s_Account_getValue);
   Py_VISIT(traverse_module_state->__pyx_n_s_Account_tradeAtPrice);
   Py_VISIT(traverse_module_state->__pyx_n_s_CASH);
@@ -2706,7 +2718,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_kp_s_Incompatible_checksums_0x_x_vs_0);
   Py_VISIT(traverse_module_state->__pyx_n_s_PickleError);
   Py_VISIT(traverse_module_state->__pyx_kp_u__2);
-  Py_VISIT(traverse_module_state->__pyx_n_s__21);
+  Py_VISIT(traverse_module_state->__pyx_n_s__22);
   Py_VISIT(traverse_module_state->__pyx_kp_u__3);
   Py_VISIT(traverse_module_state->__pyx_kp_u__4);
   Py_VISIT(traverse_module_state->__pyx_n_s_account);
@@ -2726,6 +2738,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_get);
   Py_VISIT(traverse_module_state->__pyx_n_s_getCash);
   Py_VISIT(traverse_module_state->__pyx_n_s_getPosition);
+  Py_VISIT(traverse_module_state->__pyx_n_s_getPositions);
   Py_VISIT(traverse_module_state->__pyx_n_s_getValue);
   Py_VISIT(traverse_module_state->__pyx_n_s_getstate);
   Py_VISIT(traverse_module_state->__pyx_n_s_import);
@@ -2766,18 +2779,19 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_tuple__6);
   Py_VISIT(traverse_module_state->__pyx_tuple__8);
   Py_VISIT(traverse_module_state->__pyx_tuple__10);
-  Py_VISIT(traverse_module_state->__pyx_tuple__13);
-  Py_VISIT(traverse_module_state->__pyx_tuple__15);
-  Py_VISIT(traverse_module_state->__pyx_tuple__17);
-  Py_VISIT(traverse_module_state->__pyx_tuple__19);
+  Py_VISIT(traverse_module_state->__pyx_tuple__14);
+  Py_VISIT(traverse_module_state->__pyx_tuple__16);
+  Py_VISIT(traverse_module_state->__pyx_tuple__18);
+  Py_VISIT(traverse_module_state->__pyx_tuple__20);
   Py_VISIT(traverse_module_state->__pyx_codeobj__7);
   Py_VISIT(traverse_module_state->__pyx_codeobj__9);
   Py_VISIT(traverse_module_state->__pyx_codeobj__11);
   Py_VISIT(traverse_module_state->__pyx_codeobj__12);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__14);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__16);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__18);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__20);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__13);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__15);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__17);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__19);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__21);
   return 0;
 }
 #endif
@@ -2818,6 +2832,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Account_addPosition __pyx_mstate_global->__pyx_n_s_Account_addPosition
 #define __pyx_n_s_Account_getCash __pyx_mstate_global->__pyx_n_s_Account_getCash
 #define __pyx_n_s_Account_getPosition __pyx_mstate_global->__pyx_n_s_Account_getPosition
+#define __pyx_n_s_Account_getPositions __pyx_mstate_global->__pyx_n_s_Account_getPositions
 #define __pyx_n_s_Account_getValue __pyx_mstate_global->__pyx_n_s_Account_getValue
 #define __pyx_n_s_Account_tradeAtPrice __pyx_mstate_global->__pyx_n_s_Account_tradeAtPrice
 #define __pyx_n_s_CASH __pyx_mstate_global->__pyx_n_s_CASH
@@ -2825,7 +2840,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_kp_s_Incompatible_checksums_0x_x_vs_0 __pyx_mstate_global->__pyx_kp_s_Incompatible_checksums_0x_x_vs_0
 #define __pyx_n_s_PickleError __pyx_mstate_global->__pyx_n_s_PickleError
 #define __pyx_kp_u__2 __pyx_mstate_global->__pyx_kp_u__2
-#define __pyx_n_s__21 __pyx_mstate_global->__pyx_n_s__21
+#define __pyx_n_s__22 __pyx_mstate_global->__pyx_n_s__22
 #define __pyx_kp_u__3 __pyx_mstate_global->__pyx_kp_u__3
 #define __pyx_kp_u__4 __pyx_mstate_global->__pyx_kp_u__4
 #define __pyx_n_s_account __pyx_mstate_global->__pyx_n_s_account
@@ -2845,6 +2860,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_get __pyx_mstate_global->__pyx_n_s_get
 #define __pyx_n_s_getCash __pyx_mstate_global->__pyx_n_s_getCash
 #define __pyx_n_s_getPosition __pyx_mstate_global->__pyx_n_s_getPosition
+#define __pyx_n_s_getPositions __pyx_mstate_global->__pyx_n_s_getPositions
 #define __pyx_n_s_getValue __pyx_mstate_global->__pyx_n_s_getValue
 #define __pyx_n_s_getstate __pyx_mstate_global->__pyx_n_s_getstate
 #define __pyx_n_s_import __pyx_mstate_global->__pyx_n_s_import
@@ -2885,18 +2901,19 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_tuple__6 __pyx_mstate_global->__pyx_tuple__6
 #define __pyx_tuple__8 __pyx_mstate_global->__pyx_tuple__8
 #define __pyx_tuple__10 __pyx_mstate_global->__pyx_tuple__10
-#define __pyx_tuple__13 __pyx_mstate_global->__pyx_tuple__13
-#define __pyx_tuple__15 __pyx_mstate_global->__pyx_tuple__15
-#define __pyx_tuple__17 __pyx_mstate_global->__pyx_tuple__17
-#define __pyx_tuple__19 __pyx_mstate_global->__pyx_tuple__19
+#define __pyx_tuple__14 __pyx_mstate_global->__pyx_tuple__14
+#define __pyx_tuple__16 __pyx_mstate_global->__pyx_tuple__16
+#define __pyx_tuple__18 __pyx_mstate_global->__pyx_tuple__18
+#define __pyx_tuple__20 __pyx_mstate_global->__pyx_tuple__20
 #define __pyx_codeobj__7 __pyx_mstate_global->__pyx_codeobj__7
 #define __pyx_codeobj__9 __pyx_mstate_global->__pyx_codeobj__9
 #define __pyx_codeobj__11 __pyx_mstate_global->__pyx_codeobj__11
 #define __pyx_codeobj__12 __pyx_mstate_global->__pyx_codeobj__12
-#define __pyx_codeobj__14 __pyx_mstate_global->__pyx_codeobj__14
-#define __pyx_codeobj__16 __pyx_mstate_global->__pyx_codeobj__16
-#define __pyx_codeobj__18 __pyx_mstate_global->__pyx_codeobj__18
-#define __pyx_codeobj__20 __pyx_mstate_global->__pyx_codeobj__20
+#define __pyx_codeobj__13 __pyx_mstate_global->__pyx_codeobj__13
+#define __pyx_codeobj__15 __pyx_mstate_global->__pyx_codeobj__15
+#define __pyx_codeobj__17 __pyx_mstate_global->__pyx_codeobj__17
+#define __pyx_codeobj__19 __pyx_mstate_global->__pyx_codeobj__19
+#define __pyx_codeobj__21 __pyx_mstate_global->__pyx_codeobj__21
 /* #### Code section: module_code ### */
 
 /* "account.pyx":7
@@ -3428,7 +3445,7 @@ static double __pyx_f_7account_7Account_getPosition(struct __pyx_obj_7account_Ac
  *     cpdef double getPosition(self, str asset):
  *         return self.positions.get(asset, 0.0)             # <<<<<<<<<<<<<<
  * 
- *     cpdef double getCash(self):
+ *     cpdef object getPositions(self):
  */
   if (unlikely(__pyx_v_self->positions == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
@@ -3594,12 +3611,194 @@ static PyObject *__pyx_pf_7account_7Account_4getPosition(struct __pyx_obj_7accou
 /* "account.pyx":18
  *         return self.positions.get(asset, 0.0)
  * 
+ *     cpdef object getPositions(self):             # <<<<<<<<<<<<<<
+ *         return self.positions
+ * 
+ */
+
+static PyObject *__pyx_pw_7account_7Account_7getPositions(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyObject *__pyx_f_7account_7Account_getPositions(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_skip_dispatch) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("getPositions", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getPositions); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_7getPositions)) {
+        __Pyx_XDECREF(__pyx_r);
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        __pyx_r = __pyx_t_2;
+        __pyx_t_2 = 0;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "account.pyx":19
+ * 
+ *     cpdef object getPositions(self):
+ *         return self.positions             # <<<<<<<<<<<<<<
+ * 
+ *     cpdef double getCash(self):
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->positions);
+  __pyx_r = __pyx_v_self->positions;
+  goto __pyx_L0;
+
+  /* "account.pyx":18
+ *         return self.positions.get(asset, 0.0)
+ * 
+ *     cpdef object getPositions(self):             # <<<<<<<<<<<<<<
+ *         return self.positions
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_AddTraceback("account.Account.getPositions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_7account_7Account_7getPositions(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_7account_7Account_7getPositions = {"getPositions", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_7getPositions, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7account_7Account_7getPositions(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("getPositions (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("getPositions", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "getPositions", 0))) return NULL;
+  __pyx_r = __pyx_pf_7account_7Account_6getPositions(((struct __pyx_obj_7account_Account *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_7account_7Account_6getPositions(struct __pyx_obj_7account_Account *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("getPositions", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_7account_7Account_getPositions(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("account.Account.getPositions", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "account.pyx":21
+ *         return self.positions
+ * 
  *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
  *         return self.positions["CASH"]
  * 
  */
 
-static PyObject *__pyx_pw_7account_7Account_7getCash(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_7account_7Account_9getCash(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -3628,208 +3827,9 @@ static double __pyx_f_7account_7Account_getCash(struct __pyx_obj_7account_Accoun
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getCash); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getCash); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_7getCash)) {
-        __Pyx_INCREF(__pyx_t_1);
-        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
-        __pyx_t_5 = 0;
-        #if CYTHON_UNPACK_METHODS
-        if (unlikely(PyMethod_Check(__pyx_t_3))) {
-          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-          if (likely(__pyx_t_4)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-            __Pyx_INCREF(__pyx_t_4);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_3, function);
-            __pyx_t_5 = 1;
-          }
-        }
-        #endif
-        {
-          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
-          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
-          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        }
-        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 18, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_r = __pyx_t_6;
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        goto __pyx_L0;
-      }
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
-      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
-        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-      }
-      #endif
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    }
-    #endif
-  }
-
-  /* "account.pyx":19
- * 
- *     cpdef double getCash(self):
- *         return self.positions["CASH"]             # <<<<<<<<<<<<<<
- * 
- *     cpdef double getValue(self):
- */
-  if (unlikely(__pyx_v_self->positions == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 19, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_n_u_CASH); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_r = __pyx_t_6;
-  goto __pyx_L0;
-
-  /* "account.pyx":18
- *         return self.positions.get(asset, 0.0)
- * 
- *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
- *         return self.positions["CASH"]
- * 
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("account.Account.getCash", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_7account_7Account_7getCash(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static PyMethodDef __pyx_mdef_7account_7Account_7getCash = {"getCash", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_7getCash, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7account_7Account_7getCash(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-) {
-  #if !CYTHON_METH_FASTCALL
-  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
-  #endif
-  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("getCash (wrapper)", 0);
-  #if !CYTHON_METH_FASTCALL
-  #if CYTHON_ASSUME_SAFE_MACROS
-  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
-  #else
-  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
-  #endif
-  #endif
-  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
-  if (unlikely(__pyx_nargs > 0)) {
-    __Pyx_RaiseArgtupleInvalid("getCash", 1, 0, 0, __pyx_nargs); return NULL;}
-  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "getCash", 0))) return NULL;
-  __pyx_r = __pyx_pf_7account_7Account_6getCash(((struct __pyx_obj_7account_Account *)__pyx_v_self));
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_7account_7Account_6getCash(struct __pyx_obj_7account_Account *__pyx_v_self) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  double __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("getCash", 1);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_7account_7Account_getCash(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 18, __pyx_L1_error)
-  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_r = __pyx_t_2;
-  __pyx_t_2 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("account.Account.getCash", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "account.pyx":21
- *         return self.positions["CASH"]
- * 
- *     cpdef double getValue(self):             # <<<<<<<<<<<<<<
- *         from market_simulator.utils.market_utils import last_prices
- *         cdef double total = self.positions["CASH"]
- */
-
-static PyObject *__pyx_pw_7account_7Account_9getValue(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_last_prices = NULL;
-  double __pyx_v_total;
-  PyObject *__pyx_v_asset = NULL;
-  double __pyx_r;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  unsigned int __pyx_t_5;
-  double __pyx_t_6;
-  Py_ssize_t __pyx_t_7;
-  Py_ssize_t __pyx_t_8;
-  int __pyx_t_9;
-  int __pyx_t_10;
-  int __pyx_t_11;
-  PyObject *__pyx_t_12 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("getValue", 1);
-  /* Check if called by wrapper */
-  if (unlikely(__pyx_skip_dispatch)) ;
-  /* Check if overridden in Python */
-  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
-    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
-      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getValue); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_9getValue)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_9getCash)) {
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
         __pyx_t_5 = 0;
@@ -3874,27 +3874,226 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
 
   /* "account.pyx":22
  * 
+ *     cpdef double getCash(self):
+ *         return self.positions["CASH"]             # <<<<<<<<<<<<<<
+ * 
+ *     cpdef double getValue(self):
+ */
+  if (unlikely(__pyx_v_self->positions == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(0, 22, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_n_u_CASH); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_6;
+  goto __pyx_L0;
+
+  /* "account.pyx":21
+ *         return self.positions
+ * 
+ *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
+ *         return self.positions["CASH"]
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_AddTraceback("account.Account.getCash", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_7account_7Account_9getCash(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_7account_7Account_9getCash = {"getCash", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_9getCash, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7account_7Account_9getCash(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("getCash (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("getCash", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "getCash", 0))) return NULL;
+  __pyx_r = __pyx_pf_7account_7Account_8getCash(((struct __pyx_obj_7account_Account *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_7account_7Account_8getCash(struct __pyx_obj_7account_Account *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  double __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("getCash", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_7account_7Account_getCash(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("account.Account.getCash", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "account.pyx":24
+ *         return self.positions["CASH"]
+ * 
+ *     cpdef double getValue(self):             # <<<<<<<<<<<<<<
+ *         from market_simulator.utils.market_utils import last_prices
+ *         cdef double total = self.positions["CASH"]
+ */
+
+static PyObject *__pyx_pw_7account_7Account_11getValue(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Account *__pyx_v_self, int __pyx_skip_dispatch) {
+  PyObject *__pyx_v_last_prices = NULL;
+  double __pyx_v_total;
+  PyObject *__pyx_v_asset = NULL;
+  double __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  double __pyx_t_6;
+  Py_ssize_t __pyx_t_7;
+  Py_ssize_t __pyx_t_8;
+  int __pyx_t_9;
+  int __pyx_t_10;
+  int __pyx_t_11;
+  PyObject *__pyx_t_12 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("getValue", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getValue); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_11getValue)) {
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 24, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 24, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_6;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "account.pyx":25
+ * 
  *     cpdef double getValue(self):
  *         from market_simulator.utils.market_utils import last_prices             # <<<<<<<<<<<<<<
  *         cdef double total = self.positions["CASH"]
  *         for asset in self.positions:
  */
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 25, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_last_prices);
   __Pyx_GIVEREF(__pyx_n_s_last_prices);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_last_prices)) __PYX_ERR(0, 22, __pyx_L1_error);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_market_simulator_utils_market_ut, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 22, __pyx_L1_error)
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_last_prices)) __PYX_ERR(0, 25, __pyx_L1_error);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_market_simulator_utils_market_ut, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_last_prices); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_last_prices); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 25, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_t_1);
   __pyx_v_last_prices = __pyx_t_1;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "account.pyx":23
+  /* "account.pyx":26
  *     cpdef double getValue(self):
  *         from market_simulator.utils.market_utils import last_prices
  *         cdef double total = self.positions["CASH"]             # <<<<<<<<<<<<<<
@@ -3903,15 +4102,15 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
  */
   if (unlikely(__pyx_v_self->positions == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 23, __pyx_L1_error)
+    __PYX_ERR(0, 26, __pyx_L1_error)
   }
-  __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_n_u_CASH); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_n_u_CASH); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_total = __pyx_t_6;
 
-  /* "account.pyx":24
+  /* "account.pyx":27
  *         from market_simulator.utils.market_utils import last_prices
  *         cdef double total = self.positions["CASH"]
  *         for asset in self.positions:             # <<<<<<<<<<<<<<
@@ -3921,9 +4120,9 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
   __pyx_t_7 = 0;
   if (unlikely(__pyx_v_self->positions == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 24, __pyx_L1_error)
+    __PYX_ERR(0, 27, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_dict_iterator(__pyx_v_self->positions, 1, ((PyObject *)NULL), (&__pyx_t_8), (&__pyx_t_9)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_dict_iterator(__pyx_v_self->positions, 1, ((PyObject *)NULL), (&__pyx_t_8), (&__pyx_t_9)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 27, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __pyx_t_2 = __pyx_t_1;
@@ -3931,51 +4130,51 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
   while (1) {
     __pyx_t_10 = __Pyx_dict_iter_next(__pyx_t_2, __pyx_t_8, &__pyx_t_7, &__pyx_t_1, NULL, NULL, __pyx_t_9);
     if (unlikely(__pyx_t_10 == 0)) break;
-    if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 24, __pyx_L1_error)
+    if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 27, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_asset, __pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "account.pyx":25
+    /* "account.pyx":28
  *         cdef double total = self.positions["CASH"]
  *         for asset in self.positions:
  *             if asset != "CASH":             # <<<<<<<<<<<<<<
  *                 total += self.positions[asset] * last_prices[asset]
  *         return total
  */
-    __pyx_t_11 = (__Pyx_PyUnicode_Equals(__pyx_v_asset, __pyx_n_u_CASH, Py_NE)); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 25, __pyx_L1_error)
+    __pyx_t_11 = (__Pyx_PyUnicode_Equals(__pyx_v_asset, __pyx_n_u_CASH, Py_NE)); if (unlikely((__pyx_t_11 < 0))) __PYX_ERR(0, 28, __pyx_L1_error)
     if (__pyx_t_11) {
 
-      /* "account.pyx":26
+      /* "account.pyx":29
  *         for asset in self.positions:
  *             if asset != "CASH":
  *                 total += self.positions[asset] * last_prices[asset]             # <<<<<<<<<<<<<<
  *         return total
  * 
  */
-      __pyx_t_1 = PyFloat_FromDouble(__pyx_v_total); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __pyx_t_1 = PyFloat_FromDouble(__pyx_v_total); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (unlikely(__pyx_v_self->positions == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 26, __pyx_L1_error)
+        __PYX_ERR(0, 29, __pyx_L1_error)
       }
-      __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_v_asset); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_v_asset); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_v_last_prices, __pyx_v_asset); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_v_last_prices, __pyx_v_asset); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_12 = PyNumber_Multiply(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __pyx_t_12 = PyNumber_Multiply(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_12);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_t_1, __pyx_t_12); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_t_1, __pyx_t_12); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-      __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_4); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 26, __pyx_L1_error)
+      __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_4); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_v_total = __pyx_t_6;
 
-      /* "account.pyx":25
+      /* "account.pyx":28
  *         cdef double total = self.positions["CASH"]
  *         for asset in self.positions:
  *             if asset != "CASH":             # <<<<<<<<<<<<<<
@@ -3986,7 +4185,7 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "account.pyx":27
+  /* "account.pyx":30
  *             if asset != "CASH":
  *                 total += self.positions[asset] * last_prices[asset]
  *         return total             # <<<<<<<<<<<<<<
@@ -3996,7 +4195,7 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
   __pyx_r = __pyx_v_total;
   goto __pyx_L0;
 
-  /* "account.pyx":21
+  /* "account.pyx":24
  *         return self.positions["CASH"]
  * 
  *     cpdef double getValue(self):             # <<<<<<<<<<<<<<
@@ -4021,15 +4220,15 @@ static double __pyx_f_7account_7Account_getValue(struct __pyx_obj_7account_Accou
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7account_7Account_9getValue(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_7account_7Account_11getValue(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_7account_7Account_9getValue = {"getValue", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_9getValue, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7account_7Account_9getValue(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_7account_7Account_11getValue = {"getValue", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_11getValue, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7account_7Account_11getValue(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4054,14 +4253,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("getValue", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "getValue", 0))) return NULL;
-  __pyx_r = __pyx_pf_7account_7Account_8getValue(((struct __pyx_obj_7account_Account *)__pyx_v_self));
+  __pyx_r = __pyx_pf_7account_7Account_10getValue(((struct __pyx_obj_7account_Account *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7account_7Account_8getValue(struct __pyx_obj_7account_Account *__pyx_v_self) {
+static PyObject *__pyx_pf_7account_7Account_10getValue(struct __pyx_obj_7account_Account *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   double __pyx_t_1;
@@ -4071,8 +4270,8 @@ static PyObject *__pyx_pf_7account_7Account_8getValue(struct __pyx_obj_7account_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("getValue", 1);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_7account_7Account_getValue(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 21, __pyx_L1_error)
-  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_7account_7Account_getValue(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -4089,7 +4288,7 @@ static PyObject *__pyx_pf_7account_7Account_8getValue(struct __pyx_obj_7account_
   return __pyx_r;
 }
 
-/* "account.pyx":29
+/* "account.pyx":32
  *         return total
  * 
  *     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):             # <<<<<<<<<<<<<<
@@ -4097,7 +4296,7 @@ static PyObject *__pyx_pf_7account_7Account_8getValue(struct __pyx_obj_7account_
  *         self.addPosition("CASH", -price * quantity * direction)
  */
 
-static PyObject *__pyx_pw_7account_7Account_11tradeAtPrice(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_7account_7Account_13tradeAtPrice(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4127,14 +4326,14 @@ static void __pyx_f_7account_7Account_tradeAtPrice(struct __pyx_obj_7account_Acc
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_tradeAtPrice); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_tradeAtPrice); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_11tradeAtPrice)) {
-        __pyx_t_3 = PyFloat_FromDouble(__pyx_v_price); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_7account_7Account_13tradeAtPrice)) {
+        __pyx_t_3 = PyFloat_FromDouble(__pyx_v_price); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_4 = PyFloat_FromDouble(__pyx_v_quantity); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+        __pyx_t_4 = PyFloat_FromDouble(__pyx_v_quantity); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_direction); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 29, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_direction); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_6 = __pyx_t_1; __pyx_t_7 = NULL;
@@ -4158,7 +4357,7 @@ static void __pyx_f_7account_7Account_tradeAtPrice(struct __pyx_obj_7account_Acc
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         }
@@ -4179,25 +4378,25 @@ static void __pyx_f_7account_7Account_tradeAtPrice(struct __pyx_obj_7account_Acc
     #endif
   }
 
-  /* "account.pyx":30
+  /* "account.pyx":33
  * 
  *     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):
  *         self.addPosition(asset, quantity * direction)             # <<<<<<<<<<<<<<
  *         self.addPosition("CASH", -price * quantity * direction)
  * 
  */
-  ((struct __pyx_vtabstruct_7account_Account *)__pyx_v_self->__pyx_vtab)->addPosition(__pyx_v_self, __pyx_v_asset, (__pyx_v_quantity * __pyx_v_direction), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 30, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_7account_Account *)__pyx_v_self->__pyx_vtab)->addPosition(__pyx_v_self, __pyx_v_asset, (__pyx_v_quantity * __pyx_v_direction), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 33, __pyx_L1_error)
 
-  /* "account.pyx":31
+  /* "account.pyx":34
  *     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):
  *         self.addPosition(asset, quantity * direction)
  *         self.addPosition("CASH", -price * quantity * direction)             # <<<<<<<<<<<<<<
  * 
  *     def __repr__(self):
  */
-  ((struct __pyx_vtabstruct_7account_Account *)__pyx_v_self->__pyx_vtab)->addPosition(__pyx_v_self, __pyx_n_u_CASH, (((-__pyx_v_price) * __pyx_v_quantity) * __pyx_v_direction), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 31, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_7account_Account *)__pyx_v_self->__pyx_vtab)->addPosition(__pyx_v_self, __pyx_n_u_CASH, (((-__pyx_v_price) * __pyx_v_quantity) * __pyx_v_direction), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 34, __pyx_L1_error)
 
-  /* "account.pyx":29
+  /* "account.pyx":32
  *         return total
  * 
  *     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):             # <<<<<<<<<<<<<<
@@ -4221,15 +4420,15 @@ static void __pyx_f_7account_7Account_tradeAtPrice(struct __pyx_obj_7account_Acc
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7account_7Account_11tradeAtPrice(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_7account_7Account_13tradeAtPrice(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_7account_7Account_11tradeAtPrice = {"tradeAtPrice", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_11tradeAtPrice, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7account_7Account_11tradeAtPrice(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_7account_7Account_13tradeAtPrice = {"tradeAtPrice", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_13tradeAtPrice, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7account_7Account_13tradeAtPrice(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4282,7 +4481,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -4290,9 +4489,9 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, 1); __PYX_ERR(0, 29, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -4300,9 +4499,9 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[2]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, 2); __PYX_ERR(0, 29, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -4310,14 +4509,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[3]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, 3); __PYX_ERR(0, 29, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "tradeAtPrice") < 0)) __PYX_ERR(0, 29, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "tradeAtPrice") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 4)) {
       goto __pyx_L5_argtuple_error;
@@ -4328,13 +4527,13 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
     }
     __pyx_v_asset = ((PyObject*)values[0]);
-    __pyx_v_price = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_price == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
-    __pyx_v_quantity = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_quantity == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
-    __pyx_v_direction = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_direction == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+    __pyx_v_price = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_price == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_quantity = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_quantity == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_direction = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_direction == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 29, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("tradeAtPrice", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4348,8 +4547,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_asset), (&PyUnicode_Type), 1, "asset", 1))) __PYX_ERR(0, 29, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7account_7Account_10tradeAtPrice(((struct __pyx_obj_7account_Account *)__pyx_v_self), __pyx_v_asset, __pyx_v_price, __pyx_v_quantity, __pyx_v_direction);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_asset), (&PyUnicode_Type), 1, "asset", 1))) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_r = __pyx_pf_7account_7Account_12tradeAtPrice(((struct __pyx_obj_7account_Account *)__pyx_v_self), __pyx_v_asset, __pyx_v_price, __pyx_v_quantity, __pyx_v_direction);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4366,7 +4565,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7account_7Account_10tradeAtPrice(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_price, double __pyx_v_quantity, int __pyx_v_direction) {
+static PyObject *__pyx_pf_7account_7Account_12tradeAtPrice(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v_asset, double __pyx_v_price, double __pyx_v_quantity, int __pyx_v_direction) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4375,8 +4574,8 @@ static PyObject *__pyx_pf_7account_7Account_10tradeAtPrice(struct __pyx_obj_7acc
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("tradeAtPrice", 1);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_7account_7Account_tradeAtPrice(__pyx_v_self, __pyx_v_asset, __pyx_v_price, __pyx_v_quantity, __pyx_v_direction, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_f_7account_7Account_tradeAtPrice(__pyx_v_self, __pyx_v_asset, __pyx_v_price, __pyx_v_quantity, __pyx_v_direction, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4393,7 +4592,7 @@ static PyObject *__pyx_pf_7account_7Account_10tradeAtPrice(struct __pyx_obj_7acc
   return __pyx_r;
 }
 
-/* "account.pyx":33
+/* "account.pyx":36
  *         self.addPosition("CASH", -price * quantity * direction)
  * 
  *     def __repr__(self):             # <<<<<<<<<<<<<<
@@ -4402,21 +4601,21 @@ static PyObject *__pyx_pf_7account_7Account_10tradeAtPrice(struct __pyx_obj_7acc
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7account_7Account_13__repr__(PyObject *__pyx_v_self); /*proto*/
-static PyObject *__pyx_pw_7account_7Account_13__repr__(PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_7account_7Account_15__repr__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_7account_7Account_15__repr__(PyObject *__pyx_v_self) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__repr__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_7account_7Account_12__repr__(((struct __pyx_obj_7account_Account *)__pyx_v_self));
+  __pyx_r = __pyx_pf_7account_7Account_14__repr__(((struct __pyx_obj_7account_Account *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7account_7Account_12__repr__(struct __pyx_obj_7account_Account *__pyx_v_self) {
+static PyObject *__pyx_pf_7account_7Account_14__repr__(struct __pyx_obj_7account_Account *__pyx_v_self) {
   PyObject *__pyx_v_lines = NULL;
   PyObject *__pyx_v_key = NULL;
   PyObject *__pyx_r = NULL;
@@ -4435,49 +4634,49 @@ static PyObject *__pyx_pf_7account_7Account_12__repr__(struct __pyx_obj_7account
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__repr__", 1);
 
-  /* "account.pyx":34
+  /* "account.pyx":37
  * 
  *     def __repr__(self):
  *         lines = []             # <<<<<<<<<<<<<<
  *         lines.append("-"*5+"Account " + str(self.accountID) + "-"*5)
  *         lines.append("\n")
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_lines = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "account.pyx":35
+  /* "account.pyx":38
  *     def __repr__(self):
  *         lines = []
  *         lines.append("-"*5+"Account " + str(self.accountID) + "-"*5)             # <<<<<<<<<<<<<<
  *         lines.append("\n")
  *         for key in self.positions:
  */
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->accountID); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->accountID); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Unicode(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Unicode(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_Account, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_Account, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_1, __pyx_kp_u__2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_1, __pyx_kp_u__2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_lines, __pyx_t_2); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_lines, __pyx_t_2); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "account.pyx":36
+  /* "account.pyx":39
  *         lines = []
  *         lines.append("-"*5+"Account " + str(self.accountID) + "-"*5)
  *         lines.append("\n")             # <<<<<<<<<<<<<<
  *         for key in self.positions:
  *             lines.append(str(key)+":"+str(self.positions[key]))
  */
-  __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_lines, __pyx_kp_u__3); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 36, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_lines, __pyx_kp_u__3); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 39, __pyx_L1_error)
 
-  /* "account.pyx":37
+  /* "account.pyx":40
  *         lines.append("-"*5+"Account " + str(self.accountID) + "-"*5)
  *         lines.append("\n")
  *         for key in self.positions:             # <<<<<<<<<<<<<<
@@ -4487,9 +4686,9 @@ static PyObject *__pyx_pf_7account_7Account_12__repr__(struct __pyx_obj_7account
   __pyx_t_4 = 0;
   if (unlikely(__pyx_v_self->positions == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 37, __pyx_L1_error)
+    __PYX_ERR(0, 40, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_dict_iterator(__pyx_v_self->positions, 1, ((PyObject *)NULL), (&__pyx_t_5), (&__pyx_t_6)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_dict_iterator(__pyx_v_self->positions, 1, ((PyObject *)NULL), (&__pyx_t_5), (&__pyx_t_6)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __pyx_t_2 = __pyx_t_1;
@@ -4497,53 +4696,53 @@ static PyObject *__pyx_pf_7account_7Account_12__repr__(struct __pyx_obj_7account
   while (1) {
     __pyx_t_7 = __Pyx_dict_iter_next(__pyx_t_2, __pyx_t_5, &__pyx_t_4, &__pyx_t_1, NULL, NULL, __pyx_t_6);
     if (unlikely(__pyx_t_7 == 0)) break;
-    if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(0, 37, __pyx_L1_error)
+    if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(0, 40, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_key, __pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "account.pyx":38
+    /* "account.pyx":41
  *         lines.append("\n")
  *         for key in self.positions:
  *             lines.append(str(key)+":"+str(self.positions[key]))             # <<<<<<<<<<<<<<
  *         return "\n".join(lines)
  */
-    __pyx_t_1 = __Pyx_PyObject_Unicode(__pyx_v_key); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Unicode(__pyx_v_key); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_8 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_1, __pyx_kp_u__4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_1, __pyx_kp_u__4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (unlikely(__pyx_v_self->positions == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 38, __pyx_L1_error)
+      __PYX_ERR(0, 41, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_v_key); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_self->positions, __pyx_v_key); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_9 = __Pyx_PyObject_Unicode(__pyx_t_1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_Unicode(__pyx_t_1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_8, __pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_8, __pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_lines, __pyx_t_1); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_lines, __pyx_t_1); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "account.pyx":39
+  /* "account.pyx":42
  *         for key in self.positions:
  *             lines.append(str(key)+":"+str(self.positions[key]))
  *         return "\n".join(lines)             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = PyUnicode_Join(__pyx_kp_u__3, __pyx_v_lines); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_2 = PyUnicode_Join(__pyx_kp_u__3, __pyx_v_lines); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "account.pyx":33
+  /* "account.pyx":36
  *         self.addPosition("CASH", -price * quantity * direction)
  * 
  *     def __repr__(self):             # <<<<<<<<<<<<<<
@@ -4657,15 +4856,15 @@ static int __pyx_pf_7account_7Account_9accountID_2__set__(struct __pyx_obj_7acco
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7account_7Account_15__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_7account_7Account_17__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_7account_7Account_15__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_15__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7account_7Account_15__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_7account_7Account_17__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_17__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7account_7Account_17__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4690,14 +4889,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("__reduce_cython__", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "__reduce_cython__", 0))) return NULL;
-  __pyx_r = __pyx_pf_7account_7Account_14__reduce_cython__(((struct __pyx_obj_7account_Account *)__pyx_v_self));
+  __pyx_r = __pyx_pf_7account_7Account_16__reduce_cython__(((struct __pyx_obj_7account_Account *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7account_7Account_14__reduce_cython__(struct __pyx_obj_7account_Account *__pyx_v_self) {
+static PyObject *__pyx_pf_7account_7Account_16__reduce_cython__(struct __pyx_obj_7account_Account *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -4927,15 +5126,15 @@ static PyObject *__pyx_pf_7account_7Account_14__reduce_cython__(struct __pyx_obj
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7account_7Account_17__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_7account_7Account_19__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_7account_7Account_17__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_17__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7account_7Account_17__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_7account_7Account_19__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_19__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7account_7Account_19__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -5009,7 +5208,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7account_7Account_16__setstate_cython__(((struct __pyx_obj_7account_Account *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_7account_7Account_18__setstate_cython__(((struct __pyx_obj_7account_Account *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   {
@@ -5022,7 +5221,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7account_7Account_16__setstate_cython__(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_7account_7Account_18__setstate_cython__(struct __pyx_obj_7account_Account *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -5599,14 +5798,14 @@ static int __pyx_setprop_7account_7Account_accountID(PyObject *o, PyObject *v, C
   }
 }
 
-static PyObject *__pyx_specialmethod___pyx_pw_7account_7Account_13__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
-  return __pyx_pw_7account_7Account_13__repr__(self);
+static PyObject *__pyx_specialmethod___pyx_pw_7account_7Account_15__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
+  return __pyx_pw_7account_7Account_15__repr__(self);
 }
 
 static PyMethodDef __pyx_methods_7account_Account[] = {
-  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_7account_7Account_13__repr__, METH_NOARGS|METH_COEXIST, 0},
-  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_15__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_17__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_7account_7Account_15__repr__, METH_NOARGS|METH_COEXIST, 0},
+  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_17__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7account_7Account_19__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 
@@ -5617,7 +5816,7 @@ static struct PyGetSetDef __pyx_getsets_7account_Account[] = {
 #if CYTHON_USE_TYPE_SPECS
 static PyType_Slot __pyx_type_7account_Account_slots[] = {
   {Py_tp_dealloc, (void *)__pyx_tp_dealloc_7account_Account},
-  {Py_tp_repr, (void *)__pyx_pw_7account_7Account_13__repr__},
+  {Py_tp_repr, (void *)__pyx_pw_7account_7Account_15__repr__},
   {Py_tp_traverse, (void *)__pyx_tp_traverse_7account_Account},
   {Py_tp_clear, (void *)__pyx_tp_clear_7account_Account},
   {Py_tp_methods, (void *)__pyx_methods_7account_Account},
@@ -5655,7 +5854,7 @@ static PyTypeObject __pyx_type_7account_Account = {
   #if PY_MAJOR_VERSION >= 3
   0, /*tp_as_async*/
   #endif
-  __pyx_pw_7account_7Account_13__repr__, /*tp_repr*/
+  __pyx_pw_7account_7Account_15__repr__, /*tp_repr*/
   0, /*tp_as_number*/
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
@@ -5744,6 +5943,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Account_addPosition, __pyx_k_Account_addPosition, sizeof(__pyx_k_Account_addPosition), 0, 0, 1, 1},
     {&__pyx_n_s_Account_getCash, __pyx_k_Account_getCash, sizeof(__pyx_k_Account_getCash), 0, 0, 1, 1},
     {&__pyx_n_s_Account_getPosition, __pyx_k_Account_getPosition, sizeof(__pyx_k_Account_getPosition), 0, 0, 1, 1},
+    {&__pyx_n_s_Account_getPositions, __pyx_k_Account_getPositions, sizeof(__pyx_k_Account_getPositions), 0, 0, 1, 1},
     {&__pyx_n_s_Account_getValue, __pyx_k_Account_getValue, sizeof(__pyx_k_Account_getValue), 0, 0, 1, 1},
     {&__pyx_n_s_Account_tradeAtPrice, __pyx_k_Account_tradeAtPrice, sizeof(__pyx_k_Account_tradeAtPrice), 0, 0, 1, 1},
     {&__pyx_n_s_CASH, __pyx_k_CASH, sizeof(__pyx_k_CASH), 0, 0, 1, 1},
@@ -5751,7 +5951,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_kp_s_Incompatible_checksums_0x_x_vs_0, __pyx_k_Incompatible_checksums_0x_x_vs_0, sizeof(__pyx_k_Incompatible_checksums_0x_x_vs_0), 0, 0, 1, 0},
     {&__pyx_n_s_PickleError, __pyx_k_PickleError, sizeof(__pyx_k_PickleError), 0, 0, 1, 1},
     {&__pyx_kp_u__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 1, 0, 0},
-    {&__pyx_n_s__21, __pyx_k__21, sizeof(__pyx_k__21), 0, 0, 1, 1},
+    {&__pyx_n_s__22, __pyx_k__22, sizeof(__pyx_k__22), 0, 0, 1, 1},
     {&__pyx_kp_u__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 1, 0, 0},
     {&__pyx_kp_u__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 1, 0, 0},
     {&__pyx_n_s_account, __pyx_k_account, sizeof(__pyx_k_account), 0, 0, 1, 1},
@@ -5771,6 +5971,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_get, __pyx_k_get, sizeof(__pyx_k_get), 0, 0, 1, 1},
     {&__pyx_n_s_getCash, __pyx_k_getCash, sizeof(__pyx_k_getCash), 0, 0, 1, 1},
     {&__pyx_n_s_getPosition, __pyx_k_getPosition, sizeof(__pyx_k_getPosition), 0, 0, 1, 1},
+    {&__pyx_n_s_getPositions, __pyx_k_getPositions, sizeof(__pyx_k_getPositions), 0, 0, 1, 1},
     {&__pyx_n_s_getValue, __pyx_k_getValue, sizeof(__pyx_k_getValue), 0, 0, 1, 1},
     {&__pyx_n_s_getstate, __pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 0, 1, 1},
     {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
@@ -5855,45 +6056,54 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "account.pyx":18
  *         return self.positions.get(asset, 0.0)
  * 
- *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
- *         return self.positions["CASH"]
+ *     cpdef object getPositions(self):             # <<<<<<<<<<<<<<
+ *         return self.positions
  * 
  */
   __pyx_tuple__10 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_getCash, 18, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_getPositions, 18, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 18, __pyx_L1_error)
 
   /* "account.pyx":21
+ *         return self.positions
+ * 
+ *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
+ *         return self.positions["CASH"]
+ * 
+ */
+  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_getCash, 21, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 21, __pyx_L1_error)
+
+  /* "account.pyx":24
  *         return self.positions["CASH"]
  * 
  *     cpdef double getValue(self):             # <<<<<<<<<<<<<<
  *         from market_simulator.utils.market_utils import last_prices
  *         cdef double total = self.positions["CASH"]
  */
-  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_getValue, 21, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_getValue, 24, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) __PYX_ERR(0, 24, __pyx_L1_error)
 
-  /* "account.pyx":29
+  /* "account.pyx":32
  *         return total
  * 
  *     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):             # <<<<<<<<<<<<<<
  *         self.addPosition(asset, quantity * direction)
  *         self.addPosition("CASH", -price * quantity * direction)
  */
-  __pyx_tuple__13 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_asset, __pyx_n_s_price, __pyx_n_s_quantity, __pyx_n_s_direction); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__13);
-  __Pyx_GIVEREF(__pyx_tuple__13);
-  __pyx_codeobj__14 = (PyObject*)__Pyx_PyCode_New(5, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__13, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_tradeAtPrice, 29, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__14)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_tuple__14 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_asset, __pyx_n_s_price, __pyx_n_s_quantity, __pyx_n_s_direction); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__14);
+  __Pyx_GIVEREF(__pyx_tuple__14);
+  __pyx_codeobj__15 = (PyObject*)__Pyx_PyCode_New(5, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__14, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_account_pyx, __pyx_n_s_tradeAtPrice, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__15)) __PYX_ERR(0, 32, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
  *     cdef tuple state
  *     cdef object _dict
  */
-  __pyx_tuple__15 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_state, __pyx_n_s_dict_2, __pyx_n_s_use_setstate); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__15);
-  __Pyx_GIVEREF(__pyx_tuple__15);
-  __pyx_codeobj__16 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__15, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__16)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_tuple__16 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_state, __pyx_n_s_dict_2, __pyx_n_s_use_setstate); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__16);
+  __Pyx_GIVEREF(__pyx_tuple__16);
+  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__16, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) __PYX_ERR(1, 1, __pyx_L1_error)
 
   /* "(tree fragment)":16
  *     else:
@@ -5901,20 +6111,20 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Account__set_state(self, __pyx_state)
  */
-  __pyx_tuple__17 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_pyx_state); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(1, 16, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__17);
-  __Pyx_GIVEREF(__pyx_tuple__17);
-  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __pyx_tuple__18 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_pyx_state); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__18);
+  __Pyx_GIVEREF(__pyx_tuple__18);
+  __pyx_codeobj__19 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__18, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__19)) __PYX_ERR(1, 16, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * def __pyx_unpickle_Account(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_tuple__19 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
-  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Account, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_tuple__20 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__20);
+  __Pyx_GIVEREF(__pyx_tuple__20);
+  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Account, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -5984,6 +6194,7 @@ static int __Pyx_modinit_type_init_code(void) {
   __pyx_vtabptr_7account_Account = &__pyx_vtable_7account_Account;
   __pyx_vtable_7account_Account.addPosition = (void (*)(struct __pyx_obj_7account_Account *, PyObject *, double, int __pyx_skip_dispatch))__pyx_f_7account_7Account_addPosition;
   __pyx_vtable_7account_Account.getPosition = (double (*)(struct __pyx_obj_7account_Account *, PyObject *, int __pyx_skip_dispatch))__pyx_f_7account_7Account_getPosition;
+  __pyx_vtable_7account_Account.getPositions = (PyObject *(*)(struct __pyx_obj_7account_Account *, int __pyx_skip_dispatch))__pyx_f_7account_7Account_getPositions;
   __pyx_vtable_7account_Account.getCash = (double (*)(struct __pyx_obj_7account_Account *, int __pyx_skip_dispatch))__pyx_f_7account_7Account_getCash;
   __pyx_vtable_7account_Account.getValue = (double (*)(struct __pyx_obj_7account_Account *, int __pyx_skip_dispatch))__pyx_f_7account_7Account_getValue;
   __pyx_vtable_7account_Account.tradeAtPrice = (void (*)(struct __pyx_obj_7account_Account *, PyObject *, double, double, int, int __pyx_skip_dispatch))__pyx_f_7account_7Account_tradeAtPrice;
@@ -6352,39 +6563,52 @@ if (!__Pyx_RefNanny) {
   /* "account.pyx":18
  *         return self.positions.get(asset, 0.0)
  * 
- *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
- *         return self.positions["CASH"]
+ *     cpdef object getPositions(self):             # <<<<<<<<<<<<<<
+ *         return self.positions
  * 
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_7getCash, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_getCash, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_7getPositions, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_getPositions, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_getCash, __pyx_t_2) < 0) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_getPositions, __pyx_t_2) < 0) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_7account_Account);
 
   /* "account.pyx":21
+ *         return self.positions
+ * 
+ *     cpdef double getCash(self):             # <<<<<<<<<<<<<<
+ *         return self.positions["CASH"]
+ * 
+ */
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_9getCash, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_getCash, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__12)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_getCash, __pyx_t_2) < 0) __PYX_ERR(0, 21, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  PyType_Modified(__pyx_ptype_7account_Account);
+
+  /* "account.pyx":24
  *         return self.positions["CASH"]
  * 
  *     cpdef double getValue(self):             # <<<<<<<<<<<<<<
  *         from market_simulator.utils.market_utils import last_prices
  *         cdef double total = self.positions["CASH"]
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_9getValue, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_getValue, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__12)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_11getValue, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_getValue, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__13)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_getValue, __pyx_t_2) < 0) __PYX_ERR(0, 21, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_getValue, __pyx_t_2) < 0) __PYX_ERR(0, 24, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_7account_Account);
 
-  /* "account.pyx":29
+  /* "account.pyx":32
  *         return total
  * 
  *     cpdef void tradeAtPrice(self, str asset, double price, double quantity, int direction):             # <<<<<<<<<<<<<<
  *         self.addPosition(asset, quantity * direction)
  *         self.addPosition("CASH", -price * quantity * direction)
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_11tradeAtPrice, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_tradeAtPrice, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__14)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_13tradeAtPrice, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account_tradeAtPrice, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__15)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_tradeAtPrice, __pyx_t_2) < 0) __PYX_ERR(0, 29, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_tradeAtPrice, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_7account_Account);
 
@@ -6393,7 +6617,7 @@ if (!__Pyx_RefNanny) {
  *     cdef tuple state
  *     cdef object _dict
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_15__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account___reduce_cython, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__16)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_17__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account___reduce_cython, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__17)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_reduce_cython, __pyx_t_2) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -6405,7 +6629,7 @@ if (!__Pyx_RefNanny) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Account__set_state(self, __pyx_state)
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_17__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account___setstate_cython, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__18)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_7Account_19__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Account___setstate_cython, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__19)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_7account_Account, __pyx_n_s_setstate_cython, __pyx_t_2) < 0) __PYX_ERR(1, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -6416,7 +6640,7 @@ if (!__Pyx_RefNanny) {
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_1__pyx_unpickle_Account, 0, __pyx_n_s_pyx_unpickle_Account, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_7account_1__pyx_unpickle_Account, 0, __pyx_n_s_pyx_unpickle_Account, NULL, __pyx_n_s_account, __pyx_d, ((PyObject *)__pyx_codeobj__21)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Account, __pyx_t_2) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -7438,30 +7662,6 @@ static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *nam
     return 0;
 }
 
-/* DictGetItem */
-#if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
-static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
-    PyObject *value;
-    value = PyDict_GetItemWithError(d, key);
-    if (unlikely(!value)) {
-        if (!PyErr_Occurred()) {
-            if (unlikely(PyTuple_Check(key))) {
-                PyObject* args = PyTuple_Pack(1, key);
-                if (likely(args)) {
-                    PyErr_SetObject(PyExc_KeyError, args);
-                    Py_DECREF(args);
-                }
-            } else {
-                PyErr_SetObject(PyExc_KeyError, key);
-            }
-        }
-        return NULL;
-    }
-    Py_INCREF(value);
-    return value;
-}
-#endif
-
 /* KeywordStringCheck */
 static int __Pyx_CheckKeywordStrings(
     PyObject *kw,
@@ -7535,6 +7735,30 @@ invalid_keyword:
     #endif
     return 0;
 }
+
+/* DictGetItem */
+#if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
+static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
+    PyObject *value;
+    value = PyDict_GetItemWithError(d, key);
+    if (unlikely(!value)) {
+        if (!PyErr_Occurred()) {
+            if (unlikely(PyTuple_Check(key))) {
+                PyObject* args = PyTuple_Pack(1, key);
+                if (likely(args)) {
+                    PyErr_SetObject(PyExc_KeyError, args);
+                    Py_DECREF(args);
+                }
+            } else {
+                PyErr_SetObject(PyExc_KeyError, key);
+            }
+        }
+        return NULL;
+    }
+    Py_INCREF(value);
+    return value;
+}
+#endif
 
 /* Import */
 static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level) {
@@ -11319,7 +11543,7 @@ __Pyx_PyType_GetName(PyTypeObject* tp)
     if (unlikely(name == NULL) || unlikely(!PyUnicode_Check(name))) {
         PyErr_Clear();
         Py_XDECREF(name);
-        name = __Pyx_NewRef(__pyx_n_s__21);
+        name = __Pyx_NewRef(__pyx_n_s__22);
     }
     return name;
 }

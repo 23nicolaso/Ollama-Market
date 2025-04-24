@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from market_simulator.gui.charts import ChartFrame
 from market_simulator.gui.news_feed import NewsFeedFrame
-from market_simulator.utils.market_utils import assets, last_prices, estimateUnderlyingValue, reset_markets, price_history, initial_prices
+from market_simulator.utils.market_utils import assets, last_prices, reset_markets, price_history, initial_prices
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread
 import tkinter.messagebox as messagebox
 
@@ -118,8 +118,7 @@ class MainWindow:
             self.price_tree.delete(item)
         for asset in assets:
             price = last_prices[asset]
-            fair_value = estimateUnderlyingValue(asset)
-            self.price_tree.insert("", "end", values=(asset, f"{price:.2f}", f"{fair_value:.2f}"))
+            self.price_tree.insert("", "end", values=(asset, f"{price:.2f}", f"{0:.2f}"))
 
     def update_sentiments(self, retail_trader):
         for item in self.sentiment_tree.get_children():

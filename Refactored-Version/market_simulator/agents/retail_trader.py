@@ -2,7 +2,6 @@ import random
 import math
 from market_simulator.agents.base_agent import MarketAgent
 from market_simulator.config import ASSETS, RETAIL_POSITION_LIMIT, RETAIL_MAX_ORDER_SIZE, USE_CYCLICAL_SENTIMENT, SENTIMENT_REVERSION_RATE
-from market_simulator.utils.market_utils import calculate_fair_value
 
 class RetailTrader(MarketAgent):
     def __init__(self, accountID, cash):

@@ -1,8 +1,8 @@
 from ollama import Client
 import queue
 from market_simulator.config import (
-    ASSETS, INITIAL_PRICES, SPREADS, ANNUAL_RETURNS,
-    LLM_MODEL, MAX_HISTORY_LENGTH, ASSETS_CONFIG, RFR
+    ASSETS, INITIAL_PRICES, SPREADS,
+    LLM_MODEL, MAX_HISTORY_LENGTH, RFR
 )
 from datetime import datetime, timedelta
 import random
@@ -10,7 +10,11 @@ from market_simulator.utils.db_utils import get_price_history as get_db_price_hi
 from market_simulator.utils.db_utils import db_manager as db
 import numpy as np
 
+from market_simulator.models.marketState import MarkovModel
+
 simulation_last_news_tick = 0
+
+markov_model = MarkovModel()
 
 def setLastNewsTick(tick):
     global simulation_last_news_tick
@@ -155,53 +159,12 @@ accounts = {}  # Stores list of Account objects, indexed by accountID
 initial_prices = INITIAL_PRICES
 last_prices = {}  # Stores last price for each asset
 spreads_by_market = SPREADS
-average_annual_return_by_market = ANNUAL_RETURNS
 economic_health_by_market = {asset: 1 for asset in ASSETS}
 simulation_age = 0  # Stores the age of the simulation in total sets of 10 ticks
 price_history = {}  # Stores list of past prices for each asset
 assets = ASSETS  # Stores list of assets
 markets = {}  # Stores list of OrderBook objects, indexed by asset
 recentHeadlines = []  # Stores list of recently generated headlines
-
-# store risk parameters for each asset
-RISKS = {asset: config["risk"] for asset, config in ASSETS_CONFIG.items() if config["use_rp"]}
-EV = {asset: config["initial_price"] * (1+config["annual_return"]) for asset, config in ASSETS_CONFIG.items()}
-EST_INFLATION = 0.03
-
-def calculate_fair_value(asset):
-    # Calculate a fair value for an asset using risk free rate, risk parameters
-    if RISKS.get(asset):
-        required_ror = RISKS[asset] + EST_INFLATION + RFR
-    else:
-        required_ror = RFR + EST_INFLATION
-    fair_value = EV[asset]/(1+required_ror)
-    return fair_value
-
-def calculate_r_adj_ytm(asset):
-    if RISKS.get(asset):
-        return (EV[asset]/markets[asset].last_price-(RISKS[asset]))
-
-def alter_risk_params_with_news(asset, sentiment, importance):
-    if RISKS.get(asset):
-        RISKS[asset] *= 1 + (0.1 * (0.5-sentiment) * importance)
-
-def randomly_alter_risk_params(asset):
-    # Randomly alter risk param, with a very small chance of a major change across the board. If major change, there should be a news
-    # article created explaining it. 
-    # Randomly alter risk parameters with small probability
-    if RISKS.get(asset):  # Only alter if asset uses risk parameters
-        # Small random changes (±0.001) with 20% probability
-        if random.random() < 0.2:
-            RISKS[asset] += random.uniform(-0.001, 0.001)
-            
-        # Major changes (±0.01) with 0.1% probability
-        if random.random() < 0.001:
-            val = random.uniform(-0.01, +0.01)
-            RISKS[asset] += val
-            
-            return val
-        
-        return None
 
 # Initialize last_prices and price_history from DB or defaults
 for asset in ASSETS:
@@ -223,7 +186,6 @@ def invoke_model(prompt):
     response = model.chat(model=LLM_MODEL, messages=[{'role': 'user', 'content': prompt}])
     return response['message']['content']
 
-
 def update_price_history(asset, price):
     """Updates the price history for a given asset"""
     if asset in price_history:
@@ -241,10 +203,6 @@ def makeMarkets():
     for asset in assets:
         markets[asset] = OrderBook(asset, last_prices[asset])
 
-def estimateUnderlyingValue(asset):
-    """Estimates the underlying value of an asset based on economic factors"""
-    estimated_price = calculate_fair_value(asset)
-    return estimated_price
 
 def get_price_history(asset, start_time=None, end_time=None):
     """

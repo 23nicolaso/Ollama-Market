@@ -13,15 +13,6 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 user_account = UserTrader(7, 1000000)
 
-def emit_trade_update(agent, asset, side, quantity):
-    """Emit a trade update through websocket"""
-    socketio.emit('trade_update', {
-        'agent': agent,
-        'asset': asset,
-        'side': side,
-        'quantity': quantity
-    })
-
 def emit_orderbook_update(asset):
     """Emit order book update through websocket"""
     if asset in markets:
