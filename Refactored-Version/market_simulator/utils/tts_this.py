@@ -9,10 +9,17 @@ from market_simulator.utils.market_utils import model
 from market_simulator.config import LLM_MODEL
 
 pipeline = KPipeline(lang_code='a')
+
+# Shared state
 isTalking = False
 last_text = ""
+tts_thread = None
+stop_signal = False
+thread_lock = Lock()
 
 def tts_this(text, sentiment, importance):
+    global tts_thread, stop_signal
+
     if sentiment >= 0.9:
         sentiment_str = "SOARING"
     elif sentiment > 0.5:
@@ -24,7 +31,16 @@ def tts_this(text, sentiment, importance):
     else:
         sentiment_str = "down slightly"
     text = f'{text}. This news is {"highly" if importance >= 9 else "not that"} important. Markets are {sentiment_str} after the news' 
-    Thread(target=run_tts_queue, args=(text,)).start()
+    
+    with thread_lock:
+        stop_signal = True  # Request current thread to stop
+        if tts_thread and tts_thread.is_alive():
+            tts_thread.join()  # Wait for current thread to stop
+
+        stop_signal = False  # Reset stop signal for new thread
+        tts_thread = Thread(target=run_tts_queue, args=(text,))
+        tts_thread.start()
+
 
 def run_tts_queue(text):
     tts_queue(text)
@@ -85,35 +101,29 @@ def stream_paragraphs(text = None):
             if filtered_segment.strip():
                 yield filtered_segment.strip()
 
-def tts_queue(text = None):
-    global isTalking
-    global last_text
-
-    if isTalking:
-        sd.stop()
-        isTalking = False
+def tts_queue(text=None):
+    global isTalking, last_text, stop_signal
 
     try:
+        isTalking = True
         for response in stream_paragraphs(text):
-            if response == "" or response is None:
-                return
-            
-            print(response)
-            last_text = response
-            stream = pipeline(
-                response,
-                voice='af_heart',
-                speed=1.2,
-                split_pattern=r'\n+'
-            )
+            if stop_signal:
+                break
 
-            for i, (gs, ps, audio) in enumerate(stream):
-                print(i)  # i => index
-                print(gs) # gs => graphemes/text
-                print(ps) # ps => phonemes
-                sd.play(audio, 24000)
-                sd.wait()
+            if response:
+                print(response)
+                last_text = response
+                stream = pipeline(response, voice='af_heart', speed=1.2, split_pattern=r'\n+')
 
+                for i, (gs, ps, audio) in enumerate(stream):
+                    if stop_signal:
+                        sd.stop()
+                        break
+
+                    print(i, gs, ps)
+                    sd.play(audio, 24000)
+                    sd.wait()
     finally:
         print("done speaking")
         isTalking = False
+        sd.stop()
