@@ -5,6 +5,7 @@ from market_simulator.config import (
     LLM_MODEL, MAX_HISTORY_LENGTH, RFR
 )
 from datetime import datetime, timedelta
+import re 
 import random
 from market_simulator.utils.db_utils import get_price_history as get_db_price_history
 from market_simulator.utils.db_utils import db_manager as db
@@ -26,12 +27,17 @@ def wasNewsRecent(tick):
 
 class CircularBuffer:
     # CIRCULAR BUFFER TO STORE PAST PRICES INSTEAD OF ARRAY FOR FAST SPEED
-    def __init__(self, size=500):
+    def __init__(self, size=500, initial_price=0):
         self.size = size
         self.buffer = np.empty(size, dtype=np.float64)  # Preallocated buffer
         self.index = 0  # Tracks the next write position
         self.full = False  # Tracks if the buffer has filled
+        self.initial_price = initial_price
         
+    def getPercentageChange(self):
+        """Returns % change since market open"""
+        return (self.buffer[self.index-1] - self.initial_price)/self.initial_price * 100
+
     def getLastNPrices(self, n):
         """Returns the n most recent prices"""
         if n <= 0:
@@ -52,6 +58,32 @@ class CircularBuffer:
             # Need to wrap around
             return np.concatenate((self.buffer[self.size - (n - self.index):], 
                                  self.buffer[:self.index]))
+
+    
+    def getPriceChange(self, n):
+        if n <= 1:
+             # Need at least two points to calculate a change
+            return 0.0
+
+        prices = self.getLastNPrices(n)
+
+        # Check if we have enough data points for the calculation
+        if len(prices) < n or len(prices) < 2:
+            # Not enough data in the buffer for the requested window 'n'
+            # or fewer than 2 points overall to calculate change
+            return 0.0
+
+        oldest_price = prices[0]
+        newest_price = prices[-1]
+
+        # Avoid division by zero
+        if oldest_price == 0:
+            # Define behavior: return 0, inf, or raise error? Returning 0 is safest.
+            return 0.0
+
+        # Calculate percentage change
+        price_change = (newest_price - oldest_price) / oldest_price
+        return price_change
 
     def getLastPrice(self):
         """Returns the most recent price in the buffer."""
@@ -105,6 +137,7 @@ class CircularBuffer:
             # Need to wrap around
             return np.mean(np.concatenate((self.buffer[self.size - (n - self.index):], 
                                          self.buffer[:self.index])))
+
 
     def std(self, n = MAX_HISTORY_LENGTH):
         """Returns the standard deviation of the past n prices"""
@@ -168,7 +201,7 @@ recentHeadlines = []  # Stores list of recently generated headlines
 
 # Initialize last_prices and price_history from DB or defaults
 for asset in ASSETS:
-    price_history[asset] = CircularBuffer(MAX_HISTORY_LENGTH)
+    price_history[asset] = CircularBuffer(MAX_HISTORY_LENGTH, INITIAL_PRICES[asset])
     db_prices = db.get_price_history(asset)
     if db_prices:
         last_prices[asset] = db_prices[-1][0]  # Get most recent price
@@ -194,7 +227,7 @@ def update_price_history(asset, price):
         db.queue_price_update(asset, rounded_price)
     else:
         rounded_price = round(price, 2)
-        price_history[asset] = CircularBuffer(MAX_HISTORY_LENGTH)
+        price_history[asset] = CircularBuffer(MAX_HISTORY_LENGTH, INITIAL_PRICES[asset])
         price_history[asset].append(rounded_price)
 
 def makeMarkets():

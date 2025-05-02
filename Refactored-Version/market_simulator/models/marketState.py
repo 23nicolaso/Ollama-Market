@@ -389,40 +389,36 @@ class MarkovModel:
         daily_return_base = self.market_base_return / 252  # Trading days in a year
         daily_volatility = self.market_volatility / np.sqrt(252)
         
-        # Adjust base return based on market trend
+        # Reduced modifiers
         trend_modifier = {
-            MarketTrend.BEAR: -0.01,
+            MarketTrend.BEAR: -0.005,  # Was -0.01
             MarketTrend.NEUTRAL: 0.0,
-            MarketTrend.BULL: 0.01
+            MarketTrend.BULL: 0.005   # Was 0.01
         }[self.state.market_trend]
-        
-        # Adjust base return based on economic growth
+
         growth_modifier = {
-            EconomicGrowthState.RECESSION: -0.005,
-            EconomicGrowthState.SLOW: -0.002,
-            EconomicGrowthState.MODERATE: 0.002,
-            EconomicGrowthState.RAPID: 0.005
+            EconomicGrowthState.RECESSION: -0.0025,  # Was -0.005
+            EconomicGrowthState.SLOW: -0.001,        # Was -0.002
+            EconomicGrowthState.MODERATE: 0.001,     # Was 0.002
+            EconomicGrowthState.RAPID: 0.0025        # Was 0.005
         }[self.state.economic_growth]
-        
-        # Adjust base return based on interest rate (inverse relationship)
+
         interest_modifier = {
-            InterestRateState.LOW: 0.001,
+            InterestRateState.LOW: 0.0005,  # Was 0.001
             InterestRateState.MODERATE: 0.0,
-            InterestRateState.HIGH: -0.002
+            InterestRateState.HIGH: -0.001  # Was -0.002
         }[self.state.interest_rate]
-        
-        # Inflation effect
+
         inflation_modifier = {
-            InflationState.LOW: 0.0005,
+            InflationState.LOW: 0.00025,  # Was 0.0005
             InflationState.MODERATE: 0.0,
-            InflationState.HIGH: -0.001
+            InflationState.HIGH: -0.0005  # Was -0.001
         }[self.state.inflation]
-        
-        # Unemployment effect
+
         unemployment_modifier = {
-            UnemploymentState.LOW: 0.0005,
+            UnemploymentState.LOW: 0.00025,  # Was 0.0005
             UnemploymentState.MODERATE: 0.0,
-            UnemploymentState.HIGH: -0.001
+            UnemploymentState.HIGH: -0.0005  # Was -0.001
         }[self.state.unemployment]
         
         # Calculate adjusted expected return
@@ -460,7 +456,7 @@ class MarkovModel:
                 total_effect += unemployment_effect
             
             # Add sector-specific random noise
-            sector_volatility = 0.003  # Additional sector-specific daily volatility
+            sector_volatility = 0.001  # Additional sector-specific daily volatility
             sector_noise = np.random.normal(0, sector_volatility)
             
             # Update sector performance
@@ -605,11 +601,12 @@ class MarkovModel:
         if not 0 <= sentiment <= 1:
             raise ValueError("Sentiment must be between 0 and 1")
         if not 1 <= importance <= 10:
-            raise ValueError("Importance must be between 1 and 10")
+            raise ValueError("Importance must be between 1 and 10") 
 
+        print(f"UPDATING WITH IMPORTANCE: {importance}, SENTIMENT: {sentiment}")
         # Extreme cases: importance 10 with very low/high sentiment
         if importance == 10:
-            if sentiment <= 0.1:
+            if sentiment <= 0.3:
                 # Seriously bad update
                 self.state.market_trend = MarketTrend.BEAR
                 self.state.economic_growth = EconomicGrowthState.RECESSION
@@ -617,8 +614,8 @@ class MarkovModel:
                 self.state.inflation = InflationState.HIGH
                 self.state.interest_rate = InterestRateState.HIGH
                 for sector in Sector:
-                    self.state.sector_performance[sector] -= 0.05  # Significant sector downturn
-            elif sentiment >= 0.9:
+                    self.state.sector_performance[sector] -= 0.04  # Significant sector downturn
+            elif sentiment >= 0.7:
                 # Seriously good update
                 self.state.market_trend = MarketTrend.BULL
                 self.state.economic_growth = EconomicGrowthState.RAPID
@@ -626,12 +623,12 @@ class MarkovModel:
                 self.state.inflation = InflationState.LOW
                 self.state.interest_rate = InterestRateState.LOW
                 for sector in Sector:
-                    self.state.sector_performance[sector] += 0.05  # Significant sector upturn
+                    self.state.sector_performance[sector] += 0.04  # Significant sector upturn
             return
 
         # Normal case: slight adjustments
         # Scale impact based on importance
-        impact = (sentiment - 0.5) * (importance / 10) * 0.2  # Max adjustment of 0.2 at importance 10
+        impact = (sentiment - 0.5) * (importance / 10) * 0.1  # Max adjustment of 0.2 at importance 10
 
         # Adjust transition matrices
         def adjust_matrix(matrix, direction, strength):

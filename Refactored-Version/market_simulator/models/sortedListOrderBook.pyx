@@ -71,6 +71,24 @@ cdef class LimitOrder(Order):
     def __eq__(self, other):
         return self.price == other.price and self.side == other.side and self.timestamp == other.timestamp
 
+cdef class IcebergOrder(LimitOrder):
+    """Effectively just a limit order, but when displaying it, the quantity shown is visible_size instead"""
+    cdef int max_visible_size
+    cdef public int displayed_size
+
+    __slots__ = ('max_visible_size','displayed_size', )
+    def __init__(self, acc_id: int, remaining: int, price: float, side: Side, max_visible_size: int):
+        super().__init__(acc_id, remaining, price, side)
+        self.max_visible_size = max_visible_size
+        self.displayed_size = min(self.max_visible_size, self.remaining) 
+
+    def refresh(self):
+        self.displayed_size = min(self.max_visible_size, self.remaining)
+    
+    def __repr__(self):
+        return f"Iceberg Order: acc_id:{self.acc_id}, q:{self.remaining}, \
+            p:{self.price}, time:{self.timestamp}, side:{self.side}, max_visible:{self.max_visible_size}"
+
 cdef class OrderBook:
     """
     Orderbook to process orders
@@ -96,13 +114,21 @@ cdef class OrderBook:
 
     cpdef int get_best_bid_quantity(self):
         if self.bids:
-            return self.bids[0].quantity
+            if self.bids[0].__class__ == IcebergOrder:
+                self.bids[0].refresh()
+                return self.bids[0].displayed_size
+            else:
+                return self.bids[0].quantity
         else:
             return 0
         
     cpdef int get_best_ask_quantity(self):
         if self.asks:
-            return self.asks[0].quantity
+            if self.asks[0].__class__ == IcebergOrder:
+                self.asks[0].refresh()
+                return self.asks[0].displayed_size
+            else:
+                return self.asks[0].quantity
         else: 
             return 0
 
@@ -138,11 +164,41 @@ cdef class OrderBook:
         else:
             return self.last_price
 
-    cpdef object get_bids(self):        
-        return {str(order.price): order.remaining for order in self.bids}
+    cpdef object get_bids(self):   
+        cdef object bids_dict = {}
+        cdef object order
+        cdef int qty
+        for order in self.bids:
+            if order.__class__ == IcebergOrder:
+                order.refresh()
+                qty = order.displayed_size
+            else:
+                qty = order.remaining
 
-    cpdef object get_asks(self):
-        return {str(order.price): order.remaining for order in self.asks}
+            if bids_dict.get(str(order.price)):
+                bids_dict[str(order.price)] += qty
+            else:
+                bids_dict[str(order.price)] = qty
+
+        return bids_dict
+
+    cpdef object get_asks(self):    
+        cdef object asks_dict = {}
+        cdef object order
+        cdef int qty
+        for order in self.asks:
+            if order.__class__ == IcebergOrder:
+                order.refresh()
+                qty = order.displayed_size
+            else:
+                qty = order.remaining
+                
+            if asks_dict.get(str(order.price)):
+                asks_dict[str(order.price)] += qty
+            else:
+                asks_dict[str(order.price)] = qty
+
+        return asks_dict
 
     cpdef void settle_trade(self, float price, int quantity, int acc_id_1, int acc_id_2, object direction):
         """
@@ -214,7 +270,7 @@ cdef class OrderBook:
 
                 opposite_order.remaining -= order.remaining
                 if opposite_order.remaining > 0:
-                    opposite_market_book.appendleft(opposite_order)
+                    opposite_limit_book.add(opposite_order)
                 return 
             else:
                 self.last_price = opposite_order.price
@@ -224,12 +280,12 @@ cdef class OrderBook:
 
         if order.remaining > 0: # Add to books if not filled already
             if side == Side.BUY:
-                if order.__class__ == LimitOrder:
+                if order.__class__ == LimitOrder or order.__class__ == IcebergOrder:
                     self.bids.add(order)
                 else:
                     self.market_buys.append(order)
             else:
-                if order.__class__ == LimitOrder:
+                if order.__class__ == LimitOrder or order.__class__ == IcebergOrder:
                     self.asks.add(order)
                 else:
                     self.market_sells.append(order)
@@ -250,7 +306,6 @@ cdef class OrderBook:
         for order in list(self.bids):
             if order.acc_id == acc_id:
                 self.bids.discard(order)
-        
 
     cpdef cancel_order(self, Order order):
         self.asks.discard(order)

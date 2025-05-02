@@ -3,7 +3,7 @@ WORLD_CONTEXT = """
 Ensure that all your responses follow the correct, defined response format.     
 """
 
-STATE_STRING = "President Sterling has just been elected in the US government, and is launching widespread reforms!"
+STATE_STRING = "LeBron James has just been elected President of the United States"
 
 STATE_PROMPT = f"""
 The state string is your memory of the current situation in this world. 
@@ -69,12 +69,6 @@ ASSETS_CONFIG = {
         "num_shares": 2000000000,
         "included_in_spy": True
     },
-    "MSCI World ETF": {
-        "initial_price": 100,
-        "spread": 0.02,
-        "num_shares": 1000000000,
-        "included_in_spy": False
-    },
     "Bitcoin": {
         "initial_price": 100,
         "spread": 0.02,
@@ -87,13 +81,23 @@ ASSETS_CONFIG = {
         "num_shares": 1000000000,
         "included_in_spy": False
     },
-    "China ETF": {
+    # "VIX": {
+    #     "initial_price": 10,
+    #     "spread": 0.01,
+    #     "num_shares": 1000000,
+    #     "included_in_spy": False
+    # },
+    "US10Y TBill": {
         "initial_price": 100,
-        "spread": 0.02,
-        "num_shares": 1000000000,
+        "spread": 0.01,
+        "num_shares": 1000000,
         "included_in_spy": False
     }
 }
+
+RISK_ON_ASSETS = ["TECHNOLOGY", "CONSUMER", "FINANCIAL", "INDUSTRIAL", "Bitcoin"]
+RISK_OFF_ASSETS = ["HEALTHCARE", "ENERGY", "Gold", "US10Y TBill"]
+RISK_FIRM_POSITION_SIZE = 1000000
 
 # Derived configurations
 ASSETS = list(ASSETS_CONFIG.keys())
@@ -199,20 +203,22 @@ TEXT_WIDGET_SIZE = (40, 40)
 TABLE_COLUMN_WIDTH = 150
 
 # Simulation configuration
-MAX_HISTORY_LENGTH = 500
+MAX_HISTORY_LENGTH = 2000
 TICK_RESET_THRESHOLD = 10
 CHAT_PROBABILITY = 0.01
 MAX_RECENT_HEADLINES = 10
 
 # LLM configuration
-LLM_MODEL = "gemma3:4b-it-qat" 
+LLM_MODEL = "gemma3:4b" 
 
 # AGENT QUANTITY CONFIGURATIONS
-# High-frequency trading fund - makes many trades on news as soon as it comes out
-HF_POSITION_LIMIT = 1000000
-HF_BASE_ORDER_SIZE = 100000
-HFT_BASE_ORDER_SIZE = 10000
-HFT_POSITION_LIMIT = 100000
+# Hedge Fund: 
+HF_POSITION_LIMIT = 10000000
+HF_BASE_ORDER_SIZE = 1000000
+
+# High-frequency trading fund - makes many short term trades
+HFT_BASE_ORDER_SIZE = 100000
+HFT_POSITION_LIMIT = 50000
 
 # Market maker - provides liquidity
 MM_POSITION_LIMIT = 10000000  # Large position limit to maintain liquidity
@@ -228,10 +234,13 @@ USE_CYCLICAL_SENTIMENT = True  # Enable cyclical sentiment for more natural swin
 SENTIMENT_REVERSION_RATE = 500  # Faster sentiment changes
 
 # Technical analysis traders - small-sized trades by retail-like investors
-TA_POSITION_LIMIT = 1000000  # 
 TA_MEGA_ORDER_SIZE = 10000  # 
 TA_LARGE_ORDER_SIZE = 1000  # 
+TA_POSITION_LIMIT = 100000
 
 # Long-term investor - larger but infrequent trades
 LT_INVESTOR_MAX_ORDER_SIZE = 50000  # Increased for more impactful position building
 LTI_POS_LIMIT = 20000000 # MASSIVE
+
+TTS_MODEL = "bf_emma"
+TTS_LANG = "a"

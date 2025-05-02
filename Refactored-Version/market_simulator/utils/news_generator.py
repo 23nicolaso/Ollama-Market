@@ -15,15 +15,17 @@ _hft_fund = None
 _market_maker = None
 _long_term_investor = None
 _mean_reversion_fund = None
+_risk_on_off_firm = None
 
-def init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund):
+def init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund, risk_on_off_firm):
     """Initialize the global agent references"""
-    global _retail_trader, _hft_fund, _market_maker, _long_term_investor, _mean_reversion_fund
+    global _retail_trader, _hft_fund, _market_maker, _long_term_investor, _mean_reversion_fund, _risk_on_off_firm
     _retail_trader = retail_trader
     _hft_fund = hft_fund
     _market_maker = market_maker
     _long_term_investor = long_term_investor
     _mean_reversion_fund = mean_reversion_fund
+    _risk_on_off_firm = risk_on_off_firm
 
 def generate_news(custom_headline=None, explain_this=None):
     """Generates a news headline and updates market sentiment"""
@@ -122,14 +124,14 @@ def generate_news(custom_headline=None, explain_this=None):
                 sentiment_scores_dict[asset] = 0.5
 
     for asset in ASSETS:
-            if asset in hft_scores:
-                hft_sentiment_scores_dict[asset] = hft_scores[asset]
-            else:
-                hft_sentiment_scores_dict[asset] = 0.5
+        if asset in hft_scores:
+            hft_sentiment_scores_dict[asset] = hft_scores[asset]
+        else:
+            hft_sentiment_scores_dict[asset] = 0.5
 
     _retail_trader.retailSentimentScore = sentiment_scores_dict
     tts_this(headline, sentiment_scores_dict["SPY"], urgency_score)
-    mm.update_on_sentiment(sentiment_scores_dict["SPY"], urgency_score)
+    mm.update_on_sentiment(round(sentiment_scores_dict["SPY"],1), urgency_score)
 
     # Simulate HFT trading the news
     for market in markets:
@@ -137,6 +139,11 @@ def generate_news(custom_headline=None, explain_this=None):
         _hft_fund.tradeTheNews(market, hft_sentiment_scores_dict[market])
         _retail_trader.trade(markets[market])
         _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
+
+    if sentiment_scores_dict["SPY"] > 0.5:
+        _risk_on_off_firm.risk_on()
+    else:
+        _risk_on_off_firm.risk_off()
 
     _mean_reversion_fund.set_market_return_profile(mm.get_economy_state()['sector_performance'])
     

@@ -1,8 +1,8 @@
-from market_simulator.agents.base_agent import MarketAgent
+from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.utils.market_utils import price_history
 from market_simulator.config import MM_POSITION_LIMIT, MM_BASE_ORDER_SIZE, MM_DEPTH, NEARBY_RANGE
 
-class MarketMaker(MarketAgent):
+class MarketMaker(SpyArbFund):
     def __init__(self, accountID, cash, spreads):
         super().__init__(accountID, cash)
         self.spreads = spreads
@@ -12,16 +12,22 @@ class MarketMaker(MarketAgent):
 
     def makeMarket(self, orderBook):
         # Get current market state
-        midPrice = orderBook.last_price
         self.wipeAllOrders(orderBook)
 
         # Calculate base spread
         baseSpread = self.spreads[orderBook.asset]
 
+        if orderBook.asset == "SPY":
+            self.update_calculations()
+            fair_price = self.navps
+            midPrice = fair_price
+        else:
+            midPrice = orderBook.last_price
+
         # Calculate volatility based on recent price history
         mean = price_history[orderBook.asset].mean()
         std = price_history[orderBook.asset].std()
-
+        
         volatility_factor = min(5.0, max(1.0, (std / mean) * 1000))
 
         # Adjust base spread for volatility

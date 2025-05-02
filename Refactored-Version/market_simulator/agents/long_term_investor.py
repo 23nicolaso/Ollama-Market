@@ -20,4 +20,6 @@ class LongTermInvestor(ExecutionalTrader):
     
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.1 and importance == 10: 
-            self.placeOrder(ticker, "sell", 0, self.account.getPosition(ticker)*0.01, "market") # panic sell lol
+            self.executeTradeInLegs(markets[ticker], "sell", 0, self.account.getPosition(ticker)*0.05) # panic sell lol
+        if sentiment_score >= 0.9 and importance == 10:
+            self.executeTradeInLegs(markets[ticker], "buy", 0, self.account.getPosition(ticker)*0.05) # full greed buying

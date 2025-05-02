@@ -37,10 +37,10 @@ class RetailTrader(MarketAgent):
         if quantity > 0:
             if direction == "buy":
                 if position + quantity < RETAIL_POSITION_LIMIT:
-                    self.placeOrder(orderBook, "buy", bid+random.choice([-0.02,-0.01,0,0.01,0.02]), quantity, type)
+                    self.placeOrder(orderBook, "buy", round(random.uniform(math.floor(bid),bid),2), quantity, type)
             else:
                 if position - quantity > 0: 
-                    self.placeOrder(orderBook, "sell", ask-random.choice([-0.02,-0.01,0,0.01,0.02]), quantity, type)
+                    self.placeOrder(orderBook, "sell", round(random.uniform(ask, math.ceil(ask)), 2), quantity, type)
 
     def setReversionUrgency(self, urgency):
         """Sets how quickly sentiment should revert to mean after news events"""
