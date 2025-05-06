@@ -16,16 +16,20 @@ _market_maker = None
 _long_term_investor = None
 _mean_reversion_fund = None
 _risk_on_off_firm = None
+_ollama_fund = None
+_gemma_fund = None
 
-def init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund, risk_on_off_firm):
+def init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund, risk_on_off_firm, ollama_fund, gemma_fund):
     """Initialize the global agent references"""
-    global _retail_trader, _hft_fund, _market_maker, _long_term_investor, _mean_reversion_fund, _risk_on_off_firm
+    global _retail_trader, _hft_fund, _market_maker, _long_term_investor, _mean_reversion_fund, _risk_on_off_firm, _ollama_fund, _gemma_fund
     _retail_trader = retail_trader
     _hft_fund = hft_fund
     _market_maker = market_maker
     _long_term_investor = long_term_investor
     _mean_reversion_fund = mean_reversion_fund
     _risk_on_off_firm = risk_on_off_firm
+    _ollama_fund = ollama_fund
+    _gemma_fund = gemma_fund
 
 def generate_news(custom_headline=None, explain_this=None):
     """Generates a news headline and updates market sentiment"""
@@ -139,6 +143,9 @@ def generate_news(custom_headline=None, explain_this=None):
         _hft_fund.tradeTheNews(market, hft_sentiment_scores_dict[market])
         _retail_trader.trade(markets[market])
         _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
+
+    _ollama_fund.analyzeAndTradeNews(headline)
+    _gemma_fund.analyzeAndTradeNews(headline)
 
     if sentiment_scores_dict["SPY"] > 0.5:
         _risk_on_off_firm.risk_on()

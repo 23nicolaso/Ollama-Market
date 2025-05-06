@@ -54,6 +54,7 @@ def tts_this(text, sentiment = None, importance = None):
         tts_thread.start()
 
 def run_tts_queue(text):
+    return
     start_conversation(text)
 
 def stream_paragraphs(text = None, responding_mode = False):

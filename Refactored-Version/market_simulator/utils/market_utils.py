@@ -219,6 +219,17 @@ def invoke_model(prompt):
     response = model.chat(model=LLM_MODEL, messages=[{'role': 'user', 'content': prompt}])
     return response['message']['content']
 
+def invoke_model_stream(prompt):
+    """Yields a stream of LLM responses for a given prompt"""
+    response = model.chat(
+        model=LLM_MODEL,
+        messages=[{'role': 'user', 'content': prompt}],
+        stream=True
+    )
+    for chunk in response:
+        content = chunk['message']['content']
+        yield content
+
 def update_price_history(asset, price):
     """Updates the price history for a given asset"""
     if asset in price_history:

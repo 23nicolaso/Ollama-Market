@@ -34,12 +34,7 @@ class HedgeFund(ExecutionalTrader):
                 pct_change = (markets[asset].last_price-INITIAL_PRICES[asset])/INITIAL_PRICES[asset]
                 expected_change = self.last_market_return_profile[asset]
                 delta = pct_change - expected_change
-                if delta > 0.01 and expected_change < 0:
+                if delta > 0.01:
                     self.targetPosition(markets[asset], "sell", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, HF_POSITION_LIMIT)
-                elif delta > 0.03 and expected_change >= 0:
-                    self.targetPosition(markets[asset], "sell", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, HF_POSITION_LIMIT)
-                elif delta < -0.01 and expected_change > 0:
+                elif delta < -0.01:
                     self.targetPosition(markets[asset], "buy", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, HF_POSITION_LIMIT)
-                elif delta < -0.03 and expected_change <= 0:
-                    self.targetPosition(markets[asset], "buy", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, HF_POSITION_LIMIT)
-                

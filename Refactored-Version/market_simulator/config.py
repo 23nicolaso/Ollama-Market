@@ -69,13 +69,13 @@ ASSETS_CONFIG = {
         "num_shares": 2000000000,
         "included_in_spy": True
     },
-    "Bitcoin": {
+    "BITCOIN": {
         "initial_price": 100,
         "spread": 0.02,
         "num_shares": 1000000000,
         "included_in_spy": False
     },
-    "Gold": {
+    "GOLD": {
         "initial_price": 100,
         "spread": 0.02,
         "num_shares": 1000000000,
@@ -87,7 +87,7 @@ ASSETS_CONFIG = {
     #     "num_shares": 1000000,
     #     "included_in_spy": False
     # },
-    "US10Y TBill": {
+    "TBILLS": {
         "initial_price": 100,
         "spread": 0.01,
         "num_shares": 1000000,
@@ -95,8 +95,8 @@ ASSETS_CONFIG = {
     }
 }
 
-RISK_ON_ASSETS = ["TECHNOLOGY", "CONSUMER", "FINANCIAL", "INDUSTRIAL", "Bitcoin"]
-RISK_OFF_ASSETS = ["HEALTHCARE", "ENERGY", "Gold", "US10Y TBill"]
+RISK_ON_ASSETS = ["TECHNOLOGY", "CONSUMER", "FINANCIAL", "INDUSTRIAL", "BITCOIN"]
+RISK_OFF_ASSETS = ["HEALTHCARE", "ENERGY", "GOLD", "TBILLS"]
 RISK_FIRM_POSITION_SIZE = 1000000
 
 # Derived configurations

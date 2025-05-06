@@ -22,7 +22,10 @@ class MarketMaker(SpyArbFund):
             fair_price = self.navps
             midPrice = fair_price
         else:
-            midPrice = orderBook.last_price
+            if len(price_history) > 50:
+                midPrice = price_history[orderBook.asset].mean(n=50) # use mean of last 50 trades for fair price estimate
+            else:
+                midPrice = orderBook.last_price
 
         # Calculate volatility based on recent price history
         mean = price_history[orderBook.asset].mean()

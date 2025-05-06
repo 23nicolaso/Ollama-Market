@@ -96,7 +96,7 @@ cdef class OrderBook:
     cdef public int net_volume
     cdef public str asset
     cdef public double last_price
-    cdef int bid_size, ask_size
+    cdef public int bid_size, ask_size
     cdef object bids, asks, market_buys, market_sells, update_queue
 
     def __init__(self, asset: str, initialPrice: float):
@@ -118,7 +118,7 @@ cdef class OrderBook:
                 self.bids[0].refresh()
                 return self.bids[0].displayed_size
             else:
-                return self.bids[0].quantity
+                return self.bids[0].remaining
         else:
             return 0
         
@@ -128,7 +128,7 @@ cdef class OrderBook:
                 self.asks[0].refresh()
                 return self.asks[0].displayed_size
             else:
-                return self.asks[0].quantity
+                return self.asks[0].remaining
         else: 
             return 0
 

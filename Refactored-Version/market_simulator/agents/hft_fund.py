@@ -6,7 +6,6 @@ import random
 class HFTFund(ExecutionalTrader):
     def __init__(self, accountID, cash):
         super().__init__(accountID, cash)
-        self.intendedOrders = {}
 
     def tradeMicrostructure(self, ticker):
         self.cancelAllOrders(markets[ticker])

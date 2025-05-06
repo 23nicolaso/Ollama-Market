@@ -2682,6 +2682,10 @@ static int __pyx_pf_12sortedListOB_9OrderBook_5asset_2__set__(struct __pyx_obj_1
 static int __pyx_pf_12sortedListOB_9OrderBook_5asset_4__del__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_12sortedListOB_9OrderBook_10last_price___get__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self); /* proto */
 static int __pyx_pf_12sortedListOB_9OrderBook_10last_price_2__set__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_12sortedListOB_9OrderBook_8bid_size___get__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self); /* proto */
+static int __pyx_pf_12sortedListOB_9OrderBook_8bid_size_2__set__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_12sortedListOB_9OrderBook_8ask_size___get__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self); /* proto */
+static int __pyx_pf_12sortedListOB_9OrderBook_8ask_size_2__set__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static PyObject *__pyx_pf_12sortedListOB_9OrderBook_28__reduce_cython__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_12sortedListOB_9OrderBook_30__setstate_cython__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_12sortedListOB___pyx_unpickle_Order(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
@@ -8187,7 +8191,7 @@ static int __pyx_f_12sortedListOB_9OrderBook_get_best_bid_quantity(struct __pyx_
  *                 self.bids[0].refresh()
  *                 return self.bids[0].displayed_size             # <<<<<<<<<<<<<<
  *             else:
- *                 return self.bids[0].quantity
+ *                 return self.bids[0].remaining
  */
       __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_self->bids, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
@@ -8211,14 +8215,14 @@ static int __pyx_f_12sortedListOB_9OrderBook_get_best_bid_quantity(struct __pyx_
     /* "sortedListOrderBook.pyx":121
  *                 return self.bids[0].displayed_size
  *             else:
- *                 return self.bids[0].quantity             # <<<<<<<<<<<<<<
+ *                 return self.bids[0].remaining             # <<<<<<<<<<<<<<
  *         else:
  *             return 0
  */
     /*else*/ {
       __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_self->bids, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 121, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_quantity); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_remaining); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 121, __pyx_L1_error)
@@ -8237,7 +8241,7 @@ static int __pyx_f_12sortedListOB_9OrderBook_get_best_bid_quantity(struct __pyx_
   }
 
   /* "sortedListOrderBook.pyx":123
- *                 return self.bids[0].quantity
+ *                 return self.bids[0].remaining
  *         else:
  *             return 0             # <<<<<<<<<<<<<<
  * 
@@ -8490,7 +8494,7 @@ static int __pyx_f_12sortedListOB_9OrderBook_get_best_ask_quantity(struct __pyx_
  *                 self.asks[0].refresh()
  *                 return self.asks[0].displayed_size             # <<<<<<<<<<<<<<
  *             else:
- *                 return self.asks[0].quantity
+ *                 return self.asks[0].remaining
  */
       __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_self->asks, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 129, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
@@ -8514,14 +8518,14 @@ static int __pyx_f_12sortedListOB_9OrderBook_get_best_ask_quantity(struct __pyx_
     /* "sortedListOrderBook.pyx":131
  *                 return self.asks[0].displayed_size
  *             else:
- *                 return self.asks[0].quantity             # <<<<<<<<<<<<<<
+ *                 return self.asks[0].remaining             # <<<<<<<<<<<<<<
  *         else:
  *             return 0
  */
     /*else*/ {
       __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_self->asks, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_quantity); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 131, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_remaining); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 131, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 131, __pyx_L1_error)
@@ -8540,7 +8544,7 @@ static int __pyx_f_12sortedListOB_9OrderBook_get_best_ask_quantity(struct __pyx_
   }
 
   /* "sortedListOrderBook.pyx":133
- *                 return self.asks[0].quantity
+ *                 return self.asks[0].remaining
  *         else:
  *             return 0             # <<<<<<<<<<<<<<
  * 
@@ -13304,7 +13308,7 @@ static int __pyx_pf_12sortedListOB_9OrderBook_10net_volume_2__set__(struct __pyx
  *     cdef public int net_volume
  *     cdef public str asset             # <<<<<<<<<<<<<<
  *     cdef public double last_price
- *     cdef int bid_size, ask_size
+ *     cdef public int bid_size, ask_size
  */
 
 /* Python wrapper */
@@ -13417,7 +13421,7 @@ static int __pyx_pf_12sortedListOB_9OrderBook_5asset_4__del__(struct __pyx_obj_1
  *     cdef public int net_volume
  *     cdef public str asset
  *     cdef public double last_price             # <<<<<<<<<<<<<<
- *     cdef int bid_size, ask_size
+ *     cdef public int bid_size, ask_size
  *     cdef object bids, asks, market_buys, market_sells, update_queue
  */
 
@@ -13491,6 +13495,164 @@ static int __pyx_pf_12sortedListOB_9OrderBook_10last_price_2__set__(struct __pyx
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_AddTraceback("sortedListOB.OrderBook.last_price.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "sortedListOrderBook.pyx":99
+ *     cdef public str asset
+ *     cdef public double last_price
+ *     cdef public int bid_size, ask_size             # <<<<<<<<<<<<<<
+ *     cdef object bids, asks, market_buys, market_sells, update_queue
+ * 
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_12sortedListOB_9OrderBook_8bid_size_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_12sortedListOB_9OrderBook_8bid_size_1__get__(PyObject *__pyx_v_self) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_12sortedListOB_9OrderBook_8bid_size___get__(((struct __pyx_obj_12sortedListOB_OrderBook *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_12sortedListOB_9OrderBook_8bid_size___get__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__get__", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->bid_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 99, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("sortedListOB.OrderBook.bid_size.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_12sortedListOB_9OrderBook_8bid_size_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_12sortedListOB_9OrderBook_8bid_size_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_12sortedListOB_9OrderBook_8bid_size_2__set__(((struct __pyx_obj_12sortedListOB_OrderBook *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_12sortedListOB_9OrderBook_8bid_size_2__set__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  int __pyx_t_1;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_value); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 99, __pyx_L1_error)
+  __pyx_v_self->bid_size = __pyx_t_1;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("sortedListOB.OrderBook.bid_size.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_12sortedListOB_9OrderBook_8ask_size_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_12sortedListOB_9OrderBook_8ask_size_1__get__(PyObject *__pyx_v_self) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_12sortedListOB_9OrderBook_8ask_size___get__(((struct __pyx_obj_12sortedListOB_OrderBook *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_12sortedListOB_9OrderBook_8ask_size___get__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__get__", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->ask_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 99, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("sortedListOB.OrderBook.ask_size.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_12sortedListOB_9OrderBook_8ask_size_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_12sortedListOB_9OrderBook_8ask_size_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_12sortedListOB_9OrderBook_8ask_size_2__set__(((struct __pyx_obj_12sortedListOB_OrderBook *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_12sortedListOB_9OrderBook_8ask_size_2__set__(struct __pyx_obj_12sortedListOB_OrderBook *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  int __pyx_t_1;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_value); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 99, __pyx_L1_error)
+  __pyx_v_self->ask_size = __pyx_t_1;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("sortedListOB.OrderBook.ask_size.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
   return __pyx_r;
@@ -17173,6 +17335,34 @@ static int __pyx_setprop_12sortedListOB_9OrderBook_last_price(PyObject *o, PyObj
   }
 }
 
+static PyObject *__pyx_getprop_12sortedListOB_9OrderBook_bid_size(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_12sortedListOB_9OrderBook_8bid_size_1__get__(o);
+}
+
+static int __pyx_setprop_12sortedListOB_9OrderBook_bid_size(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_12sortedListOB_9OrderBook_8bid_size_3__set__(o, v);
+  }
+  else {
+    PyErr_SetString(PyExc_NotImplementedError, "__del__");
+    return -1;
+  }
+}
+
+static PyObject *__pyx_getprop_12sortedListOB_9OrderBook_ask_size(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_12sortedListOB_9OrderBook_8ask_size_1__get__(o);
+}
+
+static int __pyx_setprop_12sortedListOB_9OrderBook_ask_size(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_12sortedListOB_9OrderBook_8ask_size_3__set__(o, v);
+  }
+  else {
+    PyErr_SetString(PyExc_NotImplementedError, "__del__");
+    return -1;
+  }
+}
+
 static PyObject *__pyx_specialmethod___pyx_pw_12sortedListOB_9OrderBook_27__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
   return __pyx_pw_12sortedListOB_9OrderBook_27__repr__(self);
 }
@@ -17188,6 +17378,8 @@ static struct PyGetSetDef __pyx_getsets_12sortedListOB_OrderBook[] = {
   {(char *)"net_volume", __pyx_getprop_12sortedListOB_9OrderBook_net_volume, __pyx_setprop_12sortedListOB_9OrderBook_net_volume, (char *)0, 0},
   {(char *)"asset", __pyx_getprop_12sortedListOB_9OrderBook_asset, __pyx_setprop_12sortedListOB_9OrderBook_asset, (char *)0, 0},
   {(char *)"last_price", __pyx_getprop_12sortedListOB_9OrderBook_last_price, __pyx_setprop_12sortedListOB_9OrderBook_last_price, (char *)0, 0},
+  {(char *)"bid_size", __pyx_getprop_12sortedListOB_9OrderBook_bid_size, __pyx_setprop_12sortedListOB_9OrderBook_bid_size, (char *)0, 0},
+  {(char *)"ask_size", __pyx_getprop_12sortedListOB_9OrderBook_ask_size, __pyx_setprop_12sortedListOB_9OrderBook_ask_size, (char *)0, 0},
   {0, 0, 0, 0, 0}
 };
 #if CYTHON_USE_TYPE_SPECS

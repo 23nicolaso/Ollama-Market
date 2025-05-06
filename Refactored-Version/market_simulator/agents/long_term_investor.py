@@ -12,14 +12,14 @@ class LongTermInvestor(ExecutionalTrader):
 
     def trade(self, market):
         """In reality, they might have some kind of strategy, but here its really just random"""
-        quantity = random.randint(1, LT_INVESTOR_MAX_ORDER_SIZE)
+        quantity = random.randint(1000, LT_INVESTOR_MAX_ORDER_SIZE)
 
-        if random.random() < 0.001:
+        if random.random() < 0.01:
             # Buy random amount on random intervals
-            self.placeOrder(market, random.choice(["buy", "sell"]), market.last_price, quantity, "limit")
+            self.placeOrder(market, random.choice(["buy", "sell"]), market.last_price, quantity, "iceberg", 100)
     
     def tradeNews(self, ticker, sentiment_score, importance):
         if sentiment_score <= 0.1 and importance == 10: 
-            self.executeTradeInLegs(markets[ticker], "sell", 0, self.account.getPosition(ticker)*0.05) # panic sell lol
+            self.targetPosition(markets[ticker], "sell", markets[ticker].last_price, markets[ticker].last_price, self.account.getPosition(ticker) * 0.95)
         if sentiment_score >= 0.9 and importance == 10:
-            self.executeTradeInLegs(markets[ticker], "buy", 0, self.account.getPosition(ticker)*0.05) # full greed buying
+            self.targetPosition(markets[ticker], "buy", markets[ticker].last_price, markets[ticker].last_price, self.account.getPosition(ticker) * 1.05)

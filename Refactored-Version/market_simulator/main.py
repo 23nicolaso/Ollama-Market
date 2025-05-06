@@ -20,6 +20,7 @@ from market_simulator.agents.hft_fund import HFTFund
 from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.agents.long_term_investor import LongTermInvestor
 from market_simulator.agents.risk_on_risk_off import RiskOnRiskOffFirm
+from market_simulator.agents.llm_funds import LLMFund
 from market_simulator.gui.main_window import MainWindow
 from market_simulator.utils.market_utils import makeMarkets, markets, markov_model, update_price_history, spreads_by_market, accounts, news_queue
 from market_simulator.utils.news_generator import generate_news_thread, generate_chat_thread, init_agents
@@ -51,47 +52,49 @@ def run_simulation(root, main_window):
         6: "long_term_investor",
         7: "USER TRADER",
         8: "quant_firm",
-        9: "risk_on_off_firm"
+        9: "risk_on_off_firm",
+        10: "Ollama Fund",
+        11: "Gemma Fund"
     }
 
     markov_model.simulate_day()
-    release_time = int(time.time()) + 60*2
+    release_time = int(time.time()) + 60*10
 
     # Quant firms begin placing bets on where financial data will take markets
     quant_firm.place_bets(markov_model.get_noisy_state()['sector_performance'])
     risk_on_off_firm.risk_off()
+    ollama_fund.analyzeOutcomes()
+    gemma_fund.analyzeOutcomes()
     
-    # Gov Announces that Financial Data Will be Released in 5 mins
-    tts_this("A massive Economic Data release is coming in 5 minutes.", 0.5, 10)
+    # Gov Announces that Financial Data Will be Released in 10 mins
+    tts_this("A massive Economic Data release is coming in 10 minutes.", 0.5, 10)
 
     while True: 
         time.sleep(0.01)        
         simulation_age += 1
-
-        # for agent in accounts:
-        #     print(account_map[agent], ": ", accounts[agent].getPositions())
 
         for market in markets:
             market_maker.provideLiquidity(markets[market])
             market_maker.makeMarket(markets[market])
             retail_trader.trade(markets[market])
             retail_trader.shiftSentimentToMean()
+
             spy_arb_fund.arbitrage()
             ta_traders.manageTATrades(market)
             ta_traders.updatePositioning(market)
-            # hft_fund.updateOrdersInLegs(markets[market])
-            # hft_fund.tradeMicrostructure(market)
-            # hft_fund.refreshNBBOOrder(markets[market])
-            # long_term_investor.trade(markets[market])
-            # long_term_investor.updatePositioning(market)
 
-            # risk_on_off_firm.refreshNBBOOrder(markets[market])
+            hft_fund.updateOrdersInLegs(markets[market])
 
-            # mean_reversion_fund.calculate_target_positions()
-            # mean_reversion_fund.strategic_iceberg_update(markets[market], simulation_age)
-            # quant_firm.refreshNBBOOrder(markets[market])
+            long_term_investor.trade(markets[market])
+            long_term_investor.sniperAlgo(markets[market])
 
-            user_account.updatePositioning(market)
+            risk_on_off_firm.stealthAlgo(markets[market])
+            mean_reversion_fund.calculate_target_positions()
+            mean_reversion_fund.sniperAlgo(markets[market])
+            quant_firm.stealthAlgo(markets[market])
+            ollama_fund.opportunisticAlgo(markets[market])
+            gemma_fund.opportunisticAlgo(markets[market])
+            # quant_firm.sniperAlgo(markets[market])
 
             update_price_history(market, markets[market].last_price)
 
@@ -100,12 +103,28 @@ def run_simulation(root, main_window):
                 real_state = markov_model.get_economy_state()
                 release_time = None
                 
-                txt = f"Economic data released! Inflation comes in at {real_state['inflation']}, interest rate comes in at {real_state['interest_rate']}, unemployment at {real_state['unemployment']}, and economic growth is in a {real_state['economic_growth']}"
+                if real_state['inflation'] == 1:
+                    inflation_number = "up 2.9% YoY"
+                elif real_state['inflation'] == 2:
+                    inflation_number = "up 3.3% YoY"
+                else:
+                    inflation_number = "up 2.5% YoY"
+                
+                if real_state['interest_rate'] == 1:
+                    interest_state = "hold rates steady"
+                elif real_state['interest_rate'] == 2:
+                    interest_state = "increase rates by 25-50 BPS"
+                else:
+                    interest_state = "decrease rates by 25-50 BPS"
+
+                txt = f"Economic data released! CPI comes in at {inflation_number} and the federal reserve decided to {interest_state}"
                 news_queue.put(txt)
                 tts_this(txt, 1 if real_state["sector_performance"]["TECHNOLOGY"] > 0 else 0, 10)
 
                 mean_reversion_fund.set_market_return_profile(real_state['sector_performance'])
                 quant_firm.close_bets()
+                ollama_fund.tradeResult(txt)
+                gemma_fund.tradeResult(txt)
 
         # Update GUI components
         main_window.update_prices()
@@ -132,7 +151,7 @@ def main():
         makeMarkets()
         
         # Initialize agents
-        global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund, quant_firm, risk_on_off_firm
+        global retail_trader, hft_fund, mean_reversion_fund, ta_traders, market_maker, long_term_investor, spy_arb_fund, quant_firm, risk_on_off_firm, ollama_fund, gemma_fund
         retail_trader = RetailTrader(0, 1000000)
         hft_fund = HFTFund(1, 10000000)
         spy_arb_fund = SpyArbFund(2, 10000000)
@@ -142,9 +161,11 @@ def main():
         long_term_investor = LongTermInvestor(6, 10000000)
         quant_firm = HedgeFund(8, 10000000, "quant_firm")
         risk_on_off_firm = RiskOnRiskOffFirm(9, 10000000)
+        ollama_fund = LLMFund(10, 100000000, "Ollama Fund")
+        gemma_fund = LLMFund(11, 100000000, "Gemma Fund")
 
         # Initialize news generator with agents
-        init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund, risk_on_off_firm)
+        init_agents(retail_trader, hft_fund, market_maker, long_term_investor, mean_reversion_fund, risk_on_off_firm, ollama_fund, gemma_fund)
 
         # Start API server in a separate thread
         api_thread = threading.Thread(target=start_api_server)

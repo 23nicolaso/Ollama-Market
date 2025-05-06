@@ -7,7 +7,7 @@ class UserTrader(ExecutionalTrader):
 
     def execute_order(self, order):
         if order.order_type == "iceberg":
-            self.executeTradeInLegs(markets[order.market], order.direction, order.price, order.quantity)
+            self.placeOrder(markets[order.market], order.direction, order.price, order.quantity, order.order_type, 1000)
         elif order.order_type == "market":
             self.placeOrder(markets[order.market], order.direction, 0.01, order.quantity, order.order_type)
         else:
