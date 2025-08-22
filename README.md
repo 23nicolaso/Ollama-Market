@@ -13,7 +13,6 @@ This section expands on each of these components in depth.
 - Order book with functional limit, market orders
 - Iceberg-style orders for trading large volumes
 - Real-time price discovery based on supply and demand
-- Options ? (coming soon) 
 
 ### 👨‍💻 Trading Agents
 To emulate how a real stock market has many participants, Ollama-Market features multiple hard-coded trading algorithms. 
