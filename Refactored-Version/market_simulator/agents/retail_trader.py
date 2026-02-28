@@ -1,3 +1,4 @@
+import time
 import random
 import math
 from market_simulator.agents.base_agent import MarketAgent
@@ -9,6 +10,8 @@ class RetailTrader(MarketAgent):
         self.retailSentimentScore = {asset: 0.5 for asset in ASSETS}
         self.newsUrgency = 1
         self.tick_counter = 0
+        # Timestamp until which sentiment is held in the news direction before reverting
+        self.news_hold_until = 0.0
 
     def trade(self, orderBook):
         try:
@@ -44,18 +47,40 @@ class RetailTrader(MarketAgent):
                 if position - quantity > 0: 
                     self.placeOrder(orderBook, "sell", ask + diff, quantity, type)
 
+    def updateSentiment(self, asset, score):
+        """Sets retail sentiment for an asset directly from a news sentiment score (0-1)."""
+        if asset in self.retailSentimentScore:
+            self.retailSentimentScore[asset] = max(0.1, min(0.9, score))
+
     def setReversionUrgency(self, urgency):
         """Sets how quickly sentiment should revert to mean after news events"""
-        self.newsUrgency = max(1, urgency)
-        
+        # Cap the order-size multiplier at 3 to prevent oversized orders; the hold
+        # duration and reversion rate still use the full urgency value so high-impact
+        # news keeps retail directional for longer and reverts more slowly.
+        self.newsUrgency = max(1, min(3, urgency))
+        # Hold sentiment in the news direction for urgency*5 seconds before reverting.
+        # High-impact news (urgency 10) → 50-second persistence; minor (urgency 1) → 5 s.
+        self.news_hold_until = time.time() + urgency * 5
+
     def shiftSentimentToMean(self):
         """Gradually shifts both base sentiment and cyclical sentiment towards the mean"""
+        if time.time() < self.news_hold_until:
+            # Hold phase: keep sentiment directional with small momentum drift + noise.
+            # This simulates continued buying/selling pressure after the initial reaction.
+            for asset in self.retailSentimentScore:
+                current = self.retailSentimentScore[asset]
+                # Tiny push further in the news direction (momentum) plus random noise
+                momentum = (current - 0.5) * random.uniform(0.0005, 0.002)
+                noise = random.uniform(-0.001, 0.001)
+                self.retailSentimentScore[asset] = max(0.1, min(0.9, current + momentum + noise))
+            return
+
         for asset in self.retailSentimentScore:
             # Shift base sentiment towards mean
             current_base = self.retailSentimentScore[asset]
             base_shift = (0.5 - current_base) / (SENTIMENT_REVERSION_RATE * self.newsUrgency)
             self.retailSentimentScore[asset] += base_shift
-            
+
             # Ensure base sentiment stays within bounds
             self.retailSentimentScore[asset] = max(0.1, min(0.9, self.retailSentimentScore[asset]))
 

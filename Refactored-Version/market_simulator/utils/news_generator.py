@@ -134,6 +134,10 @@ def generate_news(custom_headline=None, explain_this=None):
         else:
             hft_sentiment_scores_dict[asset] = 0.5
 
+    # Feed per-asset sentiment into retail traders so the hold phase has directional content.
+    for asset in ASSETS:
+        _retail_trader.updateSentiment(asset, sentiment_scores_dict[asset])
+
     tts_this(headline, sentiment_scores_dict["SPY"], urgency_score)
     mm.update_on_sentiment(round(sentiment_scores_dict["SPY"],1), urgency_score)
     _market_maker.newsUpdate(urgency_score)

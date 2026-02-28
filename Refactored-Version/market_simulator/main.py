@@ -159,7 +159,7 @@ def run_simulation(root, main_window):
             quant_firm.opportunisticAlgo(markets[market])
 
             mean_reversion_fund.calculate_target_positions()
-            mean_reversion_fund.sniperAlgo(markets[market])
+            mean_reversion_fund.opportunisticAlgo(markets[market])
             market_maker.provideLiquidity(markets[market])
             market_maker.makeMarket(markets[market])
 

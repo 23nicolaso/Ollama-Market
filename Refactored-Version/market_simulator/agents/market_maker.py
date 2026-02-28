@@ -1,24 +1,36 @@
+import time
 from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.utils.market_utils import price_history
 from market_simulator.config import MM_POSITION_LIMIT, MM_BASE_ORDER_SIZE, MM_DEPTH, NEARBY_RANGE
 import random
 
+# Half-life for post-news spread widening (seconds).
+# Spreads will be noticeably elevated for roughly 3× this duration.
+_NEWS_SPREAD_HALFLIFE = 30.0
+
 class MarketMaker(SpyArbFund):
     def __init__(self, accountID, cash, spreads):
         super().__init__(accountID, cash)
         self.spreads = spreads
-        self.news_vol = 1;
+        self._news_peak = 1.0       # peak news_vol set by the last newsUpdate call
+        self._news_update_ts = 0.0  # wall-clock time of that call
 
     def wipeAllOrders(self, orderBook):
         self.cancelAllOrders(orderBook)
 
     def newsUpdate(self, importance):
-        self.news_vol = importance; 
+        self._news_peak = float(importance)
+        self._news_update_ts = time.time()
+
+    def _current_news_vol(self):
+        """Exponentially decayed news volatility factor (half-life = _NEWS_SPREAD_HALFLIFE s)."""
+        elapsed = time.time() - self._news_update_ts
+        decay = 0.5 ** (elapsed / _NEWS_SPREAD_HALFLIFE)
+        return max(1.0, self._news_peak * decay)
 
     def makeMarket(self, orderBook):
         # Get current market state
         self.wipeAllOrders(orderBook)
-        self.news_vol-=0.01;
 
         # Calculate base spread
         baseSpread = self.spreads[orderBook.asset]
@@ -37,7 +49,7 @@ class MarketMaker(SpyArbFund):
         mean = price_history[orderBook.asset].mean()
         std = price_history[orderBook.asset].std()
         
-        volatility_factor = max(min(20.0, max(1.0, (std / mean) * 1000)), self.news_vol)
+        volatility_factor = max(min(20.0, max(1.0, (std / mean) * 1000)), self._current_news_vol())
 
         # Adjust base spread for volatility
         baseSpread = baseSpread * volatility_factor

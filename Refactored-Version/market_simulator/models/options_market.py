@@ -12,6 +12,11 @@ RISK_FREE = 0.05                        # 5% risk-free rate
 # behaves like ~6 calendar days, so OTM options are worth cents to dollars).
 SECS_PER_YEAR = 315360 # in 10x speed of reality
 
+def _spy_vol():
+    from market_simulator.utils.market_utils import price_history
+    std = price_history["SPY"].std(n=100)
+    mean = price_history["SPY"].mean(n=100)
+    return min(10.0, max(1.0, (std / mean) * 1000)) * SIGMA
 
 def _spy_price():
     """Lazily import to avoid circular imports at module load time."""
@@ -49,8 +54,8 @@ class OptionsMarket:
     def _get_chain_row(self, strike, expiry):
         S = _spy_price()
         T = self._time_remaining(expiry) / SECS_PER_YEAR
-        c_mid, c_delta, c_gamma, c_theta, c_vega = bs_price(S, strike, T, RISK_FREE, SIGMA, 'call')
-        p_mid, p_delta, p_gamma, p_theta, p_vega = bs_price(S, strike, T, RISK_FREE, SIGMA, 'put')
+        c_mid, c_delta, c_gamma, c_theta, c_vega = bs_price(S, strike, T, RISK_FREE, _spy_vol(), 'call')
+        p_mid, p_delta, p_gamma, p_theta, p_vega = bs_price(S, strike, T, RISK_FREE, _spy_vol(), 'put')
 
         half = MM_SPREAD_PCT / 2
         return {
@@ -83,7 +88,7 @@ class OptionsMarket:
             if eid not in self.expiries or qty == 0:
                 continue
             T = self._time_remaining(self.expiries[eid]) / SECS_PER_YEAR
-            _, delta, _, _, _ = bs_price(S, strike, T, RISK_FREE, SIGMA, opt_type)
+            _, delta, _, _, _ = bs_price(S, strike, T, RISK_FREE, _spy_vol(), opt_type)
             total += delta * qty * CONTRACT_SIZE
         self.mm_net_delta = total
 
@@ -120,7 +125,7 @@ class OptionsMarket:
         expiry = self.expiries[expiry_id]
         T = self._time_remaining(expiry) / SECS_PER_YEAR
         S = _spy_price()
-        mid, delta, _, _, _ = bs_price(S, strike, T, RISK_FREE, SIGMA, option_type)
+        mid, delta, _, _, _ = bs_price(S, strike, T, RISK_FREE, _spy_vol(), option_type)
 
         half = MM_SPREAD_PCT / 2
         if direction == 'buy':
@@ -184,7 +189,7 @@ class OptionsMarket:
             if qty == 0 or eid not in self.expiries:
                 continue
             T = self._time_remaining(self.expiries[eid]) / SECS_PER_YEAR
-            price, delta, gamma, theta, vega = bs_price(S, strike, T, RISK_FREE, SIGMA, opt_type)
+            price, delta, gamma, theta, vega = bs_price(S, strike, T, RISK_FREE, _spy_vol(), opt_type)
             half = MM_SPREAD_PCT / 2
             mid_value = price * abs(qty) * CONTRACT_SIZE
             result.append({

@@ -24,7 +24,4 @@ class LongTermInvestor(ExecutionalTrader):
             self.placeOrder(market, random.choice(["buy", "sell"]), market.last_price, quantity, "iceberg", 100)
     
     def tradeNews(self, ticker, sentiment_score, importance):
-        if sentiment_score <= 0.1 and importance == 10: 
-            self.targetPosition(markets[ticker], "sell", markets[ticker].last_price-1, markets[ticker].last_price-1, int(self.account.getPosition(ticker) // 100))
-        if sentiment_score >= 0.9 and importance == 10:
-            self.targetPosition(markets[ticker], "buy", markets[ticker].last_price+1, markets[ticker].last_price+1, int(self.account.getPosition(ticker) // 100))
+        return
