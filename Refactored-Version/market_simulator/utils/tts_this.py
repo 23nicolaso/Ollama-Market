@@ -1,6 +1,5 @@
 import sounddevice as sd
 from kokoro import KPipeline
-from IPython.display import display, Audio
 import re
 from threading import Thread, Lock
 from market_simulator.utils.market_utils import invoke_model
@@ -19,7 +18,6 @@ tts_thread = None
 stop_signal = False
 thread_lock = Lock()
 person = "af_bella"
-person2 = "am_eric"
 person_swap = False
 first_text = True
 
@@ -37,13 +35,10 @@ def tts_this(text, sentiment = None, importance = None):
         elif sentiment <= 0.2:
             sentiment_str = "sell off harshly"
         elif sentiment == 0.5:
-            sentiment_str = "chop sideways"
+            sentiment_str = "be highly volatile"
         else:
             sentiment_str = "drift down"
         text = f'{text}. Our analysts expect markets to {sentiment_str} after the news.'
-        text += "" 
-    else:
-        text = text
     with thread_lock:
         stop_signal = True  # Request current thread to stop
         if tts_thread and tts_thread.is_alive():
@@ -54,7 +49,6 @@ def tts_this(text, sentiment = None, importance = None):
         tts_thread.start()
 
 def run_tts_queue(text):
-    return
     start_conversation(text)
 
 def stream_paragraphs(text = None, responding_mode = False):
@@ -62,84 +56,110 @@ def stream_paragraphs(text = None, responding_mode = False):
     STATE_STRING = get_state_string()
     return_context = price_history["SPY"].getPercentageChange()
     return_str = "up "+ str(round(return_context,2)) + " percent for the day. " if return_context>0 else "down " + str(round(return_context,2)) + " percent for the day. "
+    short_term_str = "SHORT TERM PRICE CHANGE: " + "DROPPING" if price_history["SPY"].getPriceChange(n=50) < 0 else "GOING UP"
     response_styles = [
-        "Build on the idea and give a concrete market example.",
-        "Challenge the previous point directly and offer a counter-theory.",
-        "Introduce a new economic metaphor and explain how it applies.",
-        "Summarize the discussion so far and suggest a next topic.",
-        "Compare current events to historical financial trends.",
-        "Give your prediction on where markets are headed."
+        "Build on the idea with a concrete real-world market example",
+        "Directly challenge the previous point with a counter-theory",
+        "Partially agree but reframe the conclusion",
+        "Compare the situation to a historical market analog",
+        "Explain why this time may be different from past examples",
+        "Translate macroeconomic data into market impact",
+        "Break down the move using market microstructure",
+        "Explain the role of liquidity and positioning",
+        "Speculate on institutional positioning and intent",
+        "Invent realistic retail trading flow and sentiment data",
+        "Describe how retail traders are emotionally reacting",
+        "Explain how social media finance discourse is shifting",
+        "Compare results to analyst expectations and consensus",
+        "Explain why expectations mattered more than the headline",
+        "Explain why the market sold off on good news or rallied on bad news",
+        "Argue the strongest bull case possible",
+        "Argue the strongest bear case possible",
+        "Identify what the market is mispricing or ignoring",
+        "Explain how options flow and gamma exposure affect price action",
+        "Speculate on hedge fund chatter and internal narratives",
+        "Explain how passive flows or rebalancing influence price",
+        "Discuss algorithmic trading amplification effects",
+        "Frame the move within a broader market narrative",
+        "Describe the psychological state of market participants",
+        "Explain how recent wins or losses bias trader behavior",
+        "Suggest a cautious trade expression",
+        "Suggest an aggressive trade expression",
+        "Suggest a contrarian trade expression",
+        "Explain why staying on the sidelines may be optimal",
+        "Describe risk factors that could break the thesis",
+        "Identify upcoming catalysts or inflection points",
+        "Predict short-term market reaction",
+        "Predict medium-term market consequences",
+        "Present a low-probability, high-impact scenario",
+        "Respond as if debating another commentator live",
+        "Summarize the thesis in a punchy on-air soundbite",
+        "End with an unresolved question to maintain tension",
+        "Reinterpret the same data through a different lens",
+        "Explain who benefits and who loses from this move",
+        "Compare this asset’s behavior to related sectors or peers",
+        "Explain how monetary policy regime affects interpretation",
+        "Describe how volatility itself is influencing decisions",
+        "Explain how positioning could cause a squeeze or unwind",
+        "Call out a popular narrative as misleading or lazy",
+        "Highlight second-order and third-order effects",
+        "Speculate on what smart money might do next",
+        "Explain why the next data point matters more than this one"
     ]
     chosen_style = random.choice(response_styles)
 
     global last_text
     if responding_mode:
-        cohost_name = "Bella Pearl" if not person_swap else "Eric Cartman"
-        personality = """Eric, The Excitable Veteran.
-            Personality: Eric is an enthusiastic, slightly over-the-top market commentator who’s seen it all and loves dramatizing market moves. He loves making bold (and sometimes wrong) predictions. Deep down, though, he’s knowledgeable and loves explaining market behavior.
-            Speech style: Fast-talking, hyperbolic, peppered with jokes.
-            """ if not person_swap else """Bella, The Sharp, Witty Analyst.
-            Personality: Bella is sharp, witty, and tends to be a voice of reason. She’s a younger, highly skilled analyst with a bit of a sarcastic streak. 
-            Speech style: Calm, confident, analytical — with a touch of dry humor and occasional savage one-liners.
-        """
+        personality = """Bella is an enthusiastic, slightly over-the-top market commentator who’s seen it all and loves dramatizing market moves. He loves making bold (and sometimes wrong) predictions. """
         response = model.chat(
             model=LLM_MODEL,
             messages=[{'role': 'user', 'content':
                 f"""{STATE_STRING}
-                You are an economic commentator for the market mayhem livestream. You are {personality}. The S&P 500 is currently {return_str}.
-                Your cohost, {cohost_name} just said:
+                PERSONALITY:{personality}
+                S&P 500 DAILY % CHANGE: {return_str}
+                {short_term_str}
+                The last thing you said was:
                 {last_text}.
-                Try to be concise, and respond using the following instruction: {chosen_style}
+                DIALOG CONTINUATION STYLE: {chosen_style}.
                 
-                Respond only with plain dialogue text. Do not include any stage directions, emotions in parentheses, tone indicators, or non-verbal actions.
+                Continue the conversation with plain dialogue text. Do not include any stage directions, emotions in parentheses, tone indicators, or non-verbal actions.
                 """
                 }],
             stream=True
         )
 
     elif text:
-        cohost_name = "Bella Pearl" if not person_swap else "Eric Cartman"
-        personality = """Eric, The Excitable Veteran.
-            Personality: Eric is an enthusiastic, slightly over-the-top market commentator who’s seen it all. He loves making bold (and sometimes wrong) predictions. Deep down, though, he’s knowledgeable and loves teaching casual players about market behavior.
-            Speech style: Fast-talking, hyperbolic, peppered with jokes.
-            """ if not person_swap else """Bella, The Sharp, Witty Analyst.
-            Personality: Bella is sharp, witty, and tends to be a voice of reason. She’s a younger, highly skilled analyst with a bit of a sarcastic streak. While Eric gets hyped, Bella brings in cool-headed, data-driven insights.
-            Speech style: Calm, confident, analytical — with a touch of dry humor and occasional savage one-liners.
-        """
+        personality = """Bella is an enthusiastic, slightly over-the-top market commentator who’s seen it all and loves dramatizing market moves. He loves making bold (and sometimes wrong) predictions. """
         response = model.chat(
             model=LLM_MODEL,
             messages=[{'role': 'user', 'content': 
                 f"""
+                URGENT BREAKING NEWS: {text}, 
                 {STATE_STRING}
-                You are an economic commentator for the market mayhem livestream. You are {personality} 
-                You should explain whatever you are seeing and its implications. Market Mayhem aims to summarize all financial news and information
-                to make it easy for traders to understand the markets. 
-                Respond only with plain dialogue text. Do not include any stage directions, emotions in parentheses, tone indicators, or non-verbal actions.
-
-                Here's some new content that you should talk about, start the discussion about it, and your cohost, {cohost_name}, will respond to you:
-                {text}
+                PERSONALITY:{personality}
+                S&P 500 DAILY % CHANGE: {return_str}
+                {short_term_str}
+                DIALOG CONTINUATION STYLE: {chosen_style}.
+                
+                Explain the significance of the news. Do not include any stage directions, emotions in parentheses, tone indicators, or non-verbal actions.
                 """
                 }],
             stream=True
         )
     else:
-        cohost_name = "Bella Pearl" if not person_swap else "Eric Cartman"
         response = model.chat(
             model=LLM_MODEL,
             messages=[{'role': 'user', 'content': 
                 f"""
-                {STATE_STRING} 
-                You are an economic commentator who covers the activity in the simulated Ollama Market in your livestream. 
-                Your content is analytical, and should explain whatever you are seeing and its implications.
-                Respond only with plain dialogue text. Do not include any stage directions, emotions in parentheses, tone indicators, or non-verbal actions.
-
-                Your cohost, {cohost_name} just said the following:
+                {STATE_STRING}
+                PERSONALITY:{personality}
+                S&P 500 DAILY % CHANGE: {return_str}
+                {short_term_str}
+                The last thing you said was:
                 {last_text}.
+                DIALOG CONTINUATION STYLE: {chosen_style}.
                 
-                Try to build off your cohost’s point, introduce a new angle or data point, and ask a question that invites debate or deeper exploration.
-                If you disagree with their interpretation, say so and explain why.
-
-                For additional context, the S&P 500 is currently {return_str}
+                Continue the conversation with plain dialogue text. Do not include any stage directions, emotions in parentheses, tone indicators, or non-verbal actions.
                 """
                 }],
             stream=True
@@ -148,10 +168,10 @@ def stream_paragraphs(text = None, responding_mode = False):
     global first_text
     buffer = ""
     if first_text:
-        buffer = "Welcome to Ollama Market's favorite livestream, Market Mayhem. This is your host Eric Cartman, and my cohost Bella Pearl, reporting on the news! "
+        buffer = "Welcome to Ollama Market's favorite livestream, Market Mayhem. This is your host Bella Cartman, reporting on the news! "
         first_text = False
     if text:
-        buffer += "We just recieved the news that "
+        buffer += "BREAKING NEWS, "
         buffer += text
     for chunk in response:
         content = chunk['message']['content']
@@ -188,30 +208,23 @@ def tts_queue(text=None, responding_mode=False):
                 break
 
             if response:
-                print(response)
-                if not response == "":
-                    last_text = response
-                stream = pipeline(response, voice=person if person_swap else person2, speed=1.2, split_pattern=r'\n+')
+                last_text = response
+                stream = pipeline(response, voice=person, speed=1.1, split_pattern=r'\n+')
 
-                for i, (gs, ps, audio) in enumerate(stream):
+                for _, (_, _, audio) in enumerate(stream):
                     if stop_signal:
                         sd.stop()
                         break
 
-                    print(i, gs, ps)
                     sd.play(audio, 24000)
                     sd.wait()
     finally:
         isTalking = False
-        print("done speaking")
 
 def start_conversation(initial_text):
-    global person_swap
-    
     # Initial speaker
     tts_queue(initial_text, responding_mode=False)
-    
-    # Start the conversation loop
+
+    # Continue the conversation loop until externally interrupted
     while not stop_signal:
-        person_swap = not person_swap
         tts_queue(responding_mode=True)

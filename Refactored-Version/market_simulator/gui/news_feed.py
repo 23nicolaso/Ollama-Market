@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import queue
-from market_simulator.utils.market_utils import news_queue, chat_queue
-from market_simulator.web.server import emit_news, emit_chat  # Import the emit function
+from market_simulator.utils.market_utils import news_queue
+from market_simulator.web.server import emit_news  # chat is drained by _broadcast_loop
 
 class NewsFeedFrame(ttk.Frame):
     def __init__(self, parent):
@@ -52,19 +52,8 @@ class NewsFeedFrame(ttk.Frame):
             self.after(100, self._update_news_feed)
 
     def _update_chat_window(self):
-        """Internal method to update chat window"""
-        try:
-            while True:
-                message = chat_queue.get_nowait()
-                self.chat_window.insert(tk.END, f"{message}\n\n")
-                self.chat_window.see(tk.END)
-                # Emit the chat message to web clients
-                emit_chat(message)
-        except queue.Empty:
-            pass
-        finally:
-            # Schedule next update using instance method
-            self.after(100, self._update_chat_window)
+        """No-op: chat is now drained and emitted by _broadcast_loop in main.py."""
+        pass
 
     def add_news(self, headline):
         """Add news to the queue"""

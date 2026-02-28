@@ -17,9 +17,13 @@ class ChartFrame(ttk.Frame):
     def update_chart(self, asset, num_points=10):
         self.ax.clear()
         try:
-            self.ax.plot(price_history[asset].get()[:num_points])
-        except:
-            self.ax.plot(price_history[asset].get())
+            num_points = int(num_points)
+            prices = price_history[asset].getLastNPrices(num_points)
+            if len(prices) == 0:
+                prices = price_history[asset].get()
+            self.ax.plot(prices)
+        except (KeyError, ValueError):
+            pass
         self.ax.set_title(f"{asset} Price History")
         self.ax.set_xlabel("Time")
         self.ax.set_ylabel("Price")

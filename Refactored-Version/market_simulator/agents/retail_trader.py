@@ -29,18 +29,20 @@ class RetailTrader(MarketAgent):
 
         sentiment_diff = abs(final_sentiment - 0.5)  # How far sentiment is from neutral
         base_quantity = random.randint(1, RETAIL_MAX_ORDER_SIZE)
-        s_quantity = int(base_quantity * (1 + sentiment_diff * 4))  # Scale up quantity based on sentiment difference
+        s_quantity = int(base_quantity * (1 + sentiment_diff * 4) * self.newsUrgency)  # Scale up quantity based on sentiment difference
         position = self.account.getPosition(orderBook.asset)
         type = random.choice(["market","limit"])
-        quantity = s_quantity if type == "market" else s_quantity // 2
+        quantity = s_quantity 
+        diff = random.choice([-0.02, -0.01, 0, 0.01, 0.02])
 
         if quantity > 0:
+            # trades can get crowded out :)
             if direction == "buy":
                 if position + quantity < RETAIL_POSITION_LIMIT:
-                    self.placeOrder(orderBook, "buy", round(random.uniform(math.floor(bid),bid),2), quantity, type)
+                    self.placeOrder(orderBook, "buy", bid - diff, quantity, type)
             else:
                 if position - quantity > 0: 
-                    self.placeOrder(orderBook, "sell", round(random.uniform(ask, math.ceil(ask)), 2), quantity, type)
+                    self.placeOrder(orderBook, "sell", ask + diff, quantity, type)
 
     def setReversionUrgency(self, urgency):
         """Sets how quickly sentiment should revert to mean after news events"""

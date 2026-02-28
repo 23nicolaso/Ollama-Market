@@ -2,11 +2,12 @@ import threading
 import re
 from market_simulator.utils.market_utils import markov_model as mm
 from market_simulator.utils.tts_this import tts_this
-from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, markets
+from market_simulator.utils.market_utils import invoke_model, recentHeadlines, news_queue, chat_queue, action_queue, markets
 from market_simulator.config import (
     WORLD_CONTEXT, NEWS_GENERATION_PROMPT, SENTIMENT_ANALYSIS_PROMPT,
     URGENCY_ANALYSIS_PROMPT, ASSETS, SENTIMENT_ANALYSIS_PROMPT_HFT, EXPLANATION_NEWS_PROMPT,
-    STATE_PROMPT, set_state_string
+    STATE_PROMPT, set_state_string, get_state_string,
+    CHAT_ANALYSIS_PROMPT, CHAT_PERSONAS
 )
 
 # Global variables to store agent references
@@ -38,10 +39,10 @@ def generate_news(custom_headline=None, explain_this=None):
         headline = custom_headline
     else:
         if explain_this:
-
             headline = invoke_model(
                 EXPLANATION_NEWS_PROMPT.format(
                     world_context=WORLD_CONTEXT,
+                    state_string=get_state_string(),
                     update=explain_this
                 )
             )
@@ -49,7 +50,7 @@ def generate_news(custom_headline=None, explain_this=None):
             headline = invoke_model(
                 NEWS_GENERATION_PROMPT.format(
                     world_context=WORLD_CONTEXT,
-                    recent_headlines=recentHeadlines
+                    state_string=get_state_string(),
                 )
             )
     recentHeadlines.append(headline)
@@ -60,6 +61,7 @@ def generate_news(custom_headline=None, explain_this=None):
     sentiment_scores = invoke_model(
         SENTIMENT_ANALYSIS_PROMPT.format(
             world_context=WORLD_CONTEXT,
+            state_string=get_state_string(),
             headline=recentHeadlines[-1],
             assets=", ".join(ASSETS)
         )
@@ -68,6 +70,7 @@ def generate_news(custom_headline=None, explain_this=None):
     hft_sentiment_scores = invoke_model(
         SENTIMENT_ANALYSIS_PROMPT_HFT.format(
             world_context=WORLD_CONTEXT,
+            state_string=get_state_string(),
             headline=recentHeadlines[-1],
             assets=", ".join(ASSETS)
         )
@@ -82,24 +85,21 @@ def generate_news(custom_headline=None, explain_this=None):
 
     updated_state_string = invoke_model(
         STATE_PROMPT.format(
+            state_string=get_state_string(),
             headline=recentHeadlines[-1]
         )
     )
     set_state_string(updated_state_string)
-    print(updated_state_string)
-    print(headline, sentiment_scores, urgency_score)
 
     try:
         urgency_score = int(re.search(r'\d+', urgency_score).group())
-    except:
-        print("Error parsing urgency score")
+    except (AttributeError, ValueError):
         urgency_score = 1
 
     _retail_trader.setReversionUrgency(urgency_score)
     news_queue.put(str(urgency_score) + " " + headline)
 
     # Parse the sentiment score response
-    print(sentiment_scores)
     pattern = r'(\w[\w\s]*):\s*([\d.]+)' # apply regex to the sentiment scores
     sentiment_scores_dict = {}
     hft_sentiment_scores_dict = {}
@@ -115,6 +115,7 @@ def generate_news(custom_headline=None, explain_this=None):
             retry_sentiment = invoke_model(
                 SENTIMENT_ANALYSIS_PROMPT.format(
                     world_context=WORLD_CONTEXT,
+                    state_string=get_state_string(),
                     headline=recentHeadlines[-1],
                     assets=asset
                 )
@@ -133,15 +134,16 @@ def generate_news(custom_headline=None, explain_this=None):
         else:
             hft_sentiment_scores_dict[asset] = 0.5
 
-    _retail_trader.retailSentimentScore = sentiment_scores_dict
     tts_this(headline, sentiment_scores_dict["SPY"], urgency_score)
     mm.update_on_sentiment(round(sentiment_scores_dict["SPY"],1), urgency_score)
-
+    _market_maker.newsUpdate(urgency_score)
     # Simulate HFT trading the news
     for market in markets:
         _market_maker.makeMarket(markets[market])
-        _hft_fund.tradeTheNews(market, hft_sentiment_scores_dict[market])
-        _retail_trader.trade(markets[market])
+        hft_score = hft_sentiment_scores_dict[market]
+        _hft_fund.tradeTheNews(market, hft_score)
+        direction = "BUY" if hft_score > 0.5 else "SELL"
+        action_queue.put(f"HFT: {direction} {market} on news (score {hft_score:.2f})")
         _long_term_investor.tradeNews(market, sentiment_scores_dict[market], urgency_score)
 
     _ollama_fund.analyzeAndTradeNews(headline)
@@ -155,15 +157,18 @@ def generate_news(custom_headline=None, explain_this=None):
     _mean_reversion_fund.set_market_return_profile(mm.get_economy_state()['sector_performance'])
     
 def generate_chat():
-    """Generates chat messages about market conditions"""
-    return
-    # chat = invoke_model(
-    #     CHAT_ANALYSIS_PROMPT.format(
-    #         recent_headline=recentHeadlines
-    #     )
-    # )
-    # print(f"Chat: {chat}")
-    # chat_queue.put(chat)
+    """Generates an AI persona chat message and posts it to chat_queue."""
+    import random
+    persona = random.choice(CHAT_PERSONAS)
+    recent_headline = recentHeadlines[-1] if recentHeadlines else ""
+    message = invoke_model(
+        CHAT_ANALYSIS_PROMPT.format(
+            persona=persona,
+            recent_headline=recent_headline,
+            state_string=get_state_string(),
+        )
+    )
+    chat_queue.put(f"[{persona}] {message}")
 
 def generate_news_thread(headline=None, explain_this=None):
     """Creates a thread to generate news"""

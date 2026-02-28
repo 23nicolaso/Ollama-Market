@@ -51,8 +51,8 @@ model_lock = threading.Lock()
 def update_price_history(asset, price):
     if asset in price_history:
         price_history[asset].append(price)
-        if len(price_history[asset]) > 1000:
-            price_history[asset] = price_history[asset][-1000:]
+        if len(price_history[asset]) > 5000:
+            price_history[asset] = price_history[asset][-5000:]
     else:
         price_history[asset] = [price]
 

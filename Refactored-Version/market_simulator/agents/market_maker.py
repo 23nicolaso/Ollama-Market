@@ -1,18 +1,24 @@
 from market_simulator.agents.spy_arb_fund import SpyArbFund
 from market_simulator.utils.market_utils import price_history
 from market_simulator.config import MM_POSITION_LIMIT, MM_BASE_ORDER_SIZE, MM_DEPTH, NEARBY_RANGE
+import random
 
 class MarketMaker(SpyArbFund):
     def __init__(self, accountID, cash, spreads):
         super().__init__(accountID, cash)
         self.spreads = spreads
+        self.news_vol = 1;
 
     def wipeAllOrders(self, orderBook):
         self.cancelAllOrders(orderBook)
 
+    def newsUpdate(self, importance):
+        self.news_vol = importance; 
+
     def makeMarket(self, orderBook):
         # Get current market state
         self.wipeAllOrders(orderBook)
+        self.news_vol-=0.01;
 
         # Calculate base spread
         baseSpread = self.spreads[orderBook.asset]
@@ -31,7 +37,7 @@ class MarketMaker(SpyArbFund):
         mean = price_history[orderBook.asset].mean()
         std = price_history[orderBook.asset].std()
         
-        volatility_factor = min(5.0, max(1.0, (std / mean) * 1000))
+        volatility_factor = max(min(20.0, max(1.0, (std / mean) * 1000)), self.news_vol)
 
         # Adjust base spread for volatility
         baseSpread = baseSpread * volatility_factor
@@ -39,16 +45,13 @@ class MarketMaker(SpyArbFund):
         # Calculate inventory skew
         current_position = self.account.getPosition(orderBook.asset)
         position_threshold = 0.25 * MM_POSITION_LIMIT
-        skew_factor = 0
+        midPrice += random.choice([-baseSpread, 0, baseSpread])
         
-        if current_position > position_threshold:
-            # Long inventory - skew down
-            skew_factor = min(1.0, (current_position - position_threshold) / MM_POSITION_LIMIT)
-            midPrice = midPrice * (1 - skew_factor * 0.01)  # Reduce mid price by up to 1%
-        elif current_position < -position_threshold:
+        if current_position > 0:
+            midPrice -= baseSpread * int(current_position/position_threshold)
+        elif current_position < 0:
             # Short inventory - skew up
-            skew_factor = min(1.0, abs(current_position + position_threshold) / MM_POSITION_LIMIT)
-            midPrice = midPrice * (1 + skew_factor * 0.01)  # Increase mid price by up to 1%
+            midPrice += baseSpread * int(current_position/-position_threshold) 
 
         bidPrice = round(midPrice - (baseSpread), 2)
         askPrice = round(midPrice + (baseSpread), 2)
@@ -56,10 +59,10 @@ class MarketMaker(SpyArbFund):
         for i in range(MM_DEPTH):
             layerSize = int(MM_BASE_ORDER_SIZE * (i + 1))
     
-            bidLayerPrice = round(bidPrice - (0.01 * i), 2)
+            bidLayerPrice = round(bidPrice - (0.01 * i * volatility_factor), 2)
             self.placeOrder(orderBook, "buy", bidLayerPrice, layerSize, "limit")
         
-            askLayerPrice = round(askPrice + (0.01 * i), 2)
+            askLayerPrice = round(askPrice + (0.01 * i * volatility_factor), 2)
             self.placeOrder(orderBook, "sell", askLayerPrice, layerSize, "limit")
 
     def provideLiquidity(self, orderBook):
@@ -73,3 +76,13 @@ class MarketMaker(SpyArbFund):
         if remaining_urgent_sells > 0:
             price_change = self.spreads[orderBook.asset] * remaining_urgent_sells / (MM_DEPTH*MM_BASE_ORDER_SIZE*10)
             self.placeOrder(orderBook, "buy", orderBook.last_price - round(price_change, 2), remaining_urgent_sells, "limit")
+
+    def hedge_options_delta(self, options_mkt):
+        """Delta-hedge the MM's options exposure by targeting a SPY spot position."""
+        from market_simulator.utils.market_utils import markets as _markets
+        spy = _markets["SPY"]
+        target = int(options_mkt.mm_net_delta)
+        if target >= 0:
+            self.targetPosition(spy, "buy", spy.last_price, spy.last_price, target, True)
+        else:
+            self.targetPosition(spy, "sell", spy.last_price, spy.last_price, 0, True)

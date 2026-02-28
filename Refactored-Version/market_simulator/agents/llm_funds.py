@@ -1,12 +1,18 @@
 from market_simulator.agents.executional_trader import ExecutionalTrader
-from market_simulator.config import ASSETS, NUM_SHARES
-from market_simulator.utils.market_utils import invoke_model, markets
+from market_simulator.config import ASSETS, INITIAL_PRICES
+from market_simulator.utils.market_utils import invoke_model, markets, action_queue
 
 class LLMFund(ExecutionalTrader):
     def __init__(self, accountID, cash, firm_id):
         super().__init__(accountID, cash)
+        # Start with 30% of capital spread across all assets (dollar-budget, cash deducted)
+        budget_per_asset = int(cash * 0.3 / len(ASSETS))
         for asset in ASSETS:
-            self.account.addPosition(asset, int(0.0001 * NUM_SHARES[asset])) # Start with 0.01% of shares for each asset
+            shares = int(budget_per_asset / INITIAL_PRICES[asset])
+            if shares > 0:
+                cost = shares * INITIAL_PRICES[asset]
+                self.account.addPosition(asset, shares)
+                self.account.addPosition("CASH", -cost)
 
         self.firm_id = firm_id
         self.report_txt = ""
@@ -160,7 +166,8 @@ class LLMFund(ExecutionalTrader):
         
     def modify_position(self, asset: str, percent: float):
         self.targetPosition(markets[asset], "buy" if percent > 0 else "sell", markets[asset].last_price, markets[asset].last_price, int(self.getPosition(asset) * (1+percent)), False)
-        print(f"{self.firm_id} is changing their position in {asset} by {percent*100}%")
+        direction = "BUY" if percent > 0 else "SELL"
+        action_queue.put(f"{self.firm_id}: {direction} {asset} ({percent*100:+.1f}%) @ ${markets[asset].last_price:.2f}")
 
     def tradeResult(self, data):
         call_gen_prompt = f'''Right now it is time for Post-Release Positioning.

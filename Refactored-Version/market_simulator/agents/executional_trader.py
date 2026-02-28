@@ -14,64 +14,75 @@ class ExecutionalTrader(MarketAgent):
         self.nbboOrders = {}
 
     def sniperAlgo(self, orderbook):
-        """
-        Hyper aggressive liquidity taking algorithm - iceberg detection, exploits them for fast fill.
-        Uses pinging, lvl 2 data. 
-        """
         if orderbook in self.intendedPosition:
             position = self.intendedPosition[orderbook]
             direction = 1 if position["direction"] == "buy" else -1
             gap = position["quantity"]*direction-self.getPosition(orderbook.asset)
 
             if gap > 0:
-                previous_best_ask = orderbook.get_best_ask_quantity()
-                self.placeOrder(orderbook, "buy", 0, 1, "market") # ping
-                new_best_ask = orderbook.get_best_ask_quantity()
-                if previous_best_ask == new_best_ask: # PONG (aka ICEBERG DETECTED)
-                    self.placeOrder(orderbook, "buy", new_best_ask, int(gap), "limit")
-                    self.cancelAllOrders(orderbook) # FILL AS MUCH Q AS POSSIBLE
-                else: # otherwise just run as an opportunistic algo
+                previous_best_ask_q = orderbook.get_best_ask_quantity() # Renamed for clarity
+                self.placeOrder(orderbook, "buy", 0, 1, "market") 
+                new_best_ask_q = orderbook.get_best_ask_quantity()
+                
+                # Get the actual PRICE
+                best_ask_price = orderbook.get_best_ask()
+
+                if previous_best_ask_q == new_best_ask_q: 
+                    # Use best_ask_price here
+                    self.placeOrder(orderbook, "buy", best_ask_price, int(gap), "limit")
+                    self.cancelAllOrders(orderbook) 
+                else: 
+                    # Use opportunistic algo
                     self.opportunisticAlgo(orderbook)
 
             elif gap < 0:
-                previous_best_bid = orderbook.get_best_bid_quantity()
-                self.placeOrder(orderbook, "sell", 0, 1, "market") # ping
-                new_best_bid = orderbook.get_best_bid_quantity()
-                if previous_best_bid == new_best_bid: # PONG (aka ICEBERG DETECTED)
-                    self.placeOrder(orderbook, "sell", new_best_bid, int(-gap), "limit")
-                    self.cancelAllOrders(orderbook) # FILL AS MUCH Q AS POSSIBLE
-                else: # otherwise just run as an opportunistic algo
+                previous_best_bid_q = orderbook.get_best_bid_quantity()
+                self.placeOrder(orderbook, "sell", 0, 1, "market")
+                new_best_bid_q = orderbook.get_best_bid_quantity()
+                
+                # Get the actual PRICE
+                best_bid_price = orderbook.get_best_bid()
+
+                if previous_best_bid_q == new_best_bid_q: 
+                    # Use best_bid_price here
+                    self.placeOrder(orderbook, "sell", best_bid_price, int(-gap), "limit")
+                    self.cancelAllOrders(orderbook) 
+                else: 
+                    # Use best_bid_price here
                     self.opportunisticAlgo(orderbook)
 
     def stealthAlgo(self, orderbook):
         """
         Splits order into small, randomized quantities, trades on randomized intervals, 
         Pretends to be market maker, but joins one side with iceberg, puts other side deep in the book.
-        More aggressive when price is attractive, less aggressive when price is not attractive
+        More aggressive when price is attractive, less aggressive when price is not attractive.
+        If push is too aggressive, it has a cooldown period
         """
         if orderbook in self.intendedPosition:
             position = self.intendedPosition[orderbook]
             direction = 1 if position["direction"] == "buy" else -1
             gap = position["quantity"]*direction-self.getPosition(orderbook.asset)
-            avg_price = price_history[orderbook.asset].mean(n = 500)
+            avg_price = price_history[orderbook.asset].mean(n=200)
+            stdev = price_history[orderbook.asset].std(n=200)
+
             self.cancelAllOrders(orderbook)
-            if gap > 0 and orderbook.last_price < avg_price: # needs to buy
+            if gap > 0 and last_prices[orderbook.asset] < avg_price + 2 * stdev: # needs to buy
                 # modify aggression based on price
                 proportion = 0.03 + max(-0.02, min(0.02, (position["price"] - orderbook.last_price)*0.01))
 
                 cover_qty = min(MM_BASE_ORDER_SIZE, gap)
                 mx = max(MM_BASE_ORDER_SIZE, int(gap*proportion))
                 real_qty = min(random.randint(MM_BASE_ORDER_SIZE, mx), gap)
-                self.placeOrder(orderbook, "buy", orderbook.get_best_bid(), int(real_qty), "iceberg", int(cover_qty))
+                self.placeOrder(orderbook, "buy", orderbook.get_best_bid()+0.05, int(real_qty), "iceberg", int(cover_qty))
                 self.placeOrder(orderbook, "sell", orderbook.get_best_ask()+0.05, int(cover_qty), "limit")
 
-            elif gap < 0 and orderbook.last_price > avg_price: # needs to sell
+            elif gap < 0 and last_prices[orderbook.asset] > avg_price - 2 * stdev: # needs to sell
                 proportion = 0.03 + max(-0.02, min(0.02, (orderbook.last_price - position["price"])*0.01))
 
                 cover_qty = min(MM_BASE_ORDER_SIZE, int(-gap))
                 mx = max(MM_BASE_ORDER_SIZE, int(-gap*proportion))
                 real_qty = min(random.randint(MM_BASE_ORDER_SIZE, mx), -gap)
-                self.placeOrder(orderbook, "sell", orderbook.get_best_ask(), int(real_qty), "iceberg", int(cover_qty))
+                self.placeOrder(orderbook, "sell", orderbook.get_best_ask()-0.05, int(real_qty), "iceberg", int(cover_qty))
                 self.placeOrder(orderbook, "buy", orderbook.get_best_bid()-0.05, int(cover_qty), "limit")
             
 
@@ -81,32 +92,45 @@ class ExecutionalTrader(MarketAgent):
         Only trades when there is high liquidity at attractive prices.
         """
         if orderbook in self.intendedPosition:
+            self.cancelAllOrders(orderbook)
             position = self.intendedPosition[orderbook]
             direction = 1 if position["direction"] == "buy" else -1
             gap = position["quantity"]*direction-self.getPosition(orderbook.asset)
+
             avg_price = price_history[orderbook.asset].mean(n=200)
+            stdev = price_history[orderbook.asset].std(n=200)
 
-            if gap > 0:
-                top_ask_q = orderbook.get_best_ask_quantity()
+            recent_price_change = price_history[orderbook.asset].getPriceChange(n=100)
+
+            # if an attractive price is available, hit the books to fully revert that price change
+            if gap > 0 and (recent_price_change < 0 or orderbook.last_price < avg_price + stdev):
+                if orderbook.last_price > avg_price + 2 * stdev:
+                    return
+                
                 ask_size = orderbook.ask_size
-                if orderbook.last_price < avg_price or orderbook.last_price < position["price"] - 1:
-                    qty = int(min(gap * 0.05, top_ask_q * 5, ask_size))
-                    if ask_size >= 30000:
-                        self.placeOrder(orderbook, "buy", 1, qty, "market")
+                top_ask_q = orderbook.get_best_ask_quantity()
+                target_price = orderbook.last_price + round(recent_price_change / 2, 2)
 
-                    else:
-                        self.placeOrder(orderbook, "buy", orderbook.get_best_ask(), qty, "iceberg", top_ask_q)
+                qty = min(int(gap * 0.1), ask_size)
+                
+                self.placeOrder(orderbook, "buy", target_price, top_ask_q, "limit")
+                if top_ask_q < qty:
+                    self.placeOrder(orderbook, "buy", target_price, qty - top_ask_q, "iceberg", 1000)
+                
 
-            elif gap < 0:
-                top_bid_q = orderbook.get_best_bid_quantity()
+            elif gap < 0 and (recent_price_change > 0 or orderbook.last_price > avg_price - stdev):
+                if orderbook.last_price < avg_price - 2 * stdev:
+                    return
+                
                 bid_size = orderbook.bid_size
-                if orderbook.last_price > avg_price or orderbook.last_price > position["price"] + 1:
-                    qty = int(min(-gap*0.01, top_bid_q * 5, bid_size))
-                    if bid_size >= 30000:
-                        self.placeOrder(orderbook, "sell", 1, qty, "market")
-                    
-                    else:
-                        self.placeOrder(orderbook, "sell", orderbook.get_best_bid(), qty, "iceberg", top_bid_q)
+                top_bid_q = orderbook.get_best_bid_quantity()
+                target_price = orderbook.last_price - round(recent_price_change / 2, 2)
+
+                qty = min(int(gap * 0.1), bid_size)
+                
+                self.placeOrder(orderbook, "sell", target_price, top_bid_q, "limit")
+                if top_bid_q < qty:
+                    self.placeOrder(orderbook, "sell", target_price, qty - top_bid_q, "iceberg", 1000)
 
     def getConditionalOrdersInDirection(self, orderBook, direction):
         if orderBook not in self.conditionalOrders:
@@ -132,7 +156,7 @@ class ExecutionalTrader(MarketAgent):
 
     def targetPosition(self, orderBook, direction, price, initial_price, quantity, market_mode = False):
         self.intendedPosition[orderBook] = {"direction": direction, "price": price, "initial_price": initial_price, "quantity": quantity, "market_mode": market_mode}
-    
+
     def removeOldIntendedOrders(self):
         self.intendedOrders.clear()
 
@@ -236,16 +260,12 @@ class ExecutionalTrader(MarketAgent):
             return
         try:
             if self.intendedOrders[orderBook]["direction"] == "buy" and self.intendedOrders[orderBook]["price"] >= orderBook.get_best_ask():
-                quantityToFill = min(self.intendedOrders[orderBook]["quantity"],max(orderBook.get_best_ask_quantity(), 1000))
+                quantityToFill = min(self.intendedOrders[orderBook]["quantity"], max(orderBook.get_best_ask_quantity(), 1000))
                 self.placeOrder(orderBook, "buy", orderBook.get_best_ask(), quantityToFill, "limit")
-                if quantityToFill > 5000:
-                    print("WHAT")
                 self.intendedOrders[orderBook]["quantity"] -= quantityToFill
             elif self.intendedOrders[orderBook]["direction"] == "sell" and self.intendedOrders[orderBook]["price"] <= orderBook.get_best_bid():
-                quantityToFill = min(self.intendedOrders[orderBook]["quantity"], max(orderBook.get_best_bid_quantity, 1000))
+                quantityToFill = min(self.intendedOrders[orderBook]["quantity"], max(orderBook.get_best_bid_quantity(), 1000))
                 self.placeOrder(orderBook, "sell", orderBook.get_best_bid(), quantityToFill, "limit")
-                if quantityToFill > 5000:
-                    print("WHAT")
                 self.intendedOrders[orderBook]["quantity"] -= quantityToFill
-        except:
+        except (KeyError, TypeError):
             return 

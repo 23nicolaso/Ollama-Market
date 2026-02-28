@@ -10,7 +10,6 @@ class HedgeFund(ExecutionalTrader):
         self.last_market_return_profile = None
     
     def set_market_return_profile(self, return_profile):
-        print(return_profile)
         self.last_market_return_profile = return_profile
     
     def calculate_target_positions(self):
@@ -35,6 +34,8 @@ class HedgeFund(ExecutionalTrader):
                 expected_change = self.last_market_return_profile[asset]
                 delta = pct_change - expected_change
                 if delta > 0.01:
-                    self.targetPosition(markets[asset], "sell", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, HF_POSITION_LIMIT)
+                    self.placeOrder(markets[asset], "sell", markets[asset].last_price-0.1, HF_POSITION_LIMIT, "limit")
                 elif delta < -0.01:
-                    self.targetPosition(markets[asset], "buy", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, HF_POSITION_LIMIT)
+                    self.placeOrder(markets[asset], "buy", markets[asset].last_price+0.1, HF_POSITION_LIMIT, "limit")
+                elif abs(delta) < 0.005:
+                    self.targetPosition(markets[asset], "buy", round(INITIAL_PRICES[asset]*(1+expected_change),2), markets[asset].last_price, 0)

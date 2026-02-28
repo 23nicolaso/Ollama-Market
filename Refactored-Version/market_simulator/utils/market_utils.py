@@ -5,6 +5,7 @@ from market_simulator.config import (
     LLM_MODEL, MAX_HISTORY_LENGTH, RFR
 )
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import re 
 import random
 from market_simulator.utils.db_utils import get_price_history as get_db_price_history
@@ -125,6 +126,9 @@ class CircularBuffer:
 
     def mean(self, n = MAX_HISTORY_LENGTH):
         """Returns the mean price of the past n prices"""
+        if self.size < n:
+            return self.initial_price
+        
         if n == self.size and self.full:
             return np.mean(self.buffer)
             
@@ -141,6 +145,9 @@ class CircularBuffer:
 
     def std(self, n = MAX_HISTORY_LENGTH):
         """Returns the standard deviation of the past n prices"""
+        if self.size < n:
+            return 1
+        
         if n == self.size and self.full:
             return np.std(self.buffer, ddof=0)
             
@@ -186,6 +193,11 @@ class CircularBuffer:
 # Add these to the global variables
 news_queue = queue.Queue()
 chat_queue = queue.Queue()
+action_queue = queue.Queue()  # Live log of agent decisions
+
+# Maps display name -> (agent_object, initial_cash) for the P&L leaderboard.
+# Populated in main.py after agents are created.
+agent_registry = {}
 
 # Global variables
 accounts = {}  # Stores list of Account objects, indexed by accountID
